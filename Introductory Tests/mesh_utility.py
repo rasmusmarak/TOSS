@@ -130,7 +130,7 @@ def write_other(path, name, nodes, faces):
 
 def create_mesh():
 
-    path = pathlib.Path("Introductory Tests").parent.resolve()
+    path = str(pathlib.Path("Introductory Tests").parent.resolve())
 
     # Read the input .pk file
     print("Reading file...")
