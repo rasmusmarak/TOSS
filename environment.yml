@@ -7,7 +7,7 @@ dependencies:
   - pickle
   - math
   - pygmo
-  - polyhedral_gravity
+  - polyhedral-gravity-model
   - tetgen
   - meshio
   - openmesh
