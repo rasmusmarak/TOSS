@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 Introductory Tests/.DS_Store
 *.DS_Store
+Introductory Tests/figures
