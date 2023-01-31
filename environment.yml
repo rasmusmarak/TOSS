@@ -4,15 +4,10 @@ channels:
   - defaults
 dependencies:
   - numpy
-  - pickle
-  - math
   - pygmo
   - polyhedral-gravity-model
   - tetgen
   - meshio
   - openmesh
   - pyvista
-  - matplotlib.patches
-  - matplotlib.pyplot
   - matplotlib
-  - pathlib
