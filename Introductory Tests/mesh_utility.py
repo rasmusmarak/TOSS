@@ -133,38 +133,38 @@ def create_mesh():
     path = str(pathlib.Path("Introductory Tests").parent.resolve())
 
     # Read the input .pk file
-    print("Reading file...")
+    #print("Reading file...")
     mesh_points, mesh_triangles = read_pk_file(path + "/3dmeshes/churyumov-gerasimenko.pk")
 
     # Un-normalizing the scale
     #   Conversion factor [to metric meters]: 3126.6064453124995
     mesh_points = mesh_points*float(3126.6064453124995)
-    print("Physical dimension along x (UN-normalized): ", max(mesh_points[:,0]) - min(mesh_points[:,0]), "Km")
+    #print("Physical dimension along x (UN-normalized): ", max(mesh_points[:,0]) - min(mesh_points[:,0]), "Km")
 
     # Simple rotatation of comet in plot
     #mesh_points = mesh_points*-1
 
     # Tetrahralize the mesh
-    print("Tetrahralize...")
+    #print("Tetrahralize...")
     tgen = tetgen.TetGen(mesh_points, mesh_triangles)
     nodes, elems = tgen.tetrahedralize()
 
     # Print a vtk file, diplayable with ParaView
-    print("Writing vtk files...")
+    #print("Writing vtk files...")
     tgen.write(path + "/mesh/67P/churyumov-gerasimenko.vtk")
 
     # Print the input files for the C++ implementation of the Polyhedral Model
-    print("Writing polyhedron-cpp input files..")
+    #print("Writing polyhedron-cpp input files..")
     write_to_node_faces_ele_file(path + "/mesh/67P/", "churyumov-gerasimenko", nodes, mesh_triangles, elems)
 
     # Print the input files for the FORTRAN implementation of the Polyhedral Model by Tsoulis
-    print("Writing FORTRAN files..")
+    #print("Writing FORTRAN files..")
     write__tsoulis_fortran_files(path + "/mesh/67P/", mesh_points, mesh_triangles)
 
     # Write other files
-    print("Writing other files...")
+    #print("Writing other files...")
     write_other(path + "/mesh/67P/", "churyumov-gerasimenko.ply", nodes, mesh_triangles)
 
-    print("Finished.")
+    #print("Finished.")
     return tgen, mesh_points, mesh_triangles
 
