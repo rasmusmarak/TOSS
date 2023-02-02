@@ -11,3 +11,5 @@ dependencies:
   - openmesh
   - pyvista
   - matplotlib
+  - pip:
+      - tetgen
