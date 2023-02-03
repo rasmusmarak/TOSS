@@ -133,13 +133,14 @@ def create_mesh():
     path = str(pathlib.Path("Introductory Tests").parent.resolve())
 
     # Read the input .pk file
-    mesh_points, mesh_triangles = read_pk_file(path + "/3dmeshes/churyumov-gerasimenko.pk")
+    mesh_points, mesh_triangles = read_pk_file(path + "/3dmeshes/churyumov-gerasimenko_lp.pk")
 
     # Un-normalizing the scale
     #   Conversion factor [to metric meters]: 3126.6064453124995
     mesh_points = mesh_points*float(3126.6064453124995)
 
     tgen = tetgen.TetGen(mesh_points, mesh_triangles)
-    
+    nodes, elem = tgen.tetrahedralize()
+
     return tgen, mesh_points, mesh_triangles
 
