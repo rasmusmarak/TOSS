@@ -6,9 +6,6 @@ dependencies:
   - numpy
   - pygmo
   - polyhedral-gravity-model
-  - tetgen
-  - meshio
-  - openmesh-python
   - pyvista
   - matplotlib
   - pip:
