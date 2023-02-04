@@ -44,6 +44,8 @@ def create_mesh():
     # Un-normalizing the scale
     #   Conversion factor [to metric meters]: 3126.6064453124995
     mesh_points = mesh_points*float(3126.6064453124995)
+    print("Physical dimension along x (UN-normalized): ", max(mesh_points[:,0]) - min(mesh_points[:,0]), "Km")
+
 
     tgen = tetgen.TetGen(mesh_points, mesh_triangles)
     nodes, elem = tgen.tetrahedralize()
