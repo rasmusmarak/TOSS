@@ -26,7 +26,7 @@ class udp_obj:
         self.ub = ub           
     
     def fitness(self,x):
-        fit_val, _, _ = self.compute_trajectory(x)
+        fit_val, _, _, _ = self.compute_trajectory(x)
         return [fit_val]
 
     def get_bounds(self):
@@ -43,6 +43,7 @@ class udp_obj:
         # Numpy Arrays to store trajectory information
         r_store = np.zeros((3,len(time_list)))
         v_store = np.zeros((3,len(time_list)))
+        a_store = np.zeros((3,len(time_list)))
 
         # Add starting position to memory
         r_store[:,0] = r
@@ -67,11 +68,12 @@ class udp_obj:
             # Storing updated trajectory information
             r_store[:,i] = r
             v_store[:,i] = v
+            a_store[:,i-1] = a
             i += 1
 
         altitudes = (r_store[0,:]**2 + r_store[1,:]**2 + r_store[2,:]**2)**(1/2)
         fit_val = np.mean(np.abs(altitudes-self.r_T))
-        return fit_val, r_store, v_store
+        return fit_val, r_store, v_store, a_store
 
 
     def plot_trajectory(self, r_store):
