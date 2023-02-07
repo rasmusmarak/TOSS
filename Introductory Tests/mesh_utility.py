@@ -48,7 +48,7 @@ def create_mesh():
 
 
     tgen = tetgen.TetGen(mesh_points, mesh_triangles)
-    nodes, elem = tgen.tetrahedralize()
+    _, _ = tgen.tetrahedralize()
 
     return tgen, mesh_points, mesh_triangles
 

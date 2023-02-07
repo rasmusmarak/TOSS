@@ -8,5 +8,7 @@ dependencies:
   - polyhedral-gravity-model
   - pyvista
   - matplotlib
+  - panel
+  - jupyter_backend
   - pip:
       - tetgen
