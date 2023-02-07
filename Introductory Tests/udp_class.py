@@ -71,7 +71,7 @@ class udp_obj:
             a_store[:,i-1] = a
             i += 1
 
-        altitudes = (r_store[0,:]**2 + r_store[1,:]**2 + r_store[2,:]**2)**(1/2)
+        altitudes = r_store[0,:]**2 + r_store[1,:]**2 + r_store[2,:]**2
         fit_val = np.mean(np.abs(altitudes-self.r_T))
         return fit_val, r_store, v_store, a_store
 
