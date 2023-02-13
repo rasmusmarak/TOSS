@@ -17,7 +17,7 @@ class udp_initial_condition:
     The object holds attributes in terms of variables and constants that
     are used for trajectory propagation. 
     The methods of the class defines the objective function for the optimization problem,
-    boundaries for input variables, trajectoru propagation and plotting of results. 
+    boundaries for input variables, trajectory propagation and plotting of results. 
 
     Dependencies:
         - Numpy
@@ -25,7 +25,7 @@ class udp_initial_condition:
         - PyVista
     """
 
-    def __init__(self, body_density, target_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds):
+    def __init__(self, body_density, target_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds, algorithm):
         """ Setup udp attributes.
 
         Args:
@@ -36,6 +36,7 @@ class udp_initial_condition:
             time_step (int):         Step size for integration. 
             lower_bounds (float):    Lower bounds for domain of initial state.
             upper_bounds (float):    Upper bounds for domain of initial state. 
+            algorithm (str):         User defined algorithm of choice
         """
         # Creating the mesh (TetGen)
         self.body_mesh, self.mesh_vertices, self.mesh_faces = mesh_utility.create_mesh()
@@ -48,9 +49,9 @@ class udp_initial_condition:
         self.time_step = time_step
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds   
+        self.algorithm = algorithm
 
-        #self.a, self.b, self.c = self.butcher_table_dp8713()
-        self.b, self.a, self.c, self.c_hat = self.butcher_table_rkf78()   
+  
     
     def fitness(self,x):
         """ fitness evaluates the proximity of the satallite to target altitude.
@@ -64,6 +65,7 @@ class udp_initial_condition:
         fitness_value, _ = self.compute_trajectory(np.array(x))
         return [fitness_value]
 
+
     def get_bounds(self):
         """get_bounds returns upper and lower bounds for the domain of the state vector.
 
@@ -71,6 +73,7 @@ class udp_initial_condition:
             Two one-dimensional arrays for the bounady values of the state vector. 
         """
         return (self.lower_bounds, self.upper_bounds)
+
 
     def compute_trajectory(self, x):
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
@@ -80,17 +83,16 @@ class udp_initial_condition:
 
         Returns:
             fintess_values: Evaluation of proximity of satelite to target altitude.
-            r_store:        Array containing values on position at each time step for the trajectory.
-            v_store:        Array containing values on velocities at each time step for the trajectory.
-            a_store:        Array containing values on acceleration at each time step for the trajectory.
+            trajectory_info: Numpy array containing information on position and velocity at every time step.
         """
-
 
         # Fitness value (to be maximized)
         fitness_value = 0
-        algorithm = "RKF78"
-        intg = integrator(self.body_mesh, self.mesh_vertices, self.mesh_faces, self.body_density, self.target_altitude, self.final_time, self.start_time, self.time_step, algorithm)
 
+        # Setup algorithm of choice
+        intg = integrator(self.body_mesh, self.mesh_vertices, self.mesh_faces, self.body_density, self.target_altitude, self.final_time, self.start_time, self.time_step, self.algorithm)
+
+        # Integrate trajectory
         trajectory_info = intg.run_integration(x)
         
         # Return fitness value for the computed trajectory

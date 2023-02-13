@@ -8,8 +8,33 @@ import polyhedral_gravity as model
 
 
 class integrator:
+    """ 
+    Sets up the user defined numerical integrator algorithm of choice.
+    The object holds attributes in terms of variables and constants that
+    are used for trajectory propagation. 
+    The methods of the class mainly defines numerical integrators used 
+    for the trajectory propagation.
+
+    Dependencies:
+        - Numpy
+        - polyhedral-gravity-model
+        - PyVista
+    """
 
     def __init__(self, body_mesh, mesh_vertices, mesh_faces, body_density, target_altitude, final_time, start_time, time_step, algorithm):
+        """
+        Defines all attributes connected to the numerical integrators of this class. 
+
+        Args:
+            body_density (float):    Mass density of body of interest
+            target_altitude (float): Target altitude for satellite trajectory. 
+            final_time (int):        Final time for integration.
+            start_time (int):        Start time for integration of trajectory (often zero)
+            time_step (int):         Step size for integration. 
+            lower_bounds (float):    Lower bounds for domain of initial state.
+            upper_bounds (float):    Upper bounds for domain of initial state. 
+            algorithm (str):         User defined algorithm of c
+         """
 
         # Attributes for computinga acceleration
         self.body_mesh = body_mesh
@@ -33,6 +58,14 @@ class integrator:
 
 
     def run_integration(self, x):
+        """ Calls the correct numerical integration algorithm.
+
+        Args:
+            x: State vector containing position and velocity expressed in three dimensions.
+
+        Returns:
+            trajectory_info: Numpy array containing information on position and velocity at every time step.
+        """
 
         if self.algorithm == "Euler":
             trajectory_info = self.euler_approx(x)
@@ -49,10 +82,19 @@ class integrator:
 
     # Used by all RK-type algorithms
     def equation_of_motion(self, _, x):
+        """ State update equation for RK-type algorithms. 
+
+        Args:
+            _ : Time value (not needed as of now)
+            x : State vector containing position and velocity expressed in three dimensions.
+
+        Returns:
+            State vector used for computing state at the following time step.
+        """
         _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, x[0:3])
         a = - np.array(a)
-        kx = x[3:6] #* dt
-        kv = a #* dt
+        kx = x[3:6] 
+        kv = a 
         return np.concatenate((kx, kv))
 
 
@@ -119,6 +161,11 @@ class integrator:
     ######################################################
 
     def butcher_table_rkf78(self):
+        """ Butcher table/tablau for Runge-Kutta-Fehlberg 7(8) method.
+
+        Returns:
+            All table values defined for the RKF-78 method. 
+        """
         a0 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] 
         a1 = [2/27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         a2 = [1/36, 1/12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -148,6 +195,13 @@ class integrator:
 
 
     def new_rkf78(self,x):
+        """
+        Integrates Newton's equations of motion within a user defined time interval
+        using Runge-Kutta-Fehlberg 7(8) method.
+
+        Returns:
+            Complete trajectory information stored in trajectory_info.
+        """
 
         t0 = self.start_time
         tf = self.final_time
@@ -226,6 +280,11 @@ class integrator:
 
 
     def butcher_table_dp8713():
+        """ Butcher table/tablau for Dormand-Prince 8(7)-13M method.
+
+        Returns:
+            All table values defined for the DP-8713M method. 
+        """
 
         # Setting up hyperparameters for adaptive stepsize
         a0 = [1/18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -254,6 +313,13 @@ class integrator:
 
 
     def DP_8713M(self, x):
+        """
+        Integrates Newton's equations of motion within a user defined time interval
+        using Dormand-Prince 8(7)-13M method.
+
+        Returns:
+            Complete trajectory information stored in trajectory_info.
+        """
 
         # Relative error tolerance for solution vector
         relative_error_tol = 1e-1
