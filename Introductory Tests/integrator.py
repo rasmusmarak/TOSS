@@ -208,9 +208,9 @@ class integrator:
         h0 = self.time_step
         n_max = 10000
         tol_min = 1e-12
-        tol_max = 1e-8
+        tol_max = 1e-12
         h_min = 1e-6
-        h_max = 10
+        h_max = 572
 
         h = h0
         t = t0

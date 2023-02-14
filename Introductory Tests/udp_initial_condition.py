@@ -10,6 +10,13 @@ import pyvista as pv
 # For computing trajectory
 from integrator import integrator
 
+# D-solver
+import desolver as de
+import desolver.backend as D
+
+# For computing acceleration and potential
+import polyhedral_gravity as model
+
 
 class udp_initial_condition:
     """ 
@@ -90,15 +97,45 @@ class udp_initial_condition:
         fitness_value = 0
 
         # Setup algorithm of choice
-        intg = integrator(self.body_mesh, self.mesh_vertices, self.mesh_faces, self.body_density, self.target_altitude, self.final_time, self.start_time, self.time_step, self.algorithm)
+        #intg = integrator(self.body_mesh, self.mesh_vertices, self.mesh_faces, self.body_density, self.target_altitude, self.final_time, self.start_time, self.time_step, self.algorithm)
 
         # Integrate trajectory
-        trajectory_info = intg.run_integration(x)
+        #trajectory_info = intg.run_integration(x)
+
+        D.set_float_fmt('float64')
+        initial_state = D.array(x)
+        a = de.OdeSystem(self.equation_of_motion, y0=initial_state, dense_output=True, t=(self.start_time, self.final_time), dt=self.time_step, rtol=1e-12, atol=1e-12)
+        a.method = "RK87"
+        a.integrate()
+        trajectory_info = np.transpose(a.y)
         
         # Return fitness value for the computed trajectory
         squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
         fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude))
         return fitness_value, trajectory_info 
+
+
+
+
+
+    # Used by all RK-type algorithms
+    def equation_of_motion(self, _, x):
+        """ State update equation for RK-type algorithms. 
+
+        Args:
+            _ : Time value (not needed as of now)
+            x : State vector containing position and velocity expressed in three dimensions.
+
+        Returns:
+            State vector used for computing state at the following time step.
+        """
+        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, x[0:3])
+        a = - np.array(a)
+        kx = x[3:6] 
+        kv = a 
+        return np.concatenate((kx, kv))
+
+
 
 
 
