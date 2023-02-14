@@ -210,7 +210,7 @@ class integrator:
         tol_min = 1e-12
         tol_max = 1e-12
         h_min = 1e-6
-        h_max = 572
+        h_max = 10000
 
         h = h0
         t = t0

@@ -97,17 +97,17 @@ class udp_initial_condition:
         fitness_value = 0
 
         # Setup algorithm of choice
-        #intg = integrator(self.body_mesh, self.mesh_vertices, self.mesh_faces, self.body_density, self.target_altitude, self.final_time, self.start_time, self.time_step, self.algorithm)
+        intg = integrator(self.body_mesh, self.mesh_vertices, self.mesh_faces, self.body_density, self.target_altitude, self.final_time, self.start_time, self.time_step, self.algorithm)
 
         # Integrate trajectory
-        #trajectory_info = intg.run_integration(x)
+        trajectory_info = intg.run_integration(x)
 
-        D.set_float_fmt('float64')
-        initial_state = D.array(x)
-        a = de.OdeSystem(self.equation_of_motion, y0=initial_state, dense_output=True, t=(self.start_time, self.final_time), dt=self.time_step, rtol=1e-12, atol=1e-12)
-        a.method = "RK87"
-        a.integrate()
-        trajectory_info = np.transpose(a.y)
+        #D.set_float_fmt('float64')
+        #initial_state = D.array(x)
+        #a = de.OdeSystem(self.equation_of_motion, y0=initial_state, dense_output=True, t=(self.start_time, self.final_time), dt=self.time_step, rtol=1e-12, atol=1e-12)
+        #a.method = "RK87"
+        #a.integrate()
+        #trajectory_info = np.transpose(a.y)
         
         # Return fitness value for the computed trajectory
         squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
