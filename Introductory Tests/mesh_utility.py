@@ -52,3 +52,59 @@ def create_mesh():
 
     return tgen, mesh_points, mesh_triangles
 
+
+def is_outside(points, mesh_vertices, mesh_triangles):
+    """Detects if points are outside a 3D mesh
+    Args:
+        points ((N,3)) np.array): points to test.
+        mesh_vertices ((M,3) np.array): vertices pf the mesh
+        mesh_triangles ((M,3) np.array): ids of each triangle
+    Returns:
+        np.array of boolean values determining whether the points are inside
+    """
+    counter = np.array([0]*len(points))
+    direction = np.array([0, 0, 1])
+    for t in mesh_triangles:
+        counter += ray_triangle_intersect(
+            points, direction, mesh_vertices[t[0]], mesh_vertices[t[1]], mesh_vertices[t[2]])
+    return (counter % 2) == 0
+
+
+def ray_triangle_intersect(ray_o, ray_d, v0, v1, v2):
+    """Möller–Trumbore intersection algorithm
+    Computes whether a ray intersect a triangle
+    Args:
+        ray_o (3D np.array): origin of the ray.
+        ray_d (3D np.array): direction of the ray.
+        v0, v1, v2 (3D np.array): triangle vertices
+    Returns:
+        boolean value if the intersection exist (includes the edges)
+    See: https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+    """
+    if ray_o.shape != (3,):
+        raise ValueError("Shape f ray_o input should be (3,)")
+    edge1 = v1-v0
+    edge2 = v2-v0
+    h = np.cross(ray_d, edge2)
+
+    a = np.dot(edge1, h)
+
+    if a < 0.000001 and a > -0.000001:
+        return False
+
+    f = 1.0 / a
+    s = ray_o-v0
+    u = np.dot(s, h) * f
+
+    if u < 0 or u > 1:
+        return False
+
+    q = np.cross(s, edge1)
+    v = np.dot(ray_d, q) * f
+
+    if v < 0 or u + v > 1:
+        return False
+
+    t = f * np.dot(edge2, q)
+
+    return t > 0

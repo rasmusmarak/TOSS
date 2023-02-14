@@ -145,6 +145,23 @@ class udp_initial_condition:
         return r_store, v_store, a_store
 
 
+    def comet_collision_detection(self, x):
+        """
+        Uses is_outside to check if a set of positions (or current) x is is inside mesh.
+        Returns boolean with corresponding results.
+
+        Args:
+            x: Array containing current, or a set of, positions expressed in 3 dimensions.
+
+        Returns:
+            collision_boolean: A one dimensional array with boolean values corresponding to each
+                               position kept in x. Returns "False" if point is inside mesh, and 
+                               "True" if point is outside mesh (that is, there no collision).
+        """
+        collision_boolean = mesh_utility.is_outside(x, self.mesh_vertices, self.mesh_faces)
+        return collision_boolean
+
+
     def plot_trajectory(self, r_store):
         """plot_trajectory plots the body mesh and satellite trajectory.
 
