@@ -5,9 +5,10 @@ channels:
 dependencies:
   - numpy
   - pygmo
-  - polyhedral_gravity
-  - tetgen
-  - meshio
-  - openmesh
+  - polyhedral-gravity-model
   - pyvista
   - matplotlib
+  - panel
+  - jupyter_backend
+  - pip:
+      - tetgen
