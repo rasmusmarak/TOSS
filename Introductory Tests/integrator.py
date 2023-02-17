@@ -1,10 +1,6 @@
-
 # General
 import numpy as np
 from typing import Union
-
-# For computing acceleration and potential
-import polyhedral_gravity as model
 
 
 # Class for numerical integration
@@ -17,13 +13,11 @@ class Integrator:
     for the trajectory propagation.
     """
 
-    def __init__(self, body_mesh, mesh_vertices, mesh_faces, body_density, target_altitude, final_time, start_time, time_step, algorithm):
+    def __init__(self, final_time, start_time, time_step, algorithm, eq_of_motion):
         """
         Defines all attributes connected to the numerical integrators of this class. 
 
         Args:
-            body_density (float):    Mass density of body of interest
-            target_altitude (float): Target altitude for satellite trajectory. 
             final_time (int):        Final time for integration.
             start_time (int):        Start time for integration of trajectory (often zero)
             time_step (int):         Step size for integration. 
@@ -32,36 +26,28 @@ class Integrator:
             algorithm (str):         User defined algorithm of c
          """
 
-        # Attributes for computing acceleration
-        self.body_mesh = body_mesh
-        self.mesh_vertices = mesh_vertices
-        self.mesh_faces = mesh_faces
-
         # Assertions:
-        assert body_density > 0
-        assert target_altitude > 0
         assert final_time > start_time
         assert time_step <= (final_time - start_time)
 
         # Additional hyperparameters
-        self.body_density = body_density     
-        self.target_altitude = target_altitude     
         self.final_time = final_time      
         self.start_time = start_time                
         self.time_step = time_step
+        self.eq_of_motion = eq_of_motion
 
         # Run algorithm specified by user
         self.algorithm = algorithm
         if self.algorithm == "Euler":
-            self.integrator = self.euler_approx()
+            self.integrator = self.euler_approx
 
         elif self.algorithm == "RKF78":
             self.b, self.a, self.c, self.c_hat = self.butcher_table_rkf78()
-            self.integrator = self.new_rkf78()
+            self.integrator = self.new_rkf78
         
         elif self.algorithm == "DP8713M":
             self.a, self.b, self.c = self.butcher_table_dp8713()
-            self.integrator = self.DP_8713M()
+            self.integrator = self.DP_8713M
 
 
     def run_integration(self, x: np.ndarray) -> np.ndarray:
@@ -75,25 +61,6 @@ class Integrator:
         """
         return self.integrator(x)
         
-
-
-    # Used by all RK-type algorithms
-    def equation_of_motion(self, x: np.ndarray, t: float = None) -> np.ndarray:
-        """ State update equation for RK-type algorithms. 
-
-        Args:
-            t : Time value corresponding to current state
-            x : State vector containing position and velocity expressed in three dimensions.
-
-        Returns:
-            State vector used for computing state at the following time step.
-        """
-        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, x[0:3])
-        a = - np.array(a)
-        kx = x[3:6] 
-        kv = a 
-        return np.concatenate((kx, kv))
-
 
 
     ######################################################
@@ -123,8 +90,7 @@ class Integrator:
 
         for i in range(1,len(time_list)):
             # Retrieve information at current position
-            _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, r)
-            a = - np.array(a)
+            a = self.eq_of_motion.compute_acceleration(r)
 
             # Computing velocity and position for next time-step
             v_n = v + self.time_step * a
@@ -141,13 +107,10 @@ class Integrator:
             i += 1
 
         # Adding final acceleration to memory 
-        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, r)
-        a = - np.array(a)
+        a = self.eq_of_motion.compute_acceleration(r)
         trajectory_info[6:9, i-1] = a
 
         return np.vstack(trajectory_info, time_list)
-
-
 
 
 
@@ -224,19 +187,19 @@ class Integrator:
             elif h > h_max:
                 h = h_max
             
-            k0 = self.equation_of_motion(x,t)
-            k1 = self.equation_of_motion(x + h*(self.a[1,0]*k0,t))
-            k2 = self.equation_of_motion(x + h*(self.a[2,0]*k0 + self.a[2,1]*k1),t)
-            k3 = self.equation_of_motion(x + h*(self.a[3,0]*k0 + self.a[3,1]*k1 + self.a[3,2]*k2),t)
-            k4 = self.equation_of_motion(x + h*(self.a[4,0]*k0 + self.a[4,1]*k1 + self.a[4,2]*k2 + self.a[4,3]*k3),t)
-            k5 = self.equation_of_motion(x + h*(self.a[5,0]*k0 + self.a[5,1]*k1 + self.a[5,2]*k2 + self.a[5,3]*k3 + self.a[5,4]*k4),t)
-            k6 = self.equation_of_motion(x + h*(self.a[6,0]*k0 + self.a[6,1]*k1 + self.a[6,2]*k2 + self.a[6,3]*k3 + self.a[6,4]*k4 + self.a[6,5]*k5), t)
-            k7 = self.equation_of_motion(x + h*(self.a[7,0]*k0 + self.a[7,1]*k1 + self.a[7,2]*k2 + self.a[7,3]*k3 + self.a[7,4]*k4 + self.a[7,5]*k5 + self.a[7,6]*k6), t)
-            k8 = self.equation_of_motion(x + h*(self.a[8,0]*k0 + self.a[8,1]*k1 + self.a[8,2]*k2 + self.a[8,3]*k3 + self.a[8,4]*k4 + self.a[8,5]*k5 + self.a[8,6]*k6 + self.a[8,7]*k7), t)
-            k9 = self.equation_of_motion(x + h*(self.a[9,0]*k0 + self.a[9,1]*k1 + self.a[9,2]*k2 + self.a[9,3]*k3 + self.a[9,4]*k4 + self.a[9,5]*k5 + self.a[9,6]*k6 + self.a[9,7]*k7 + self.a[9,8]*k8), t)
-            k10 = self.equation_of_motion(x + h*(self.a[10,0]*k0 + self.a[10,1]*k1 + self.a[10,2]*k2 + self.a[10,3]*k3 + self.a[10,4]*k4 + self.a[10,5]*k5 + self.a[10,6]*k6 + self.a[10,7]*k7 + self.a[10,8]*k8 + self.a[10,9]*k9), t)
-            k11 = self.equation_of_motion(x + h*(self.a[11,0]*k0 + self.a[11,1]*k1 + self.a[11,2]*k2 + self.a[11,3]*k3 + self.a[11,4]*k4 + self.a[11,5]*k5 + self.a[11,6]*k6 + self.a[11,7]*k7 + self.a[11,8]*k8 + self.a[11,9]*k9 + self.a[11,10]*k10), t)
-            k12 = self.equation_of_motion(x + h*(self.a[12,0]*k0 + self.a[12,1]*k1 + self.a[12,2]*k2 + self.a[12,3]*k3 + self.a[12,4]*k4 + self.a[12,5]*k5 + self.a[12,6]*k6 + self.a[12,7]*k7 + self.a[12,8]*k8 + self.a[12,9]*k9 + self.a[12,10]*k10 + self.a[12,11]*k11), t)
+            k0 = self.eq_of_motion.compute_motion(x, t)
+            k1 = self.eq_of_motion.compute_motion(x + h*(self.a[1,0]*k0), t)
+            k2 = self.eq_of_motion.compute_motion(x + h*(self.a[2,0]*k0 + self.a[2,1]*k1),t)
+            k3 = self.eq_of_motion.compute_motion(x + h*(self.a[3,0]*k0 + self.a[3,1]*k1 + self.a[3,2]*k2), t)
+            k4 = self.eq_of_motion.compute_motion(x + h*(self.a[4,0]*k0 + self.a[4,1]*k1 + self.a[4,2]*k2 + self.a[4,3]*k3), t)
+            k5 = self.eq_of_motion.compute_motion(x + h*(self.a[5,0]*k0 + self.a[5,1]*k1 + self.a[5,2]*k2 + self.a[5,3]*k3 + self.a[5,4]*k4), t)
+            k6 = self.eq_of_motion.compute_motion(x + h*(self.a[6,0]*k0 + self.a[6,1]*k1 + self.a[6,2]*k2 + self.a[6,3]*k3 + self.a[6,4]*k4 + self.a[6,5]*k5), t)
+            k7 = self.eq_of_motion.compute_motion(x + h*(self.a[7,0]*k0 + self.a[7,1]*k1 + self.a[7,2]*k2 + self.a[7,3]*k3 + self.a[7,4]*k4 + self.a[7,5]*k5 + self.a[7,6]*k6), t)
+            k8 = self.eq_of_motion.compute_motion(x + h*(self.a[8,0]*k0 + self.a[8,1]*k1 + self.a[8,2]*k2 + self.a[8,3]*k3 + self.a[8,4]*k4 + self.a[8,5]*k5 + self.a[8,6]*k6 + self.a[8,7]*k7), t)
+            k9 = self.eq_of_motion.compute_motion(x + h*(self.a[9,0]*k0 + self.a[9,1]*k1 + self.a[9,2]*k2 + self.a[9,3]*k3 + self.a[9,4]*k4 + self.a[9,5]*k5 + self.a[9,6]*k6 + self.a[9,7]*k7 + self.a[9,8]*k8), t)
+            k10 = self.eq_of_motion.compute_motion(x + h*(self.a[10,0]*k0 + self.a[10,1]*k1 + self.a[10,2]*k2 + self.a[10,3]*k3 + self.a[10,4]*k4 + self.a[10,5]*k5 + self.a[10,6]*k6 + self.a[10,7]*k7 + self.a[10,8]*k8 + self.a[10,9]*k9), t)
+            k11 = self.eq_of_motion.compute_motion(x + h*(self.a[11,0]*k0 + self.a[11,1]*k1 + self.a[11,2]*k2 + self.a[11,3]*k3 + self.a[11,4]*k4 + self.a[11,5]*k5 + self.a[11,6]*k6 + self.a[11,7]*k7 + self.a[11,8]*k8 + self.a[11,9]*k9 + self.a[11,10]*k10), t)
+            k12 = self.eq_of_motion.compute_motion(x + h*(self.a[12,0]*k0 + self.a[12,1]*k1 + self.a[12,2]*k2 + self.a[12,3]*k3 + self.a[12,4]*k4 + self.a[12,5]*k5 + self.a[12,6]*k6 + self.a[12,7]*k7 + self.a[12,8]*k8 + self.a[12,9]*k9 + self.a[12,10]*k10 + self.a[12,11]*k11), t)
         
             y = x + h*(self.c[0]*k0 + self.c[1]*k1 + self.c[2]*k2 + self.c[3]*k3 + self.c[4]*k4 + self.c[5]*k5 + self.c[6]*k6 + self.c[7]*k7 + self.c[8]*k8 + self.c[9]*k9 + self.c[10]*k10)
             y_hat = x + h*(self.c_hat[0]*k0 + self.c_hat[1]*k1 + self.c_hat[2]*k2 + self.c_hat[3]*k3 + self.c_hat[4]*k4 + self.c_hat[5]*k5 + self.c_hat[6]*k6 + self.c_hat[7]*k7 + self.c_hat[8]*k8 + self.c_hat[9]*k9 + self.c_hat[10]*k10 + self.c_hat[11]*k11 + self.c_hat[12]*k12)
@@ -256,10 +219,6 @@ class Integrator:
                 
                 if trunc_error < tol_min:
                     h = 2*h
-
-            print("Succesfull steps: ", k)
-            print("Current time: ", t)
-            print("Current step size: ", h)
         
         trajectory_info = np.array(trajectory_info)
         return trajectory_info[:, 0:k]
@@ -331,8 +290,7 @@ class Integrator:
         # Numpy Arrays to store trajectory information
         trajectory_info = np.empty((9,it_max+1), dtype = np.float64)
         trajectory_info[0:len(x), 0] = x
-        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, x[0:3])
-        a = - np.array(a)
+        a = self.eq_of_motion.compute_acceleration(x[0:3])
         trajectory_info[len(x):(len(x)+len(a)), 0] = a
 
         # Initialization
@@ -347,17 +305,17 @@ class Integrator:
         # Main loop for Runge-kutta 8(7)-13M formulae
         while (t[it] < self.final_time) and it < it_max: 
 
-            rk_eval_matrix[:,0] = h * self.equation_of_motion(x, h)
+            rk_eval_matrix[:,0] = h * self.eq_of_motion.compute_motion(x, h)
             for j in range(11):
                 # Embedded solution
                 if j+1 == 11:
                     solution_low_dim = x + h*rk_eval_matrix.dot(self.b[0,:])
                 elif j+1 == 12:
-                    rk_eval_matrix[:,j+1] = h * self.equation_of_motion(solution_low_dim, h)
+                    rk_eval_matrix[:,j+1] = h * self.eq_of_motion.compute_motion(solution_low_dim, h)
                 else:
                     #Note: if a(r(t), v(t), t) depends on time, then t=h*self.c[j+1] in this method call. 
                     #      However, with polyhedral model which only depend on r(t), we have a(r)*dt (where dt=h)
-                    rk_eval_matrix[:,j+1] = h * self.equation_of_motion(x + h*rk_eval_matrix.dot(self.a[j+1,:]), h) 
+                    rk_eval_matrix[:,j+1] = h * self.eq_of_motion.compute_motion(x + h*rk_eval_matrix.dot(self.a[j+1,:]), h) 
             # Two solutions
             #solution_low_dim = x + h*rk_eval_matrix.dot(self.b[0,:])
             solution_high_dim = x + h*rk_eval_matrix.dot(self.b[1,:])
@@ -389,8 +347,7 @@ class Integrator:
 
             # Saving current trajectory information
             trajectory_info[0:len(x), it+1] = x
-            _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, x[0:3])
-            a = - np.array(a)
+            a = self.eq_of_motion.compute_acceleration(x[0:3])
             trajectory_info[(len(x)):(len(x)+len(a)), it+1] = a
 
             if self.final_time - t[it] <= 1e-8:
@@ -398,10 +355,6 @@ class Integrator:
 
             # Update iteration counter
             it += 1
-
-            print("it (# steps): ", it)
-            print("final time: ", self.final_time)
-            print("current time: ", t[it])
 
         if t[it] < self.final_time:
             print("Error:  Final time of integration was never reached. We reached t=: ", t[it], " [s].")

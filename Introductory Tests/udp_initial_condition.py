@@ -5,18 +5,14 @@ from typing import Union
 # For working with the mesh
 import mesh_utility
 
-# For Plotting
-import pyvista as pv
-
 # For computing trajectory
 from Integrator import Integrator
 
-# D-solver
-import desolver as de
-import desolver.backend as D
+# For computing the next state
+from Equations_of_motion import Equations_of_motion
 
-# For computing acceleration and potential
-import polyhedral_gravity as model
+# For Plotting
+import pyvista as pv
 
 
 # Class representing UDP
@@ -50,20 +46,21 @@ class udp_initial_condition:
         assert target_altitude > 0
         assert final_time > start_time
         assert time_step <= (final_time - start_time)
-        assert lower_bounds < upper_bounds
+        assert lower_bounds.all() < upper_bounds.all()
+
+        # Setup equations of motion class
+        self.eq_of_motion = Equations_of_motion(self.mesh_vertices, self.mesh_faces, body_density)
+
+        # Setup user defined numerical integrator
+        self.integrator = Integrator(final_time, start_time, time_step, algorithm, self.eq_of_motion)
 
         # Additional hyperparameters
-        self.algorithm = algorithm
-        self.body_density = body_density  
         self.target_altitude = target_altitude     
-        self.final_time = final_time      
-        self.start_time = start_time                
-        self.time_step = time_step
         self.lower_bounds = lower_bounds
-        self.upper_bounds = upper_bounds   
+        self.upper_bounds = upper_bounds
 
-        
     
+
     def fitness(self, x: np.ndarray) -> float:
         """ fitness evaluates the proximity of the satallite to target altitude.
 
@@ -100,20 +97,8 @@ class udp_initial_condition:
         # Fitness value (to be maximized)
         fitness_value = 0
 
-        # Setup algorithm of choice
-        intg = Integrator(self.body_mesh, self.mesh_vertices, self.mesh_faces, self.body_density, self.target_altitude, self.final_time, self.start_time, self.time_step, self.algorithm)
-
         # Integrate trajectory
-        trajectory_info = intg.run_integration(x)
-
-        # Remember, if we want to use this package we must switch places of t and x 
-        #   as the input to equations_of_motion
-        #D.set_float_fmt('float64')
-        #initial_state = D.array(x)
-        #a = de.OdeSystem(Integrator.equation_of_motion, y0=initial_state, dense_output=True, t=(self.start_time, self.final_time), dt=self.time_step, rtol=1e-12, atol=1e-12)
-        #a.method = "RK87"
-        #a.integrate()
-        #trajectory_info = np.transpose(a.y)
+        trajectory_info = self.integrator.run_integration(x)
         
         # Return fitness value for the computed trajectory
         squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
