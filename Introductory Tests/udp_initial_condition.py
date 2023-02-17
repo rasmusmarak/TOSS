@@ -25,11 +25,6 @@ class udp_initial_condition:
     are used for trajectory propagation. 
     The methods of the class defines the objective function for the optimization problem,
     boundaries for input variables, trajectory propagation and plotting of results. 
-
-    Dependencies:
-        - Numpy
-        - polyhedral-gravity-model
-        - PyVista
     """
 
     def __init__(self, body_density, target_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds, algorithm):

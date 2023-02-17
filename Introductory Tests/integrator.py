@@ -14,11 +14,6 @@ class Integrator:
     are used for trajectory propagation. 
     The methods of the class mainly defines numerical integrators used 
     for the trajectory propagation.
-
-    Dependencies:
-        - Numpy
-        - polyhedral-gravity-model
-        - PyVista
     """
 
     def __init__(self, body_mesh, mesh_vertices, mesh_faces, body_density, target_altitude, final_time, start_time, time_step, algorithm):
