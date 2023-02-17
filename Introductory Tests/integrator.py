@@ -7,7 +7,7 @@ import polyhedral_gravity as model
 
 
 
-class integrator:
+class Integrator:
     """ 
     Sets up the user defined numerical integrator algorithm of choice.
     The object holds attributes in terms of variables and constants that

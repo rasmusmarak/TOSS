@@ -8,7 +8,7 @@ import mesh_utility
 import pyvista as pv
 
 # For computing trajectory
-from integrator import integrator
+from Integrator import Integrator
 
 # D-solver
 import desolver as de
@@ -97,7 +97,7 @@ class udp_initial_condition:
         fitness_value = 0
 
         # Setup algorithm of choice
-        intg = integrator(self.body_mesh, self.mesh_vertices, self.mesh_faces, self.body_density, self.target_altitude, self.final_time, self.start_time, self.time_step, self.algorithm)
+        intg = Integrator(self.body_mesh, self.mesh_vertices, self.mesh_faces, self.body_density, self.target_altitude, self.final_time, self.start_time, self.time_step, self.algorithm)
 
         # Integrate trajectory
         trajectory_info = intg.run_integration(x)
