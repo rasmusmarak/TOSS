@@ -1,12 +1,13 @@
 
+# General
 import numpy as np
+from typing import Union
 
 # For computing acceleration and potential
 import polyhedral_gravity as model
 
 
-
-
+# Class for numerical integration
 class Integrator:
     """ 
     Sets up the user defined numerical integrator algorithm of choice.
@@ -52,7 +53,7 @@ class Integrator:
             self.a, self.b, self.c = self.butcher_table_dp8713()
 
 
-    def run_integration(self, x):
+    def run_integration(self, x: np.ndarray) -> np.ndarray:
         """ Calls the correct numerical integration algorithm.
 
         Args:
@@ -76,7 +77,7 @@ class Integrator:
 
 
     # Used by all RK-type algorithms
-    def equation_of_motion(self, _, x):
+    def equation_of_motion(self, _, x: np.ndarray) -> np.ndarray:
         """ State update equation for RK-type algorithms. 
 
         Args:
@@ -98,7 +99,7 @@ class Integrator:
     #        Semi-Implicit Euler approximation           #
     ######################################################
 
-    def euler_approx(self, x):
+    def euler_approx(self, x: np.ndarray) -> np.ndarray:
         """euler_approx uses euler's method as numerical integrator for approximating the trajectory. 
 
         Args:
@@ -155,7 +156,7 @@ class Integrator:
     #              Runge-Kutta-Fehlberg 78               #
     ######################################################
 
-    def butcher_table_rkf78(self):
+    def butcher_table_rkf78(self) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """ Butcher table/tablau for Runge-Kutta-Fehlberg 7(8) method.
 
         Returns:
@@ -189,7 +190,7 @@ class Integrator:
         
 
 
-    def new_rkf78(self,x):
+    def new_rkf78(self, x: np.ndarray) -> np.ndarray:
         """
         Integrates Newton's equations of motion within a user defined time interval
         using Runge-Kutta-Fehlberg 7(8) method.
@@ -274,7 +275,7 @@ class Integrator:
     ######################################################
 
 
-    def butcher_table_dp8713():
+    def butcher_table_dp8713() -> Union[np.ndarray, np.ndarray, np.ndarray]:
         """ Butcher table/tablau for Dormand-Prince 8(7)-13M method.
 
         Returns:
@@ -307,7 +308,7 @@ class Integrator:
 
 
 
-    def DP_8713M(self, x):
+    def DP_8713M(self, x: np.ndarray) -> np.ndarray:
         """
         Integrates Newton's equations of motion within a user defined time interval
         using Dormand-Prince 8(7)-13M method.

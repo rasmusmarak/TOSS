@@ -1,5 +1,6 @@
 # General
 import numpy as np
+from typing import Union
 
 # For working with the mesh
 import mesh_utility
@@ -18,6 +19,7 @@ import desolver.backend as D
 import polyhedral_gravity as model
 
 
+# Class representing UDP
 class udp_initial_condition:
     """ 
     Sets up the user defined problem (udp) for use with pygmo.
@@ -55,7 +57,7 @@ class udp_initial_condition:
 
   
     
-    def fitness(self,x):
+    def fitness(self, x: np.ndarray) -> float:
         """ fitness evaluates the proximity of the satallite to target altitude.
 
         Args:
@@ -68,7 +70,7 @@ class udp_initial_condition:
         return [fitness_value]
 
 
-    def get_bounds(self):
+    def get_bounds(self) -> Union[np.ndarray, np.ndarray]:
         """get_bounds returns upper and lower bounds for the domain of the state vector.
 
         Returns:
@@ -77,7 +79,7 @@ class udp_initial_condition:
         return (self.lower_bounds, self.upper_bounds)
 
 
-    def compute_trajectory(self, x):
+    def compute_trajectory(self, x: np.ndarray) -> Union[float, np.ndarray]:
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
         Args:
@@ -114,7 +116,7 @@ class udp_initial_condition:
 
 
     # Used by all RK-type algorithms
-    def equation_of_motion(self, _, x):
+    def equation_of_motion(self, _, x: np.ndarray) -> np.ndarray:
         """ State update equation for RK-type algorithms. 
 
         Args:
@@ -135,7 +137,7 @@ class udp_initial_condition:
 
 
 
-    def plot_trajectory(self, r_store):
+    def plot_trajectory(self, r_store: np.ndarray):
         """plot_trajectory plots the body mesh and satellite trajectory.
 
         Args:
