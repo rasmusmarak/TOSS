@@ -10,5 +10,6 @@ dependencies:
   - matplotlib
   - panel
   - jupyter_backend
+  - pykep
   - pip:
       - tetgen
