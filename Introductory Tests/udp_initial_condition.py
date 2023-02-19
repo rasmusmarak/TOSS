@@ -145,7 +145,7 @@ class udp_initial_condition:
         return r_store, v_store, a_store
 
 
-    def comet_collision_detection(self, x):
+    def point_is_outside_mesh(self, x):
         """
         Uses is_outside to check if a set of positions (or current) x is is inside mesh.
         Returns boolean with corresponding results.
