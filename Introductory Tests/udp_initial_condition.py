@@ -27,7 +27,7 @@ class udp_initial_condition:
         - PyVista
     """
 
-    def __init__(self, body_density, target_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds, mu):
+    def __init__(self, body_density, body_mu, target_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds):
         """__init__ _summary_
         Setup udp attributes.
 
@@ -44,9 +44,9 @@ class udp_initial_condition:
         self.body_mesh, self.mesh_vertices, self.mesh_faces = mesh_utility.create_mesh()
 
         # Additional hyperparameters
-        self.body_density = body_density     
+        self.body_density = body_density  
+        self.body_mu = body_mu     
         self.target_altitude = target_altitude
-        self.mu = mu     
         self.final_time = final_time      
         self.start_time = start_time                
         self.time_step = time_step
@@ -94,7 +94,7 @@ class udp_initial_condition:
         """
 
         # Convert osculating orbital elements to cartesian for integration
-        r, v = pk.par2ic(E=x, mu=self.mu)
+        r, v = pk.par2ic(E=x, mu=self.body_mu)
         r = np.array(r)
         v = np.array(v)
 
