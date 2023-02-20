@@ -1,9 +1,21 @@
 # General
 import numpy as np
 from typing import Union
+from enum import Enum
 
 
-# Class for numerical integration
+
+class Selected_Integrator(Enum):
+        """ Describes different types of numerical integrators.
+        1 - Euler
+        2 - RKF78
+        3 - DP7813M
+        """
+        Euler = "Euler"
+        RKF78 = "RKF78"
+        DP7813M = "DP7813M"
+
+
 class Integrator:
     """ 
     Sets up the user defined numerical integrator algorithm of choice.
@@ -37,15 +49,14 @@ class Integrator:
         self.eq_of_motion = eq_of_motion
 
         # Run algorithm specified by user
-        self.algorithm = algorithm
-        if self.algorithm == "Euler":
+        if algorithm is Selected_Integrator.Euler.value:
             self.integrator = self.euler_approx
 
-        elif self.algorithm == "RKF78":
+        elif algorithm is Selected_Integrator.RKF78.value:
             self.b, self.a, self.c, self.c_hat = self.butcher_table_rkf78()
             self.integrator = self.new_rkf78
         
-        elif self.algorithm == "DP8713M":
+        elif algorithm is Selected_Integrator.DP7813M.value:
             self.a, self.b, self.c = self.butcher_table_dp8713()
             self.integrator = self.DP_8713M
 
@@ -60,7 +71,7 @@ class Integrator:
             NDArray containing information on position and velocity at every time step.
         """
         return self.integrator(x)
-        
+
 
 
     ######################################################
