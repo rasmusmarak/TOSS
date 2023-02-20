@@ -10,6 +10,8 @@ import mesh_utility
 # For Plotting
 import pyvista as pv
 
+# For orbit representation (reference frame)
+import pykep as pk
 
 class udp_initial_condition:
     """ _summary_
@@ -25,7 +27,7 @@ class udp_initial_condition:
         - PyVista
     """
 
-    def __init__(self, body_density, target_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds):
+    def __init__(self, body_density, body_mu, target_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds):
         """__init__ _summary_
         Setup udp attributes.
 
@@ -42,8 +44,9 @@ class udp_initial_condition:
         self.body_mesh, self.mesh_vertices, self.mesh_faces = mesh_utility.create_mesh()
 
         # Additional hyperparameters
-        self.body_density = body_density     
-        self.target_altitude = target_altitude     
+        self.body_density = body_density  
+        self.body_mu = body_mu     
+        self.target_altitude = target_altitude
         self.final_time = final_time      
         self.start_time = start_time                
         self.time_step = time_step
@@ -54,37 +57,46 @@ class udp_initial_condition:
         """ fitness evaluates the proximity of the satallite to target altitude.
 
         Args:
-            x: State vector containing values for position and velocity of satelite in three dimensions. 
+            x (1x6 array): State vector containing initial values for osculating orbital elements. 
 
         Returns:
             fitness value (float): Difference between squared values of current and target altitude of satellite.
         """
-        fitness_value, _, _, _ = self.compute_trajectory(x)
+
+        # Compute trajectory given initial position
+        r_store, _, _ = self.compute_trajectory(x)
+
+        # Return fitness value for the computed trajectory
+        squared_altitudes = r_store[0,:]**2 + r_store[1,:]**2 + r_store[2,:]**2
+        fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude))
+
         return [fitness_value]
+    
 
     def get_bounds(self):
         """get_bounds returns upper and lower bounds for the domain of the state vector.
 
         Returns:
-            Two one-dimensional arrays for the bounady values of the state vector. 
+            Two 1x6 arrays for the bounady values of the state vector. 
         """
         return (self.lower_bounds, self.upper_bounds)
 
-    def compute_trajectory(self, x):
+    def compute_trajectory(self,x):
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
         Args:
-            x: State vector (position and velocity)
+            x (6x1 array): State vector containing initial values for osculating orbital elements. 
 
         Returns:
-            fintess_values: Evaluation of proximity of satelite to target altitude.
             r_store:        Array containing values on position at each time step for the trajectory.
             v_store:        Array containing values on velocities at each time step for the trajectory.
             a_store:        Array containing values on acceleration at each time step for the trajectory.
         """
-        # Initial information
-        r = np.transpose(x[0:3]) # Start Position
-        v = np.transpose(x[3:6]) # Initial velocity
+
+        # Convert osculating orbital elements to cartesian for integration
+        r, v = pk.par2ic(E=x, mu=self.body_mu)
+        r = np.array(r)
+        v = np.array(v)
 
         # Array containing times for summation
         time_list = np.arange(self.start_time, self.final_time, self.time_step)
@@ -97,17 +109,11 @@ class udp_initial_condition:
         # Add starting position to memory
         r_store[:,0] = r
         v_store[:,0] = v
-
-        # Fitness value (to be maximized)
-        fitness_value = 0
         
         # Numerical integration of Newton's equations of motion (trajectory propagation)
         r_store, v_store, a_store = self.euler_approx(r, v, time_list, r_store, v_store, a_store)
 
-        # Return fitness value for the computed trajectory
-        squared_altitudes = r_store[0,:]**2 + r_store[1,:]**2 + r_store[2,:]**2
-        fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude))
-        return fitness_value, r_store, v_store, a_store
+        return r_store, v_store, a_store
 
     
     def euler_approx(self, r, v, time_list, r_store, v_store, a_store):
