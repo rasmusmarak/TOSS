@@ -100,13 +100,26 @@ class udp_initial_condition:
 
         # Fitness value (to be maximized)
         fitness_value = 0
-        
-        # Numerical integration of Newton's equations of motion (trajectory propagation)
-        r_store, v_store, a_store = self.euler_approx(r, v, time_list, r_store, v_store, a_store)
+        collision = 0
 
-        # Return fitness value for the computed trajectory
-        squared_altitudes = r_store[0,:]**2 + r_store[1,:]**2 + r_store[2,:]**2
-        fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude))
+        if r[0]**2 + r[1]**2 + r[2]**2 <= 5000**2:
+            fitness_value = 1e30
+            r_store = 0
+            v_store = 0
+            a_store = 0
+
+        else:
+            # Numerical integration of Newton's equations of motion (trajectory propagation)
+            r_store, v_store, a_store, collision = self.euler_approx(r, v, time_list, r_store, v_store, a_store)
+
+            if collision == 1:
+                fitness_value = 1e30
+
+            else:
+                # Return fitness value for the computed trajectory
+                squared_altitudes = r_store[0,:]**2 + r_store[1,:]**2 + r_store[2,:]**2
+                fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude))
+                
         return fitness_value, r_store, v_store, a_store
 
     
@@ -141,8 +154,17 @@ class udp_initial_condition:
             v_store[:,i] = v
             a_store[:,i-1] = a
             i += 1
+
+            collision = 0
             
-        return r_store, v_store, a_store
+            if r[0]**2 + r[1]**2 + r[2]**2 <= 5000*2:
+                r_store = 0
+                v_store = 0
+                a_store = 0
+                collision = 1
+                return r_store, v_store, a_store, collision
+
+        return r_store, v_store, a_store, collision
 
 
     def point_is_outside_mesh(self, x):
@@ -172,7 +194,7 @@ class udp_initial_condition:
         # Plotting mesh of asteroid/comet
         mesh_plot = pv.Plotter()
         mesh_plot.add_mesh(self.body_mesh.grid, show_edges=True)
-        mesh_plot.show_bounds(grid='front',location='outer',all_edges=True)
+        mesh_plot.show_grid(color='black') # Alternativ: show_bounds()
 
         # Plotting trajectory
         trajectory_plot = np.transpose(r_store)
@@ -181,4 +203,5 @@ class udp_initial_condition:
         trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
         mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
         
-        mesh_plot.show(jupyter_backend = 'panel') 
+        #mesh_plot.set_background('grey') #Changes backrgound color of plot
+        mesh_plot.show(jupyter_backend = 'panel' ) 
