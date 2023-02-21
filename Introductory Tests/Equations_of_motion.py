@@ -29,7 +29,7 @@ class Equations_of_motion:
             State vector used for computing state at the following time step.
         """
         a = self.compute_acceleration(x[0:3])
-        kx = x[3:6] 
+        kx = x[3:6]  
         kv = a 
         return np.concatenate((kx, kv))
 

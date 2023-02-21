@@ -14,6 +14,11 @@ from Equations_of_motion import Equations_of_motion
 # For Plotting
 import pyvista as pv
 
+#********* HEYOKA *********#
+# For computing acceleration and potential
+import polyhedral_gravity as model
+import heyoka as hk
+#**************************#
 
 # Class representing UDP
 class udp_initial_condition:
@@ -60,6 +65,12 @@ class udp_initial_condition:
         self.upper_bounds = upper_bounds
 
     
+        #*********** HEYOKA TEST ************#
+        self.body_density = body_density
+        self.start_time = start_time
+        self.final_time = final_time
+        self.time_step = time_step
+        #************************************#
 
     def fitness(self, x: np.ndarray) -> float:
         """ fitness evaluates the proximity of the satallite to target altitude.
@@ -83,7 +94,12 @@ class udp_initial_condition:
         return (self.lower_bounds, self.upper_bounds)
 
 
-    def compute_trajectory(self, x: np.ndarray) -> Union[float, np.ndarray]:
+    def comp_acc(self,point):
+        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, point)
+        a = -np.array(a)
+        return a
+
+    def compute_trajectory(self, initial_state: np.ndarray) -> Union[float, np.ndarray]:
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
         Args:
@@ -98,7 +114,56 @@ class udp_initial_condition:
         fitness_value = 0
 
         # Integrate trajectory
-        trajectory_info = self.integrator.run_integration(x)
+        #trajectory_info = self.integrator.run_integration(x)
+
+
+
+        #************ HEYOKA TEST ************#
+
+        # create heyoka variables
+        x,y,z,vx,vy,vz = hk.make_vars("x","y","z","vx","vy","vz")
+
+
+        #results = lambda x,y,z: model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, [x,y,z])
+        #a = -np.array(reults(1))
+
+        _,a,_ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, [x,y,z])
+        a = -a
+
+        # EOM
+        dxdt = vx
+        dydt = vy
+        dzdt = vz
+        
+        dvxdt = a[0]
+        dvydt = a[1]
+        dvzdt = a[2]
+
+        # Instantiate the heyoka (taylor) algorithm
+        ta = hk.taylor_adaptive(sys = [(x,dxdt),(y,dydt),(z,dzdt),(vx,dvxdt),(vy,dvydt),(vz,dvzdt)],
+                        state = initial_state,
+                        time = self.start_time,
+                        tol = 1e-16)
+
+
+        # Here we redefine the initial conditions since we may want to change them without recompiling the integrator
+        ta.time = self.start_time
+
+        # Note the python syntax to assign directly the array elements. Here necessary
+        # as heyoka does not allow to change the memory location of the state
+        ta.state[:] = initial_state
+
+        # Propagate trajectory over time interval tgrid
+        tgrid = np.linspace(self.start_time, self.final_time ,int(1 + self.final_time/self.time_step), endpoint = True)
+        trajectory_info = ta.propagate_grid(tgrid)
+
+        trajectory_info = np.array(trajectory_info)
+        trajectory_info = np.transpose(trajectory_info)
+
+        #*************************************#
+
+
+
         
         # Return fitness value for the computed trajectory
         squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
