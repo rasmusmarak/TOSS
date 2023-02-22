@@ -51,4 +51,3 @@ def create_mesh():
     _, _ = tgen.tetrahedralize()
 
     return tgen, mesh_points, mesh_triangles
-
