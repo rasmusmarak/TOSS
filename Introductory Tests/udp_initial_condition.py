@@ -94,10 +94,10 @@ class udp_initial_condition:
         return (self.lower_bounds, self.upper_bounds)
 
 
-    def comp_acc(self,point):
-        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, point)
+    def comp_acc(self,x,y,z):
+        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, [x,y,z])
         a = -np.array(a)
-        return a
+        return a[0], a[1], a[2]
 
     def compute_trajectory(self, initial_state: np.ndarray) -> Union[float, np.ndarray]:
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
@@ -123,21 +123,23 @@ class udp_initial_condition:
         # create heyoka variables
         x,y,z,vx,vy,vz = hk.make_vars("x","y","z","vx","vy","vz")
 
-
         #results = lambda x,y,z: model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, [x,y,z])
         #a = -np.array(reults(1))
 
-        _,a,_ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, [x,y,z])
-        a = -a
+        #_,a,_ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, [x,y,z])
+        #a = -a
+        
+        # Get accelertion using polyhedral-gravity-model.
+        a0, a1, a2 = self.comp_acc  #Function that returns runs: model.evaluate(vertices, faces, [x,y,z])
 
         # EOM
         dxdt = vx
         dydt = vy
         dzdt = vz
         
-        dvxdt = a[0]
-        dvydt = a[1]
-        dvzdt = a[2]
+        dvxdt = a0
+        dvydt = a1
+        dvzdt = a2
 
         # Instantiate the heyoka (taylor) algorithm
         ta = hk.taylor_adaptive(sys = [(x,dxdt),(y,dydt),(z,dzdt),(vx,dvxdt),(vy,dvydt),(vz,dvzdt)],
@@ -156,9 +158,7 @@ class udp_initial_condition:
         # Propagate trajectory over time interval tgrid
         tgrid = np.linspace(self.start_time, self.final_time ,int(1 + self.final_time/self.time_step), endpoint = True)
         trajectory_info = ta.propagate_grid(tgrid)
-
-        trajectory_info = np.array(trajectory_info)
-        trajectory_info = np.transpose(trajectory_info)
+        trajectory_info = np.transpose(np.array(trajectory_info))
 
         #*************************************#
 
