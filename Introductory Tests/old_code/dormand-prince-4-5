@@ -1,0 +1,84 @@
+
+
+def dp_parameters(self):
+
+    # Setting up hyperparameters for adaptive stepsize
+    a1 = [0, 0, 0, 0, 0, 0, 0]
+    a2 = [1/5, 0, 0, 0, 0, 0, 0]
+    a3 = [3/40, 9/40, 0, 0, 0, 0, 0]
+    a4 = [44/45, -56/15, 32/9, 0, 0, 0, 0]
+    a5 = [19372/6561, -25360/2187, 64448/6561, -212/729, 0, 0, 0]
+    a6 = [9017/3168, 0, -355/33, 46732/5247, 49/176, -5103/18656, 0]
+    a7 = [35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0]
+    b = [0, 1/5, 3/10, 4/5, 8/9, 1, 1]
+    c1 = [35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0]
+    c2 = [5179/57600, 0, 7571/16695, 393/640, -92097/339200, 1872100, 1/40]
+    
+    self.a = np.array([a1, a2, a3, a4, a5, a6, a7])
+    self.b = b
+    self.c = np.array([c1, c2])
+
+    # Setting up hyperparameters for adaptive stepsize
+    self.a_max = 2
+    self.a_min = 0.5
+    self.k = 0.8
+
+
+
+
+
+
+
+    def equation_of_motion(self):
+        return ...
+    
+    def dormand_prince_approx(self, x, n, trajectory_info):
+        
+        i = 0 
+        h = self.time_step
+        t = np.empty(n+1, dtype = np.float64)
+
+        while i < n:
+            k1 = self.equation_of_motion(i, t[i] + h*self.b[0], trajectory_info[:,i])
+            k2 = self.equation_of_motion(i, t[i] + h*self.b[1], trajectory_info[:,i] + h*(self.a[1,0]*k1))
+            k3 = self.equation_of_motion(i, t[i] + h*self.b[2], trajectory_info[:,i] + h*(self.a[2,0]*k1 + self.a[2,1]*k2))
+            k4 = self.equation_of_motion(i, t[i] + h*self.b[3], trajectory_info[:,i] + h*(self.a[3,0]*k1 + self.a[3,1]*k2 + self.a[3,2]*k3))
+            k5 = self.equation_of_motion(i, t[i] + h*self.b[4], trajectory_info[:,i] + h*(self.a[4,0]*k1 + self.a[4,1]*k2 + self.a[4,2]*k3 + self.a[4,3]*k4))
+            k6 = self.equation_of_motion(i, t[i] + h*self.b[5], trajectory_info[:,i] + h*(self.a[5,0]*k1 + self.a[5,1]*k2 + self.a[5,2]*k3 + self.a[5,3]*k4 + self.a[5,4]*k5))
+            
+            u5 = trajectory_info[0:6,i] + h*(self.c[0,0]*k1 + self.c[0,1]*k2 + self.c[0,2]*k3 + self.c[0,3]*k4 + self.c[0,4]*k5 + self.c[0,5]*k6)
+
+            k7 = self.equation_of_motion(i, t[i] + h*self.b[6], trajectory_info[:,i] + h*(self.a[6,0]*k1 + self.a[6,1]*k2 + self.a[6,2]*k3 + self.a[6,3]*k4 + self.a[6,4]*k5 + self.a[6,5]*k6))
+
+            u4 = trajectory_info[0:6,i] + h*(self.c[1,0]*k1 + self.c[1,1]*k2 + self.c[1,2]*k3 + self.c[1,3]*k4 + self.c[1,4]*k5 + self.c[1,5]*k6 + self.c[1,6]*k7)
+
+
+            # Compute truncation error
+            u_error = np.linalg.norm(u5-u4, np.inf)
+
+            if u_error == 0:
+                h_new = self.a_max * h
+            else:
+                h_new = h * min(a_max, max(a_min, b * np.power(u_tolerance/u_error, 1/5)))
+
+            # If truncation error bigger than tolerance, we try again
+            if u_error > u_tolerance:
+                h = h_new
+                continue
+
+             # Last stepsize cannot overshoot final time
+            h = min(self.final_time - t[i], h_new)
+
+            t[i+1] = t[i] + h
+            trajectory_info[0:6, i+1] = u5
+
+            # If final time is reached
+            if self.final_time - t[i] <= 1e-30:
+                return t[0:i+1], trajectory_info[:, 0:i+1]
+        
+        print("Maximum number of iterations was reached at time:   t = ", t[-1])
+        return t, trajectory_info
+
+
+
+
