@@ -13,7 +13,6 @@ import pyvista as pv
 # For orbit representation (reference frame)
 import pykep as pk
 
-
 class udp_initial_condition:
     """ _summary_
     Sets up the user defined problem (udp) for use with pygmo.
