@@ -18,7 +18,7 @@ class Equations_of_motion:
         return -np.array(a)
 
     # Used by all RK-type algorithms
-    def compute_motion(self, x: np.ndarray, t: float = None) -> np.ndarray:
+    def compute_motion(self, t: float, x: np.ndarray) -> np.ndarray:
         """ State update equation for RK-type algorithms. 
 
         Args:

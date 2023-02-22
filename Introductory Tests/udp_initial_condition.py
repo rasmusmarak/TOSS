@@ -14,6 +14,12 @@ from Equations_of_motion import Equations_of_motion
 # For Plotting
 import pyvista as pv
 
+# D-solver
+import desolver as de
+import desolver.backend as D
+D.set_float_fmt('float64')
+
+
 
 # Class representing UDP
 class udp_initial_condition:
@@ -88,13 +94,7 @@ class udp_initial_condition:
         """
         return (self.lower_bounds, self.upper_bounds)
 
-
-    def comp_acc(self,x,y,z):
-        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, [x,y,z])
-        a = -np.array(a)
-        return a[0], a[1], a[2]
-
-    def compute_trajectory(self, initial_state: np.ndarray) -> Union[float, np.ndarray]:
+    def compute_trajectory(self, x: np.ndarray) -> Union[float, np.ndarray]:
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
         Args:
@@ -109,7 +109,22 @@ class udp_initial_condition:
         fitness_value = 0
 
         # Integrate trajectory
-        trajectory_info = self.integrator.run_integration(x)
+        #trajectory_info = self.integrator.run_integration(x)
+
+        # Remember, if we want to use this package we must switch places of t and x 
+        #   as the input to equations_of_motion
+        initial_state = D.array(x)
+        a = de.OdeSystem(
+            self.eq_of_motion.compute_motion, 
+            y0 = initial_state, 
+            dense_output = True, 
+            t = (self.start_time, self.final_time), 
+            dt = self.time_step, 
+            rtol = 1e-12, 
+            atol = 1e-12)
+        a.method = "RK87"
+        a.integrate()
+        trajectory_info = np.transpose(a.y)
 
         # Return fitness value for the computed trajectory
         squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
@@ -124,7 +139,7 @@ class udp_initial_condition:
         Args:
             r_store: Array containing values on position at each time step for the trajectory.
         """
-
+                
         # Plotting mesh of asteroid/comet
         mesh_plot = pv.Plotter()
         mesh_plot.add_mesh(self.body_mesh.grid, show_edges=True)
