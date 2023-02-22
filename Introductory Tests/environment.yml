@@ -1,0 +1,14 @@
+name: 67P_Swarm
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - pygmo
+  - polyhedral-gravity-model
+  - pyvista
+  - matplotlib
+  - panel
+  - jupyter_backend
+  - pip:
+      - tetgen
