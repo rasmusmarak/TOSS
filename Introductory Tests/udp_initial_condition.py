@@ -167,6 +167,19 @@ class udp_initial_condition:
         return r_store, v_store, a_store, collision
 
 
+    def close_encounter():
+        # Note: This code be implemented and completed once the 
+        # numerical-integrator Desolver has been merged with main.
+        period_check_for_collision = 20
+        time_list = np.linspace(self.start_time, self.final_time ,period_check_for_collision, endpoint = True)
+
+        for i in range(len(time_list)):
+            t0 = ...
+            tf = ...
+
+        return ...
+
+
     def point_is_outside_mesh(self, x):
         """
         Uses is_outside to check if a set of positions (or current) x is is inside mesh.
