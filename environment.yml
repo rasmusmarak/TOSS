@@ -10,7 +10,6 @@ dependencies:
   - matplotlib
   - panel
   - jupyter_backend
-  - heyoka.py
   - pip:
       - tetgen
       - desolver
