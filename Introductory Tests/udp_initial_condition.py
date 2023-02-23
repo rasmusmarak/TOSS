@@ -2,19 +2,19 @@
 import numpy as np
 from typing import Union
 
+# For Plotting
+import pyvista as pv
+
 # For working with the mesh
 import mesh_utility
-
-# For computing trajectory
-from Integrator import Integrator
 
 # For computing the next state
 from Equations_of_motion import Equations_of_motion
 
-# For Plotting
-import pyvista as pv
+# For choosing numerical integration method
+from Integrator import IntegrationScheme
 
-# D-solver
+# D-solver (performs integration)
 import desolver as de
 import desolver.backend as D
 D.set_float_fmt('float64')
@@ -35,14 +35,14 @@ class udp_initial_condition:
         """ Setup udp attributes.
 
         Args:
-            body_density (float):    Mass density of body of interest
-            target_altitude (float): Target altitude for satellite trajectory. 
-            final_time (int):        Final time for integration.
-            start_time (int):        Start time for integration of trajectory (often zero)
-            time_step (int):         Step size for integration. 
-            lower_bounds (float):    Lower bounds for domain of initial state.
-            upper_bounds (float):    Upper bounds for domain of initial state. 
-            algorithm (str):         User defined algorithm of choice
+            body_density (_float_):    Mass density of body of interest
+            target_altitude (_float_): Target altitude for satellite trajectory. 
+            final_time (_float_):        Final time for integration.
+            start_time (_float_):        Start time for integration of trajectory (often zero)
+            time_step (_float_):         Step size for integration. 
+            lower_bounds (_np.ndarray_):    Lower bounds for domain of initial state.
+            upper_bounds (_np.ndarray_):    Upper bounds for domain of initial state. 
+            algorithm (_int_):         User defined algorithm of choice
         """
         # Creating the mesh (TetGen)
         self.body_mesh, self.mesh_vertices, self.mesh_faces = mesh_utility.create_mesh()
@@ -57,30 +57,24 @@ class udp_initial_condition:
         # Setup equations of motion class
         self.eq_of_motion = Equations_of_motion(self.mesh_vertices, self.mesh_faces, body_density)
 
-        # Setup user defined numerical integrator
-        self.integrator = Integrator(final_time, start_time, time_step, algorithm, self.eq_of_motion)
-
         # Additional hyperparameters
-        self.target_altitude = target_altitude     
-        self.lower_bounds = lower_bounds
-        self.upper_bounds = upper_bounds
-
-    
-        #*********** HEYOKA TEST ************#
-        self.body_density = body_density
         self.start_time = start_time
         self.final_time = final_time
         self.time_step = time_step
-        #************************************#
+        self.target_altitude = target_altitude     
+        self.lower_bounds = lower_bounds
+        self.upper_bounds = upper_bounds
+        self.algorithm = algorithm
+
 
     def fitness(self, x: np.ndarray) -> float:
         """ fitness evaluates the proximity of the satallite to target altitude.
 
         Args:
-            x: State vector containing values for position and velocity of satelite in three dimensions. 
+            x (_np.ndarray_): State vector containing values for position and velocity of satelite in three dimensions. 
 
         Returns:
-            fitness value (float): Difference between squared values of current and target altitude of satellite.
+            fitness value (_float_): Difference between squared values of current and target altitude of satellite.
         """
         fitness_value, _ = self.compute_trajectory(np.array(x))
         return [fitness_value]
@@ -90,7 +84,8 @@ class udp_initial_condition:
         """get_bounds returns upper and lower bounds for the domain of the state vector.
 
         Returns:
-            Two one-dimensional arrays for the bounady values of the state vector. 
+            lower_bounds (_np.ndarray_): Lower boundary values for the initial state vector.
+            upper_bounds (_np.ndarray_): Lower boundary values for the initial state vector.
         """
         return (self.lower_bounds, self.upper_bounds)
 
@@ -98,11 +93,11 @@ class udp_initial_condition:
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
         Args:
-            x: State vector (position and velocity)
+            x (_np.ndarray_): State vector containing values for position and velocity of satelite in three dimensions.
 
         Returns:
-            fintess_values: Evaluation of proximity of satelite to target altitude.
-            trajectory_info: Numpy array containing information on position and velocity at every time step.
+            fitness_value (_float_): Evaluation of proximity of satelite to target altitude.
+            trajectory_info (_np.ndarray_): Numpy array containing information on position and velocity at every time step (columnwise).
         """
 
         # Fitness value (to be maximized)
@@ -118,7 +113,8 @@ class udp_initial_condition:
             dt = self.time_step, 
             rtol = 1e-12, 
             atol = 1e-12)
-        a.method = "RK87"
+        a.method = str(IntegrationScheme(self.algorithm).name)
+
         a.integrate()
         trajectory_info = np.transpose(a.y)
 
@@ -132,7 +128,7 @@ class udp_initial_condition:
         """plot_trajectory plots the body mesh and satellite trajectory.
 
         Args:
-            r_store: Array containing values on position at each time step for the trajectory.
+            r_store (_np.ndarray_): Array containing values on position at each time step for the trajectory (columnwise).
         """
 
         # Plotting mesh of asteroid/comet
@@ -142,11 +138,12 @@ class udp_initial_condition:
 
         # Plotting trajectory
         trajectory_plot = np.transpose(r_store)
-        mesh_plot.add_lines(trajectory_plot, color="red", width=40)
-        #mesh_plot.add_mesh(trajectory_plot, style='wireframe', line_width=20, color='red')
-        
+        if (len(trajectory_plot[:,0]) % 2) != 0:
+            trajectory_plot = trajectory_plot[0:-1,:,]
+        mesh_plot.add_lines(trajectory_plot[:,0:3], color="red", width=40)        
 
-        trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
+        # Plotting final position as a white dot
+        trajectory_plot = pv.PolyData(np.transpose(r_store[-1,0:3]))
         mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
         
         mesh_plot.show(jupyter_backend = 'panel') 
