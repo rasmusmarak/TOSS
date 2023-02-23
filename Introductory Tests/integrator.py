@@ -5,15 +5,15 @@ from enum import Enum
 
 
 
-class Selected_Integrator(Enum):
+class IntegrationScheme(Enum):
         """ Describes different types of numerical integrators.
         1 - Euler
         2 - RKF78
         3 - DP7813M
         """
-        Euler = "Euler"
-        RKF78 = "RKF78"
-        DP7813M = "DP7813M"
+        Euler = 1
+        RKF78 = 2
+        DP7813M = 3
 
 
 class Integrator:
