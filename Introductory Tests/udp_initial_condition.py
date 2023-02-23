@@ -207,7 +207,7 @@ class udp_initial_condition:
         # Plotting mesh of asteroid/comet
         mesh_plot = pv.Plotter()
         mesh_plot.add_mesh(self.body_mesh.grid, show_edges=True)
-        mesh_plot.show_grid(color='black') # Alternativ: show_bounds()
+        mesh_plot.show_grid()
 
         # Plotting trajectory
         trajectory_plot = np.transpose(r_store)
