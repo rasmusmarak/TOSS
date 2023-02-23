@@ -109,10 +109,6 @@ class udp_initial_condition:
         fitness_value = 0
 
         # Integrate trajectory
-        #trajectory_info = self.integrator.run_integration(x)
-
-        # Remember, if we want to use this package we must switch places of t and x 
-        #   as the input to equations_of_motion
         initial_state = D.array(x)
         a = de.OdeSystem(
             self.eq_of_motion.compute_motion, 
@@ -132,22 +128,23 @@ class udp_initial_condition:
         return fitness_value, trajectory_info 
 
 
-
     def plot_trajectory(self, r_store: np.ndarray):
         """plot_trajectory plots the body mesh and satellite trajectory.
 
         Args:
             r_store: Array containing values on position at each time step for the trajectory.
         """
-                
+
         # Plotting mesh of asteroid/comet
-        mesh_plot = pv.Plotter()
+        mesh_plot = pv.Plotter(window_size=[500, 500])
         mesh_plot.add_mesh(self.body_mesh.grid, show_edges=True)
-        mesh_plot.show_bounds(grid='front',location='outer',all_edges=True)
+        mesh_plot.show_grid() #grid='front',location='outer',all_edges=True 
 
         # Plotting trajectory
         trajectory_plot = np.transpose(r_store)
-        mesh_plot.add_lines(trajectory_plot, color="red", width=20)
+        mesh_plot.add_lines(trajectory_plot, color="red", width=40)
+        #mesh_plot.add_mesh(trajectory_plot, style='wireframe', line_width=20, color='red')
+        
 
         trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
         mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
