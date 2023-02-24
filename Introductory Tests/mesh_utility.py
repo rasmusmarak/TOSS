@@ -44,13 +44,17 @@ def create_mesh():
     # Un-normalizing the scale
     #   Conversion factor [to metric meters]: 3126.6064453124995
     mesh_points = mesh_points*float(3126.6064453124995)
-    print("Physical dimension along x (UN-normalized): ", max(mesh_points[:,0]) - min(mesh_points[:,0]), "Km")
-
+    #print("Physical dimension along x (UN-normalized): ", max(mesh_points[:,0]) - min(mesh_points[:,0]), "Km")
+    largest_protuberant = max(max(mesh_points[:,0]), max(mesh_points[:,1]), max(mesh_points[:,2]))
 
     tgen = tetgen.TetGen(mesh_points, mesh_triangles)
     _, _ = tgen.tetrahedralize()
 
-    return tgen, mesh_points, mesh_triangles
+    return tgen, mesh_points, mesh_triangles, largest_protuberant
+
+
+
+
 
 
 def is_outside(points, mesh_vertices, mesh_triangles):
@@ -66,7 +70,7 @@ def is_outside(points, mesh_vertices, mesh_triangles):
     direction = np.array([0, 0, 1])
     for t in mesh_triangles:
         counter += ray_triangle_intersect(
-            points, direction, mesh_vertices[t[0]], mesh_vertices[t[1]], mesh_vertices[t[2]])
+            points, direction, mesh_vertices[t[0]], mesh_vertices[t[1]], mesh_vertices[t[2]])    
     return (counter % 2) == 0
 
 

@@ -41,12 +41,13 @@ class Equations_of_motion:
         return -np.array(a)
 
     # Used by all RK-type algorithms
-    def compute_motion(self, t: float, x: np.ndarray) -> np.ndarray:
+    def compute_motion(self, t: float, x: np.ndarray, risk_zone_radius: float = None, mesh_vertices: np.ndarray = None, mesh_faces: np.ndarray = None) -> np.ndarray:
         """ State update equation for RK-type algorithms. 
 
         Args:
             t (_float_): Time value corresponding to current state
             x (_np.ndarray_): State vector containing position and velocity expressed in three dimensions.
+            risk_zone_radius (_float_): Radius of bounding sphere around mesh. 
 
         Returns:
             (_np.ndarray_): K vector used for computing state at the following time step.

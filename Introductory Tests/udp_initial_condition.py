@@ -31,21 +31,22 @@ class udp_initial_condition:
     boundaries for input variables, trajectory propagation and plotting of results. 
     """
 
-    def __init__(self, body_density, target_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds, algorithm):
+    def __init__(self, body_density, target_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds, algorithm, radius_bounding_sphere):
         """ Setup udp attributes.
 
         Args:
-            body_density (_float_):    Mass density of body of interest
+            body_density (_float_): Mass density of body of interest
             target_altitude (_float_): Target altitude for satellite trajectory. 
-            final_time (_float_):        Final time for integration.
-            start_time (_float_):        Start time for integration of trajectory (often zero)
-            time_step (_float_):         Step size for integration. 
-            lower_bounds (_np.ndarray_):    Lower bounds for domain of initial state.
-            upper_bounds (_np.ndarray_):    Upper bounds for domain of initial state. 
-            algorithm (_int_):         User defined algorithm of choice
+            final_time (_float_): Final time for integration.
+            start_time (_float_): Start time for integration of trajectory (often zero)
+            time_step (_float_): Step size for integration. 
+            lower_bounds (_np.ndarray_): Lower bounds for domain of initial state.
+            upper_bounds (_np.ndarray_): Upper bounds for domain of initial state. 
+            algorithm (_int_): User defined algorithm of choice
+            radius_bounding_sphere (_float_)_: Radius for the bounding sphere around mesh.
         """
         # Creating the mesh (TetGen)
-        self.body_mesh, self.mesh_vertices, self.mesh_faces = mesh_utility.create_mesh()
+        self.body_mesh, self.mesh_vertices, self.mesh_faces, largest_body_protuberant = mesh_utility.create_mesh()
 
         # Assertions:
         assert body_density > 0
@@ -53,6 +54,7 @@ class udp_initial_condition:
         assert final_time > start_time
         assert time_step <= (final_time - start_time)
         assert lower_bounds.all() < upper_bounds.all()
+        assert radius_bounding_sphere > largest_body_protuberant
 
         # Setup equations of motion class
         self.eq_of_motion = Equations_of_motion(self.mesh_vertices, self.mesh_faces, body_density)
@@ -65,7 +67,7 @@ class udp_initial_condition:
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
         self.algorithm = algorithm
-
+        self.radius_bounding_sphere = radius_bounding_sphere
 
     def fitness(self, x: np.ndarray) -> float:
         """ fitness evaluates the proximity of the satallite to target altitude.
@@ -103,6 +105,8 @@ class udp_initial_condition:
         # Fitness value (to be maximized)
         fitness_value = 0
 
+        print("Current x: ", x)
+
         # Integrate trajectory
         initial_state = D.array(x)
         a = de.OdeSystem(
@@ -112,45 +116,30 @@ class udp_initial_condition:
             t = (self.start_time, self.final_time), 
             dt = self.time_step, 
             rtol = 1e-12, 
-            atol = 1e-12)
+            atol = 1e-12,
+            constants=dict(risk_zone_radius = self.radius_bounding_sphere, mesh_vertices = self.mesh_vertices, mesh_faces = self.mesh_faces))
         a.method = str(IntegrationScheme(self.algorithm).name)
 
-        a.integrate()
-        trajectory_info = np.transpose(a.y)
+        check_for_collision.is_terminal = True
+        a.integrate(events=check_for_collision)
+        #a.integrate()
+        trajectory_info = np.vstack((np.transpose(a.y), a.t))
+
+        # Compute average distance to target altitude
+        squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
+    
+        # Add collision penalty
+        if trajectory_info[-1,-1] < self.final_time:
+            collision_penalty = 1e30
+        else:
+            collision_penalty = 0
+        
+        print("Reached time: ", trajectory_info[-1,-1])
 
         # Return fitness value for the computed trajectory
-        squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
-        fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude))
+        fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude)) + collision_penalty
         return fitness_value, trajectory_info 
 
-    def close_encounter():
-        # Note: This code be implemented and completed once the 
-        # numerical-integrator Desolver has been merged with main.
-        period_check_for_collision = 20
-        time_list = np.linspace(self.start_time, self.final_time ,period_check_for_collision, endpoint = True)
-
-        for i in range(len(time_list)):
-            t0 = ...
-            tf = ...
-
-        return ...
-
-
-    def point_is_outside_mesh(self, x):
-        """
-        Uses is_outside to check if a set of positions (or current) x is is inside mesh.
-        Returns boolean with corresponding results.
-
-        Args:
-            x: Array containing current, or a set of, positions expressed in 3 dimensions.
-
-        Returns:
-            collision_boolean: A one dimensional array with boolean values corresponding to each
-                               position kept in x. Returns "False" if point is inside mesh, and 
-                               "True" if point is outside mesh (that is, there no collision).
-        """
-        collision_boolean = mesh_utility.is_outside(x, self.mesh_vertices, self.mesh_faces)
-        return collision_boolean
 
 
     def plot_trajectory(self, r_store: np.ndarray):
@@ -176,3 +165,48 @@ class udp_initial_condition:
         mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
         
         mesh_plot.show(jupyter_backend = 'panel') 
+
+
+
+def check_for_collision(t: float, state: np.ndarray, risk_zone_radius: float, mesh_vertices: np.ndarray, mesh_faces: np.ndarray) -> float:
+    """ Checks for event: collision with the celestial body.
+
+    Args:
+        t (_float_): Current time step for integration.
+        state (_np.ndarray_): Current state, i.e position and velocity
+        risk_zone_radius (_float_): Radius of bounding sphere around mesh. 
+
+    Returns:
+        (_float_): Either distance from origin to satellite for collisions, or zero for no collisions.
+    """
+    position = state[0:3]
+    distance = risk_zone_radius - D.norm(position)
+    
+    # If satellite is within risk-zone
+    if distance >= 0:
+        collision_avoided = point_is_outside_mesh(position, mesh_vertices, mesh_faces)
+
+        # If there is a collision with the celestial body, return 0:
+        if collision_avoided.all() == False:
+            return 0
+    
+    # Else, return 1
+    return 1
+
+
+def point_is_outside_mesh(x: np.ndarray, mesh_vertices: np.ndarray, mesh_faces: np.ndarray) -> bool:
+    """
+    Uses is_outside to check if a set of positions (or current) x is is inside mesh.
+    Returns boolean with corresponding results.
+
+    Args:
+        x (_np.ndarray_): Array containing current, or a set of, positions expressed in 3 dimensions.
+
+    Returns:
+        collision_boolean (_bool): A one dimensional array with boolean values corresponding to each
+                                position kept in x. Returns "False" if point is inside mesh, and 
+                                "True" if point is outside mesh (that is, there no collision).
+    """
+    collision_boolean = mesh_utility.is_outside(x, mesh_vertices, mesh_faces)
+    return collision_boolean
+
