@@ -69,6 +69,10 @@ class udp_initial_condition:
         self.algorithm = algorithm
         self.radius_bounding_sphere = radius_bounding_sphere
 
+
+        #Test
+        self.k = 1
+
     def fitness(self, x: np.ndarray) -> float:
         """ fitness evaluates the proximity of the satallite to target altitude.
 
@@ -78,7 +82,15 @@ class udp_initial_condition:
         Returns:
             fitness value (_float_): Difference between squared values of current and target altitude of satellite.
         """
-        fitness_value, _ = self.compute_trajectory(np.array(x))
+        # Integrate trajectory
+        _, squared_altitudes, collision_penalty = self.compute_trajectory(np.array(x))
+
+        # Compute fitness value for the integrated trajectory
+        fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude)) + collision_penalty
+
+        ### FOR TEST ###
+        print(self.k)
+        self.k += 1
         return [fitness_value]
 
 
@@ -98,18 +110,14 @@ class udp_initial_condition:
             x (_np.ndarray_): State vector containing values for position and velocity of satelite in three dimensions.
 
         Returns:
-            fitness_value (_float_): Evaluation of proximity of satelite to target altitude.
             trajectory_info (_np.ndarray_): Numpy array containing information on position and velocity at every time step (columnwise).
+            squared_altitudes (_float_): Sum of squared altitudes above origin for every position
+            collision_penalty (_float_): Penalty value given for the event of a collision with the celestial body.
         """
-
-        # Fitness value (to be maximized)
-        fitness_value = 0
-
-        print("Current x: ", x)
 
         # Integrate trajectory
         initial_state = D.array(x)
-        a = de.OdeSystem(
+        trajectory = de.OdeSystem(
             self.eq_of_motion.compute_motion, 
             y0 = initial_state, 
             dense_output = True, 
@@ -117,28 +125,31 @@ class udp_initial_condition:
             dt = self.time_step, 
             rtol = 1e-12, 
             atol = 1e-12,
-            constants=dict(risk_zone_radius = self.radius_bounding_sphere, mesh_vertices = self.mesh_vertices, mesh_faces = self.mesh_faces))
-        a.method = str(IntegrationScheme(self.algorithm).name)
+            constants=dict(risk_zone_radius = self.radius_bounding_sphere)) #, mesh_vertices = self.mesh_vertices, mesh_faces = self.mesh_faces
+        trajectory.method = str(IntegrationScheme(self.algorithm).name)
 
-        check_for_collision.is_terminal = True
-        a.integrate(events=check_for_collision)
-        #a.integrate()
-        trajectory_info = np.vstack((np.transpose(a.y), a.t))
+        Check_inside_risk_zone.is_terminal = False
+        trajectory.integrate(events=Check_inside_risk_zone)
+        trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
 
         # Compute average distance to target altitude
         squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
-    
-        # Add collision penalty
-        if trajectory_info[-1,-1] < self.final_time:
-            collision_penalty = 1e30
-        else:
-            collision_penalty = 0
-        
-        print("Reached time: ", trajectory_info[-1,-1])
 
-        # Return fitness value for the computed trajectory
-        fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude)) + collision_penalty
-        return fitness_value, trajectory_info 
+        # Add collision penalty
+        points_inisde_risk_zone = np.empty((len(trajectory.events), 3), dtype=np.float64)
+        i = 0
+        for j in trajectory.events:
+            points_inisde_risk_zone[i,:] = j.y[0:3]
+            i += 1
+        
+        collision_avoided = point_is_outside_mesh(points_inisde_risk_zone, self.mesh_vertices, self.mesh_faces)
+        if all(collision_avoided) == True:
+            collision_penalty = 0
+        else:
+            collision_penalty = 1e30
+        
+        # Return trajectory and neccessary values for fitness.
+        return trajectory_info, squared_altitudes, collision_penalty
 
 
 
@@ -168,7 +179,7 @@ class udp_initial_condition:
 
 
 
-def check_for_collision(t: float, state: np.ndarray, risk_zone_radius: float, mesh_vertices: np.ndarray, mesh_faces: np.ndarray) -> float:
+def Check_inside_risk_zone(t: float, state: np.ndarray, risk_zone_radius: float) -> float: #, mesh_vertices: np.ndarray, mesh_faces: np.ndarray
     """ Checks for event: collision with the celestial body.
 
     Args:
@@ -177,20 +188,12 @@ def check_for_collision(t: float, state: np.ndarray, risk_zone_radius: float, me
         risk_zone_radius (_float_): Radius of bounding sphere around mesh. 
 
     Returns:
-        (_float_): Either distance from origin to satellite for collisions, or zero for no collisions.
+        (_float_): Returns 1 when the satellite enters the risk-zone, and 0 otherwise.
     """
     position = state[0:3]
     distance = risk_zone_radius - D.norm(position)
-    
-    # If satellite is within risk-zone
     if distance >= 0:
-        collision_avoided = point_is_outside_mesh(position, mesh_vertices, mesh_faces)
-
-        # If there is a collision with the celestial body, return 0:
-        if collision_avoided.all() == False:
-            return 0
-    
-    # Else, return 1
+        return 0
     return 1
 
 

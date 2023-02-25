@@ -41,7 +41,7 @@ class Equations_of_motion:
         return -np.array(a)
 
     # Used by all RK-type algorithms
-    def compute_motion(self, t: float, x: np.ndarray, risk_zone_radius: float = None, mesh_vertices: np.ndarray = None, mesh_faces: np.ndarray = None) -> np.ndarray:
+    def compute_motion(self, t: float, x: np.ndarray, risk_zone_radius: float = None) -> np.ndarray: #, mesh_vertices: np.ndarray = None, mesh_faces: np.ndarray = None
         """ State update equation for RK-type algorithms. 
 
         Args:
