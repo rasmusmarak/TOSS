@@ -58,11 +58,7 @@ class Trajectory:
         self.radius_bounding_sphere = radius_bounding_sphere
 
 
-        #Test
-        self.k = 1
-
-
-    def integrate(self, x: np.ndarray) -> Union[float, np.ndarray]:
+    def integrate(self, x: np.ndarray) -> Union[np.ndarray, float, float]:
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
         Args:
@@ -87,8 +83,8 @@ class Trajectory:
             constants=dict(risk_zone_radius = self.radius_bounding_sphere)) #, mesh_vertices = self.mesh_vertices, mesh_faces = self.mesh_faces
         trajectory.method = str(IntegrationScheme(self.algorithm).name)
 
-        check_inside_risk_zone.is_terminal = False
-        trajectory.integrate(events=check_inside_risk_zone)
+        point_is_inside_risk_zone.is_terminal = False
+        trajectory.integrate(events=point_is_inside_risk_zone)
         trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
 
         # Compute average distance to target altitude
@@ -107,7 +103,7 @@ class Trajectory:
         else:
             collision_penalty = 1e30
         
-        # Return trajectory and neccessary values for fitness.
+        # Return trajectory and neccessary values for computing fitness in udp.
         return trajectory_info, squared_altitudes, collision_penalty
 
 
@@ -118,27 +114,27 @@ class Trajectory:
         Args:
             r_store (_np.ndarray_): Array containing values on position at each time step for the trajectory (columnwise).
         """
-
         # Plotting mesh of asteroid/comet
         mesh_plot = pv.Plotter(window_size=[500, 500])
         mesh_plot.add_mesh(self.body_mesh.grid, show_edges=True)
-        mesh_plot.show_grid() #grid='front',location='outer',all_edges=True 
+        mesh_plot.show_bounds(minor_ticks=True) #grid='front',location='outer',all_edges=True 
 
         # Plotting trajectory
-        trajectory_plot = np.transpose(r_store)
-        if (len(trajectory_plot[:,0]) % 2) != 0:
-            trajectory_plot = trajectory_plot[0:-1,:,]
-        mesh_plot.add_lines(trajectory_plot[:,0:3], color="red", width=40)        
-
+        trajectory = np.transpose(r_store)
+        for i in range(0,len(r_store[0])-1):
+            traj = np.vstack((trajectory[i,:], trajectory[i+1,:]))
+            mesh_plot.add_lines(traj, color="red", width=40)
+                        
         # Plotting final position as a white dot
-        trajectory_plot = pv.PolyData(np.transpose(r_store[-1,0:3]))
+        trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
         mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
+
         
         mesh_plot.show(jupyter_backend = 'panel') 
 
 
 
-def check_inside_risk_zone(t: float, state: np.ndarray, risk_zone_radius: float) -> float:
+def point_is_inside_risk_zone(t: float, state: np.ndarray, risk_zone_radius: float) -> int:
     """ Checks for event: collision with the celestial body.
 
     Args:
@@ -147,7 +143,7 @@ def check_inside_risk_zone(t: float, state: np.ndarray, risk_zone_radius: float)
         risk_zone_radius (_float_): Radius of bounding sphere around mesh. 
 
     Returns:
-        (_float_): Returns 1 when the satellite enters the risk-zone, and 0 otherwise.
+        (_int_): Returns 1 when the satellite enters the risk-zone, and 0 otherwise.
     """
     position = state[0:3]
     distance = risk_zone_radius - D.norm(position)
