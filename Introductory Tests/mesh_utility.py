@@ -2,6 +2,7 @@
 import pickle as pk
 import numpy as np
 import pathlib
+from typing import Union
 
 # meshing
 import tetgen
@@ -34,7 +35,16 @@ def read_pk_file(filename):
     return mesh_points, mesh_triangles
 
 
-def create_mesh():
+def create_mesh() -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float]:
+    """
+    Creates a tetrahedralized mesh object representing the celestial body of interest.
+
+    Returns:
+        tgen (_tetgen.pytetgen.TetGen_): Tetgen mesh object of celestial body.
+        mesh_points (_np.ndarray_): Array of all points on mesh.
+        mesh_triangles (_np.ndarray_): Array of all triangles on mesh.
+        largest_protuberant (_float_): Length of largest protuberant mass of the celestial body. (Computed from body centered at origin)
+    """
 
     path = str(pathlib.Path("Introductory Tests").parent.resolve())
 
