@@ -146,7 +146,7 @@ def point_is_inside_risk_zone(t: float, state: np.ndarray, risk_zone_radius: flo
         (_int_): Returns 1 when the satellite enters the risk-zone, and 0 otherwise.
     """
     position = state[0:3]
-    distance = risk_zone_radius - D.norm(position)
+    distance = risk_zone_radius**2 - position[0]**2 + position[1]**2 + position[2]**2
     if distance >= 0:
         return 0
     return 1
