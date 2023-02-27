@@ -91,13 +91,13 @@ class Trajectory:
         squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
 
         # Add collision penalty
-        points_inisde_risk_zone = np.empty((len(trajectory.events), 3), dtype=np.float64)
+        points_inside_risk_zone = np.empty((len(trajectory.events), 3), dtype=np.float64)
         i = 0
         for j in trajectory.events:
-            points_inisde_risk_zone[i,:] = j.y[0:3]
+            points_inside_risk_zone[i,:] = j.y[0:3]
             i += 1
         
-        collision_avoided = point_is_outside_mesh(points_inisde_risk_zone, self.mesh_vertices, self.mesh_faces)
+        collision_avoided = point_is_outside_mesh(points_inside_risk_zone, self.mesh_vertices, self.mesh_faces)
         if all(collision_avoided) == True:
             collision_penalty = 0
         else:
