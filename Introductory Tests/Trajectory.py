@@ -90,21 +90,21 @@ class Trajectory:
         # Compute average distance to target altitude
         squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
 
-        # Add collision penalty
+        # Check for potential collisions
         points_inside_risk_zone = np.empty((len(trajectory.events), 3), dtype=np.float64)
         i = 0
         for j in trajectory.events:
             points_inside_risk_zone[i,:] = j.y[0:3]
             i += 1
         
-        collision_avoided = point_is_outside_mesh(points_inside_risk_zone, self.mesh_vertices, self.mesh_faces)
-        if all(collision_avoided) == True:
-            collision_penalty = 0
+        collisions_avoided = point_is_outside_mesh(points_inside_risk_zone, self.mesh_vertices, self.mesh_faces)
+        if all(collisions_avoided) == True:
+            collision_detected = False
         else:
-            collision_penalty = 1e30
+            collision_detected = True
         
         # Return trajectory and neccessary values for computing fitness in udp.
-        return trajectory_info, squared_altitudes, collision_penalty
+        return trajectory_info, squared_altitudes, collision_detected
 
 
 
@@ -129,6 +129,7 @@ class Trajectory:
         trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
         mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
 
+        mesh_plot.add_axes(x_color='red', y_color='green', z_color='blue', xlabel='X', ylabel='Y', zlabel='Z', line_width=2, shaft_length = 10)
         
         mesh_plot.show(jupyter_backend = 'panel') 
 

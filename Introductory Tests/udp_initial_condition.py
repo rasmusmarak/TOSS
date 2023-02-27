@@ -53,7 +53,13 @@ class udp_initial_condition:
             fitness value (float): Difference between squared values of current and target altitude of satellite.
         """
         # Integrate trajectory
-        _, squared_altitudes, collision_penalty = self.trajectory.integrate(np.array(x))
+        _, squared_altitudes, collision_detected = self.trajectory.integrate(np.array(x))
+
+        # Define fitness penalty in the event of at least one collision along the trajectory
+        if collision_detected == True:
+            collision_penalty = 1e30
+        else:
+            collision_penalty = 0
 
         # Compute fitness value for the integrated trajectory
         fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude)) + collision_penalty
