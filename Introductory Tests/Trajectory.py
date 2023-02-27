@@ -9,7 +9,7 @@ import pyvista as pv
 import mesh_utility
 
 # For computing the next state
-from Equations_of_motion import Equations_of_motion
+from EquationsOfMotion import EquationsOfMotion
 
 # For choosing numerical integration method
 from Integrator import IntegrationScheme
@@ -48,7 +48,7 @@ class Trajectory:
         assert radius_bounding_sphere > largest_body_protuberant
 
         # Setup equations of motion class
-        self.eq_of_motion = Equations_of_motion(self.mesh_vertices, self.mesh_faces, body_density)
+        self.eq_of_motion = EquationsOfMotion(self.mesh_vertices, self.mesh_faces, body_density)
 
         # Additional hyperparameters
         self.start_time = start_time

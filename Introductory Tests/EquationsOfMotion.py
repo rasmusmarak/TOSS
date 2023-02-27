@@ -5,7 +5,7 @@ import numpy as np
 import polyhedral_gravity as model
 
 
-class Equations_of_motion:
+class EquationsOfMotion:
     """
     Defining the celestial body of interest as a mesh object, as well as providing methods 
     for computing the satellite's acceleration and motion with respect to the celestial
