@@ -31,12 +31,12 @@ class Trajectory:
         """ Setup udp attributes.
 
         Args:
-            body_density (_float_): Mass density of body of interest
-            final_time (_float_): Final time for integration.
-            start_time (_float_): Start time for integration of trajectory (often zero)
-            time_step (_float_): Step size for integration. 
-            algorithm (_int_): User defined algorithm of choice
-            radius_bounding_sphere (_float_)_: Radius for the bounding sphere around mesh.
+            body_density (float): Mass density of body of interest
+            final_time (float): Final time for integration.
+            start_time (float): Start time for integration of trajectory (often zero)
+            time_step (float): Step size for integration. 
+            algorithm (int): User defined algorithm of choice
+            radius_bounding_sphere (float)_: Radius for the bounding sphere around mesh.
         """
         # Creating the mesh (TetGen)
         self.body_mesh, self.mesh_vertices, self.mesh_faces, largest_body_protuberant = mesh_utility.create_mesh()
@@ -62,12 +62,12 @@ class Trajectory:
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
         Args:
-            x (_np.ndarray_): State vector containing values for position and velocity of satelite in three dimensions.
+            x (np.ndarray): State vector containing values for position and velocity of satelite in three dimensions.
 
         Returns:
-            trajectory_info (_np.ndarray_): Numpy array containing information on position and velocity at every time step (columnwise).
-            squared_altitudes (_float_): Sum of squared altitudes above origin for every position
-            collision_penalty (_float_): Penalty value given for the event of a collision with the celestial body.
+            trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
+            squared_altitudes (float): Sum of squared altitudes above origin for every position
+            collision_penalty (float): Penalty value given for the event of a collision with the celestial body.
         """
 
         # Integrate trajectory
@@ -112,7 +112,7 @@ class Trajectory:
         """plot_trajectory plots the body mesh and satellite trajectory.
 
         Args:
-            r_store (_np.ndarray_): Array containing values on position at each time step for the trajectory (columnwise).
+            r_store (np.ndarray): Array containing values on position at each time step for the trajectory (columnwise).
         """
         # Plotting mesh of asteroid/comet
         mesh_plot = pv.Plotter(window_size=[500, 500])
@@ -138,12 +138,12 @@ def point_is_inside_risk_zone(t: float, state: np.ndarray, risk_zone_radius: flo
     """ Checks for event: collision with the celestial body.
 
     Args:
-        t (_float_): Current time step for integration.
-        state (_np.ndarray_): Current state, i.e position and velocity
-        risk_zone_radius (_float_): Radius of bounding sphere around mesh. 
+        t (float): Current time step for integration.
+        state (np.ndarray): Current state, i.e position and velocity
+        risk_zone_radius (float): Radius of bounding sphere around mesh. 
 
     Returns:
-        (_int_): Returns 1 when the satellite enters the risk-zone, and 0 otherwise.
+        (int): Returns 1 when the satellite enters the risk-zone, and 0 otherwise.
     """
     position = state[0:3]
     distance = risk_zone_radius**2 - position[0]**2 + position[1]**2 + position[2]**2
@@ -158,10 +158,10 @@ def point_is_outside_mesh(x: np.ndarray, mesh_vertices: np.ndarray, mesh_faces: 
     Returns boolean with corresponding results.
 
     Args:
-        x (_np.ndarray_): Array containing current, or a set of, positions expressed in 3 dimensions.
+        x (np.ndarray): Array containing current, or a set of, positions expressed in 3 dimensions.
 
     Returns:
-        collision_boolean (_bool): A one dimensional array with boolean values corresponding to each
+        collision_boolean (bool): A one dimensional array with boolean values corresponding to each
                                 position kept in x. Returns "False" if point is inside mesh, and 
                                 "True" if point is outside mesh (that is, there no collision).
     """

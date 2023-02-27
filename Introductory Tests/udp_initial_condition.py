@@ -20,15 +20,15 @@ class udp_initial_condition:
         """ Setup udp attributes.
 
         Args:
-            body_density (_float_): Mass density of body of interest
-            target_altitude (_float_): Target altitude for satellite trajectory. 
-            final_time (_float_): Final time for integration.
-            start_time (_float_): Start time for integration of trajectory (often zero)
-            time_step (_float_): Step size for integration. 
-            lower_bounds (_np.ndarray_): Lower bounds for domain of initial state.
-            upper_bounds (_np.ndarray_): Upper bounds for domain of initial state. 
-            algorithm (_int_): User defined algorithm of choice
-            radius_bounding_sphere (_float_)_: Radius for the bounding sphere around mesh.
+            body_density (float): Mass density of body of interest
+            target_altitude (float): Target altitude for satellite trajectory. 
+            final_time (float): Final time for integration.
+            start_time (float): Start time for integration of trajectory (often zero)
+            time_step (float): Step size for integration. 
+            lower_bounds (np.ndarray): Lower bounds for domain of initial state.
+            upper_bounds (np.ndarray): Upper bounds for domain of initial state. 
+            algorithm (int): User defined algorithm of choice
+            radius_bounding_sphere (float)_: Radius for the bounding sphere around mesh.
         """
 
         # Setup equations of motion class
@@ -47,10 +47,10 @@ class udp_initial_condition:
         """ fitness evaluates the proximity of the satallite to target altitude.
 
         Args:
-            x (_np.ndarray_): State vector containing values for position and velocity of satelite in three dimensions. 
+            x (np.ndarray): State vector containing values for position and velocity of satelite in three dimensions. 
 
         Returns:
-            fitness value (_float_): Difference between squared values of current and target altitude of satellite.
+            fitness value (float): Difference between squared values of current and target altitude of satellite.
         """
         # Integrate trajectory
         _, squared_altitudes, collision_penalty = self.trajectory.integrate(np.array(x))
@@ -65,7 +65,7 @@ class udp_initial_condition:
         """get_bounds returns upper and lower bounds for the domain of the state vector.
 
         Returns:
-            lower_bounds (_np.ndarray_): Lower boundary values for the initial state vector.
-            upper_bounds (_np.ndarray_): Lower boundary values for the initial state vector.
+            lower_bounds (np.ndarray): Lower boundary values for the initial state vector.
+            upper_bounds (np.ndarray): Lower boundary values for the initial state vector.
         """
         return (self.lower_bounds, self.upper_bounds)
