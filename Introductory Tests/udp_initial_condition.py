@@ -5,6 +5,8 @@ from typing import Union
 # For computing trajectory
 from Trajectory import Trajectory
 
+# For choosing numerical integration method
+from Integrator import IntegrationScheme
 
 # Class representing UDP
 class udp_initial_condition:
@@ -38,6 +40,16 @@ class udp_initial_condition:
         assert target_altitude > 0
         assert all(np.greater(upper_bounds, lower_bounds))
 
+        # Assertions:
+        assert body_density > 0
+        assert target_altitude > 0
+        assert final_time > start_time
+        assert time_step <= (final_time - start_time)
+        assert lower_bounds.all() < upper_bounds.all()
+
+        # Setup equations of motion class
+        self.eq_of_motion = Equations_of_motion(self.mesh_vertices, self.mesh_faces, body_density)
+
         # Additional hyperparameters
         self.target_altitude = target_altitude     
         self.lower_bounds = lower_bounds
@@ -50,7 +62,7 @@ class udp_initial_condition:
             x (np.ndarray): State vector containing values for position and velocity of satelite in three dimensions. 
 
         Returns:
-            fitness value (float): Difference between squared values of current and target altitude of satellite.
+            fitness value (_float_): Difference between squared values of current and target altitude of satellite.
         """
         # Integrate trajectory
         _, squared_altitudes, collision_penalty = self.trajectory.integrate(np.array(x))
