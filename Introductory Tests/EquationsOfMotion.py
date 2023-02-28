@@ -21,6 +21,9 @@ class EquationsOfMotion:
             mesh_faces (array): Array containing all the faces on the mesh.
             body_density (float): Density of the celestial body of interest represented by the mesh.
         """
+        # Assertion
+        assert body_density > 0
+
         # Attributes relating to mesh 
         self.mesh_vertices = mesh_vertices
         self.mesh_faces = mesh_faces 

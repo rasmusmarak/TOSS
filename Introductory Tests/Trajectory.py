@@ -42,7 +42,6 @@ class Trajectory:
         self.body_mesh, self.mesh_vertices, self.mesh_faces, largest_body_protuberant = mesh_utility.create_mesh()
 
         # Assertions:
-        assert body_density > 0
         assert final_time > start_time
         assert time_step <= (final_time - start_time)
         assert radius_bounding_sphere > largest_body_protuberant
