@@ -117,19 +117,19 @@ class Trajectory:
         # Plotting mesh of asteroid/comet
         mesh_plot = pv.Plotter(window_size=[500, 500])
         mesh_plot.add_mesh(self.body_mesh.grid, show_edges=True)
-        mesh_plot.show_bounds(minor_ticks=True) #grid='front',location='outer',all_edges=True 
+        mesh_plot.show_bounds() # minor_ticks=True, grid='front',location='outer',all_edges=True 
 
         # Plotting trajectory
-        trajectory = np.transpose(r_store)
-        for i in range(0,len(r_store[0])-1):
-            traj = np.vstack((trajectory[i,:], trajectory[i+1,:]))
-            mesh_plot.add_lines(traj, color="red", width=40)
+        #trajectory = np.transpose(r_store)
+        #for i in range(0,len(r_store[0])-1):
+        #    traj = np.vstack((trajectory[i,:], trajectory[i+1,:]))
+        #    mesh_plot.add_lines(traj, color="red", width=40)
                         
         # Plotting final position as a white dot
-        trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
-        mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
+        #trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
+        #mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
 
-        mesh_plot.add_axes(x_color='red', y_color='green', z_color='blue', xlabel='X', ylabel='Y', zlabel='Z', line_width=2, shaft_length = 10)
+        #mesh_plot.add_axes(x_color='red', y_color='green', z_color='blue', xlabel='X', ylabel='Y', zlabel='Z', line_width=2, shaft_length = 10)
         
         mesh_plot.show(jupyter_backend = 'panel') 
 

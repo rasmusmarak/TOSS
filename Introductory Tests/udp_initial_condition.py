@@ -5,8 +5,8 @@ from typing import Union
 # For computing trajectory
 from Trajectory import Trajectory
 
-# For choosing numerical integration method
-from Integrator import IntegrationScheme
+# For orbit representation (reference frame)
+import pykep as pk
 
 # Class representing UDP
 class udp_initial_condition:
@@ -64,8 +64,16 @@ class udp_initial_condition:
         Returns:
             fitness value (_float_): Difference between squared values of current and target altitude of satellite.
         """
+
+        # Convert osculating orbital elements to cartesian for integration
+        body_mu = 665.666
+        r, v = pk.par2ic(E=x, mu=body_mu)
+        r = np.array(r)
+        v = np.array(v)
+        x_cartesian = np.concatenate((r,v), axis=None)
+
         # Integrate trajectory
-        _, squared_altitudes, collision_detected = self.trajectory.integrate(np.array(x))
+        _, squared_altitudes, collision_detected = self.trajectory.integrate(x_cartesian) #np.array(x_cartesian)
 
         # Define fitness penalty in the event of at least one collision along the trajectory
         if collision_detected == True:
