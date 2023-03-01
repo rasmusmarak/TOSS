@@ -48,7 +48,7 @@ class udp_initial_condition:
         assert lower_bounds.all() < upper_bounds.all()
 
         # Setup equations of motion class
-        self.eq_of_motion = Equations_of_motion(self.mesh_vertices, self.mesh_faces, body_density)
+        #self.eq_of_motion = Equations_of_motion(self.mesh_vertices, self.mesh_faces, body_density)
 
         # Additional hyperparameters
         self.target_altitude = target_altitude     
