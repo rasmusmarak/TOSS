@@ -27,11 +27,16 @@ class Trajectory:
     Desolver. The class also calls for files related to plotting the trajectory.
     """
 
-    def __init__(self, body_density, final_time, start_time, time_step, algorithm, radius_bounding_sphere):
+    def __init__(self, body_args, final_time, start_time, time_step, algorithm, radius_bounding_sphere):
         """ Setup udp attributes.
 
         Args:
-            body_density (float): Mass density of body of interest
+            body_args (np.ndarray): Paramteers relating to the celestial body:
+                [0] body_density (float): Body density of celestial body.
+                [1] body_mu (float): Gravitational parameter for celestial body.
+                [2] body_declination (float): Declination angle of spin axis.
+                [3] body_right_acension (float): Right ascension angle of spin axis.
+                [4] body_spin_period (float): Rotational period around spin axis of the body.
             final_time (float): Final time for integration.
             start_time (float): Start time for integration of trajectory (often zero)
             time_step (float): Step size for integration. 
@@ -42,13 +47,13 @@ class Trajectory:
         self.body_mesh, self.mesh_vertices, self.mesh_faces, largest_body_protuberant = mesh_utility.create_mesh()
 
         # Assertions:
-        assert body_density > 0
+        #assert body_args > 0
         assert final_time > start_time
         assert time_step <= (final_time - start_time)
         assert radius_bounding_sphere > largest_body_protuberant
 
         # Setup equations of motion class
-        self.eq_of_motion = EquationsOfMotion(self.mesh_vertices, self.mesh_faces, body_density)
+        self.eq_of_motion = EquationsOfMotion(self.mesh_vertices, self.mesh_faces, body_args)
 
         # Additional hyperparameters
         self.start_time = start_time
@@ -58,7 +63,7 @@ class Trajectory:
         self.radius_bounding_sphere = radius_bounding_sphere
 
 
-    def integrate(self, x: np.ndarray) -> Union[np.ndarray, float, float]:
+    def integrate(self, x: np.ndarray) -> Union[np.ndarray, float, bool]:
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
         Args:
@@ -67,7 +72,7 @@ class Trajectory:
         Returns:
             trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
             squared_altitudes (float): Sum of squared altitudes above origin for every position
-            collision_penalty (float): Penalty value given for the event of a collision with the celestial body.
+            collision_penalty (bool): Penalty value given for the event of a collision with the celestial body.
         """
 
         # Integrate trajectory
@@ -120,16 +125,16 @@ class Trajectory:
         mesh_plot.show_bounds() # minor_ticks=True, grid='front',location='outer',all_edges=True 
 
         # Plotting trajectory
-        #trajectory = np.transpose(r_store)
-        #for i in range(0,len(r_store[0])-1):
-        #    traj = np.vstack((trajectory[i,:], trajectory[i+1,:]))
-        #    mesh_plot.add_lines(traj, color="red", width=40)
+        trajectory = np.transpose(r_store)
+        for i in range(0,len(r_store[0])-1):
+            traj = np.vstack((trajectory[i,:], trajectory[i+1,:]))
+            mesh_plot.add_lines(traj, color="red", width=40)
                         
         # Plotting final position as a white dot
-        #trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
-        #mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
+        trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
+        mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
 
-        #mesh_plot.add_axes(x_color='red', y_color='green', z_color='blue', xlabel='X', ylabel='Y', zlabel='Z', line_width=2, shaft_length = 10)
+        mesh_plot.add_axes(x_color='red', y_color='green', z_color='blue', xlabel='X', ylabel='Y', zlabel='Z', line_width=2, shaft_length = 10)
         
         mesh_plot.show(jupyter_backend = 'panel') 
 
