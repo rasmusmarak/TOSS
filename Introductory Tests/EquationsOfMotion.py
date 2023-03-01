@@ -80,8 +80,10 @@ class EquationsOfMotion:
         """
         rotated_position = self.orbit_rotation(t, x[0:3])
         a = self.compute_acceleration(rotated_position)
+
         kx = x[3:6]  
-        kv = a 
+        kv = a
+
         return np.concatenate((kx, kv))
     
 
@@ -98,7 +100,7 @@ class EquationsOfMotion:
         spin_velocity = (2*pi)/self.body_spin_period
 
         # Get Quaternion object for rotation around spin axis
-        q_rot = Quaternion(axis=self.spin_axis, angle=((2*pi)-(spin_velocity*t)))
+        q_rot = Quaternion(axis=self.spin_axis, angle=(2*pi-spin_velocity*t))
         
         # Rotate satellite position using q_rot
         x_rotated = q_rot.rotate(x)
