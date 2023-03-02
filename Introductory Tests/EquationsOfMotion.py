@@ -75,7 +75,7 @@ class EquationsOfMotion:
         Returns:
             (np.ndarray): K vector used for computing state at the following time step.
         """
-        rotated_position = self.orbit_rotation(t, x[0:3])
+        rotated_position = self.rotate_point(t, x[0:3])
         a = self.compute_acceleration(rotated_position)
 
         kx = x[3:6]  
@@ -84,7 +84,7 @@ class EquationsOfMotion:
         return np.concatenate((kx, kv))
     
 
-    def orbit_rotation(self, t: float, x: np.ndarray) -> np.ndarray:
+    def rotate_point(self, t: float, x: np.ndarray) -> np.ndarray:
         """ Rotates position x according to the analyzed body's real rotation.
         Args:
             t (float): Time value when position x occurs.
