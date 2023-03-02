@@ -43,6 +43,9 @@ class EquationsOfMotion:
         # Attributes relating to body
         self.body_args = body_args 
 
+        # Compute angular velocity of spin using known rotational period.
+        self.spin_velocity = (2*pi)/body_args.spin_period
+
         # Setup spin axis of the body
         q_dec = Quaternion(axis=[1,0,0], angle=radians(self.body_args.declination)) # Rotate spin axis according to declination
         q_ra = Quaternion(axis=[0,0,1], angle=radians(self.body_args.right_ascension)) # Rotate spin axis accordining to right ascension
@@ -93,12 +96,9 @@ class EquationsOfMotion:
         Returns:
             x_rotated (np.ndarray): Rotated position of satellite expressed in the 3D cartesian coordinates.
         """
-        
-        # Compute angular velocity of spin using known rotational period.
-        spin_velocity = (2*pi)/self.body_args.spin_period
 
         # Get Quaternion object for rotation around spin axis
-        q_rot = Quaternion(axis=self.spin_axis, angle=(2*pi-spin_velocity*t))
+        q_rot = Quaternion(axis=self.spin_axis, angle=(2*pi-self.spin_velocity*t))
         
         # Rotate satellite position using q_rot
         x_rotated = q_rot.rotate(x)
