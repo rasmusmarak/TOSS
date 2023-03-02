@@ -61,12 +61,11 @@ class udp_initial_condition:
         """ fitness evaluates the proximity of the satallite to target altitude.
 
         Args:
-            x (np.ndarray): State vector containing values for position and velocity of satelite in three dimensions. 
+            x (np.ndarray): State vector containing values for position and velocity of satelite in #D cartesian coordinates. 
 
         Returns:
             fitness value (_float_): Difference between squared values of current and target altitude of satellite.
         """
-        print("VALUEEEE: ", self.body_args.mu)
         # Convert osculating orbital elements to cartesian for integration
         r, v = pk.par2ic(E=x, mu=self.body_args.mu)
         r = np.array(r)

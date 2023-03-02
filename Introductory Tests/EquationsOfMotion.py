@@ -55,7 +55,7 @@ class EquationsOfMotion:
         a celestial body of interest. This is done using the Polyhedral-Gravity-Model package.
 
         Args:
-            x (np.ndarray): Vector containing information on current position expressed in three dimensions (point).
+            x (np.ndarray): Vector containing information on current position expressed in 3D cartesian coordinates.
 
         Returns:
             (np.ndarray): The acceleration at the given point x with respect to the mesh (celestial body).
@@ -68,9 +68,9 @@ class EquationsOfMotion:
         """ State update equation for RK-type algorithms. 
 
         Args:
-            t (float): Time value corresponding to current state
-            x (np.ndarray): State vector containing position and velocity expressed in three dimensions.
-            risk_zone_radius (float): Radius of bounding sphere around mesh. 
+            t (float): Time value in seconds corresponding to current state
+            x (np.ndarray): State vector containing position and velocity expressed in 3D cartesian coordinates.
+            risk_zone_radius (float): Radius of bounding sphere around mesh with center at origin. 
 
         Returns:
             (np.ndarray): K vector used for computing state at the following time step.
@@ -86,11 +86,12 @@ class EquationsOfMotion:
 
     def rotate_point(self, t: float, x: np.ndarray) -> np.ndarray:
         """ Rotates position x according to the analyzed body's real rotation.
+            The rotation is made in the 3D cartesian inertial body frame.
         Args:
-            t (float): Time value when position x occurs.
-            x (np.ndarray): Position of satellite expressed in three dimensions.
+            t (float): Time value in seconds when position x occurs.
+            x (np.ndarray): Position of satellite expressed in the 3D cartesian coordinates.
         Returns:
-            x_rotated (np.ndarray): Rotated position using quaternions.
+            x_rotated (np.ndarray): Rotated position of satellite expressed in the 3D cartesian coordinates.
         """
         
         # Compute angular velocity of spin using known rotational period.

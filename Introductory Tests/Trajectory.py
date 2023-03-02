@@ -66,7 +66,7 @@ class Trajectory:
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
         Args:
-            x (np.ndarray): State vector containing values for position and velocity of satelite in three dimensions.
+            x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates.
 
         Returns:
             trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
