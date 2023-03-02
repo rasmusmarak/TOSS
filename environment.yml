@@ -11,6 +11,7 @@ dependencies:
   - panel
   - jupyter_backend
   - pykep
+  - pyquaternion
   - pip:
       - tetgen
       - desolver
