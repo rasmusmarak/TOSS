@@ -18,7 +18,7 @@ class udp_initial_condition:
     boundaries for the state variables and computation of the fitness value for a given intial state. 
     """
 
-    def __init__(self, body_args, target_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds, algorithm, radius_bounding_sphere):
+    def __init__(self, body_args, target_squared_altitude, final_time, start_time, time_step, lower_bounds, upper_bounds, algorithm, radius_bounding_sphere):
         """ Setup udp attributes.
 
         Args:
@@ -28,7 +28,7 @@ class udp_initial_condition:
                 declination (float): Declination angle of spin axis.
                 right_ascension (float): Right ascension angle of spin axis.
                 spin_period (float): Rotational period around spin axis of the body.
-            target_altitude (float): Target altitude for satellite trajectory. 
+            target_squared_altitude (float): Target altitude for satellite trajectory. 
             final_time (float): Final time for integration.
             start_time (float): Start time for integration of trajectory (often zero)
             time_step (float): Step size for integration. 
@@ -42,17 +42,13 @@ class udp_initial_condition:
         self.trajectory = Trajectory(body_args, final_time, start_time, time_step, algorithm, radius_bounding_sphere)
 
         # Assertions:
-        assert target_altitude > 0
+        assert target_squared_altitude > 0
         assert all(np.greater(upper_bounds, lower_bounds))
-
-        # Assertions:
         assert body_args.mu > 0
-        assert target_altitude > 0
-        assert all(np.greater(upper_bounds, lower_bounds))
 
         # Additional hyperparameters
         self.body_args = body_args
-        self.target_altitude = target_altitude     
+        self.target_squared_altitude = target_squared_altitude     
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
 
@@ -68,12 +64,10 @@ class udp_initial_condition:
         """
         # Convert osculating orbital elements to cartesian for integration
         r, v = pk.par2ic(E=x, mu=self.body_args.mu)
-        r = np.array(r)
-        v = np.array(v)
-        x_cartesian = np.concatenate((r,v), axis=None)
+        x_cartesian = np.array(r+v)
 
         # Integrate trajectory
-        _, squared_altitudes, collision_detected = self.trajectory.integrate(x_cartesian) #np.array(x_cartesian)
+        _, squared_altitudes, collision_detected = self.trajectory.integrate(x_cartesian)
 
         # Define fitness penalty in the event of at least one collision along the trajectory
         if collision_detected == True:
@@ -82,7 +76,7 @@ class udp_initial_condition:
             collision_penalty = 0
 
         # Compute fitness value for the integrated trajectory
-        fitness_value = np.mean(np.abs(squared_altitudes-self.target_altitude)) + collision_penalty
+        fitness_value = np.mean(np.abs(squared_altitudes-self.target_squared_altitude)) + collision_penalty
 
         return [fitness_value]
 
