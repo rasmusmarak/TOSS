@@ -12,6 +12,7 @@ dependencies:
   - jupyter_backend
   - pykep
   - pyquaternion
+  - dotmap
   - pip:
       - tetgen
       - desolver

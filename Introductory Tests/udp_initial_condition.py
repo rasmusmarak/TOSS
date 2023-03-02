@@ -22,12 +22,12 @@ class udp_initial_condition:
         """ Setup udp attributes.
 
         Args:
-            body_args (np.ndarray): Paramteers relating to the celestial body:
-                [0] body_density (float): Body density of celestial body.
-                [1] body_mu (float): Gravitational parameter for celestial body.
-                [2] body_declination (float): Declination angle of spin axis.
-                [3] body_right_acension (float): Right ascension angle of spin axis.
-                [4] body_spin_period (float): Rotational period around spin axis of the body.
+            body_args (dotmap.DotMap): Paramteers relating to the celestial body:
+                density (float): Body density of celestial body.
+                mu (float): Gravitational parameter for celestial body.
+                declination (float): Declination angle of spin axis.
+                right_ascension (float): Right ascension angle of spin axis.
+                spin_period (float): Rotational period around spin axis of the body.
             target_altitude (float): Target altitude for satellite trajectory. 
             final_time (float): Final time for integration.
             start_time (float): Start time for integration of trajectory (often zero)
@@ -46,15 +46,16 @@ class udp_initial_condition:
         assert all(np.greater(upper_bounds, lower_bounds))
 
         # Assertions:
-        assert body_args[1] > 0
+        assert body_args.mu > 0
         assert target_altitude > 0
         assert all(np.greater(upper_bounds, lower_bounds))
 
         # Additional hyperparameters
-        self.body_mu = body_args[1]
+        self.body_args = body_args
         self.target_altitude = target_altitude     
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
+
 
     def fitness(self, x: np.ndarray) -> float:
         """ fitness evaluates the proximity of the satallite to target altitude.
@@ -65,9 +66,9 @@ class udp_initial_condition:
         Returns:
             fitness value (_float_): Difference between squared values of current and target altitude of satellite.
         """
-
+        print("VALUEEEE: ", self.body_args.mu)
         # Convert osculating orbital elements to cartesian for integration
-        r, v = pk.par2ic(E=x, mu=self.body_mu)
+        r, v = pk.par2ic(E=x, mu=self.body_args.mu)
         r = np.array(r)
         v = np.array(v)
         x_cartesian = np.concatenate((r,v), axis=None)

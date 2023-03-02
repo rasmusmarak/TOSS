@@ -31,12 +31,12 @@ class Trajectory:
         """ Setup udp attributes.
 
         Args:
-            body_args (np.ndarray): Paramteers relating to the celestial body:
-                [0] body_density (float): Body density of celestial body.
-                [1] body_mu (float): Gravitational parameter for celestial body.
-                [2] body_declination (float): Declination angle of spin axis.
-                [3] body_right_acension (float): Right ascension angle of spin axis.
-                [4] body_spin_period (float): Rotational period around spin axis of the body.
+            body_args (dotmap.DotMap): Paramteers relating to the celestial body:
+                density (float): Body density of celestial body.
+                mu (float): Gravitational parameter for celestial body.
+                declination (float): Declination angle of spin axis.
+                right_ascension (float): Right ascension angle of spin axis.
+                spin_period (float): Rotational period around spin axis of the body.
             final_time (float): Final time for integration.
             start_time (float): Start time for integration of trajectory (often zero)
             time_step (float): Step size for integration. 
@@ -47,7 +47,6 @@ class Trajectory:
         self.body_mesh, self.mesh_vertices, self.mesh_faces, largest_body_protuberant = mesh_utility.create_mesh()
 
         # Assertions:
-        #assert body_args > 0
         assert final_time > start_time
         assert time_step <= (final_time - start_time)
         assert radius_bounding_sphere > largest_body_protuberant

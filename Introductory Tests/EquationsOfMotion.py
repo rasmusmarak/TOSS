@@ -23,32 +23,29 @@ class EquationsOfMotion:
         Args:
             mesh_vertices (array): Array containing all vertices of the mesh.
             mesh_faces (array): Array containing all the faces on the mesh.
-            body_args (np.ndarray): Paramteers relating to the celestial body:
-                [0] body_density (float): Body density of celestial body.
-                [1] body_mu (float): Gravitational parameter for celestial body.
-                [2] body_declination (float): Declination angle of spin axis.
-                [3] body_right_acension (float): Right ascension angle of spin axis.
-                [4] body_spin_period (float): Rotational period around spin axis of the body.
+            body_args (dotmap.DotMap): Paramteers relating to the celestial body:
+                density (float): Body density of celestial body.
+                mu (float): Gravitational parameter for celestial body.
+                declination (float): Declination angle of spin axis.
+                right_ascension (float): Right ascension angle of spin axis.
+                spin_period (float): Rotational period around spin axis of the body.
         """
         # Assertion
-        assert body_args[0] > 0
-        assert body_args[2] >= 0
-        assert body_args[3] >= 0
-        assert body_args[4] >= 0
+        assert body_args.density > 0
+        assert body_args.declination >= 0
+        assert body_args.right_ascension >= 0
+        assert body_args.spin_period >= 0
 
         # Attributes relating to mesh 
         self.mesh_vertices = mesh_vertices
         self.mesh_faces = mesh_faces 
 
-        # Attributes relating to body 
-        self.body_density = body_args[0]
-        self.body_declination = body_args[2]
-        self.body_right_acension = body_args[3]
-        self.body_spin_period = body_args[4]
+        # Attributes relating to body
+        self.body_args = body_args 
 
         # Setup spin axis of the body
-        q_dec = Quaternion(axis=[1,0,0], angle=radians(self.body_declination)) # Rotate spin axis according to declination
-        q_ra = Quaternion(axis=[0,0,1], angle=radians(self.body_right_acension)) # Rotate spin axis accordining to right ascension
+        q_dec = Quaternion(axis=[1,0,0], angle=radians(self.body_args.declination)) # Rotate spin axis according to declination
+        q_ra = Quaternion(axis=[0,0,1], angle=radians(self.body_args.right_ascension)) # Rotate spin axis accordining to right ascension
         q_axis = q_dec * q_ra  # Composite rotation of q1 then q2 expressed as standard multiplication
         self.spin_axis = q_axis.rotate([0,0,1])
 
@@ -63,7 +60,7 @@ class EquationsOfMotion:
         Returns:
             (np.ndarray): The acceleration at the given point x with respect to the mesh (celestial body).
         """
-        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_density, x)
+        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_args.density, x)
         return -np.array(a)
 
     # Used by all RK-type algorithms
@@ -97,7 +94,7 @@ class EquationsOfMotion:
         """
         
         # Compute angular velocity of spin using known rotational period.
-        spin_velocity = (2*pi)/self.body_spin_period
+        spin_velocity = (2*pi)/self.body_args.spin_period
 
         # Get Quaternion object for rotation around spin axis
         q_rot = Quaternion(axis=self.spin_axis, angle=(2*pi-spin_velocity*t))
