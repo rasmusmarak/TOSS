@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - numpy
+  - numpy==1.23.5
   - pygmo
   - polyhedral-gravity-model
   - pyvista
