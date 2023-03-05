@@ -84,7 +84,7 @@ class Trajectory:
             dt = self.time_step, 
             rtol = 1e-12, 
             atol = 1e-12,
-            constants=dict(risk_zone_radius = self.radius_bounding_sphere)) #, mesh_vertices = self.mesh_vertices, mesh_faces = self.mesh_faces
+            constants=dict(risk_zone_radius = self.radius_bounding_sphere))
         trajectory.method = str(IntegrationScheme(self.algorithm).name)
 
         point_is_inside_risk_zone.is_terminal = False
@@ -110,8 +110,6 @@ class Trajectory:
         # Return trajectory and neccessary values for computing fitness in udp.
         return trajectory_info, squared_altitudes, collision_detected
 
-
-
     def plot_trajectory(self, r_store: np.ndarray):
         """plot_trajectory plots the body mesh and satellite trajectory.
 
@@ -121,7 +119,7 @@ class Trajectory:
         # Plotting mesh of asteroid/comet
         mesh_plot = pv.Plotter(window_size=[500, 500])
         mesh_plot.add_mesh(self.body_mesh.grid, show_edges=True)
-        mesh_plot.show_bounds() # minor_ticks=True, grid='front',location='outer',all_edges=True 
+        #mesh_plot.show_bounds() # minor_ticks=True, grid='front',location='outer',all_edges=True 
 
         # Plotting trajectory
         trajectory = np.transpose(r_store)
