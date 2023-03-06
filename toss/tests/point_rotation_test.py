@@ -78,5 +78,3 @@ def rotation_of_point_test():
 
     # Check if both methods give equal rotation
     assert all(np.equal(rotated_position_analytical,rotated_position_quaternion))
-
-rotation_of_point_test()
