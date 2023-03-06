@@ -13,7 +13,7 @@ from dotmap import DotMap
 import math
 from math import pi, radians
 import numpy as np
-from numpy.random import rand
+from numpy.random import randint
 
 # For computing rotations of orbits
 from pyquaternion import Quaternion
@@ -52,7 +52,7 @@ def test_rotation_of_point():
     for i in range(0, n_max-1):
         
         # Generate random 3-dim array representing a position [m]
-        x = rand(0, 20000, 3)
+        x = randint(0, 20000, 3)
         
         # Generate a random time [s] to define the rotation angle.
         t = rand(1)
