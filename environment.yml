@@ -1,4 +1,4 @@
-name: 67P_Swarm
+name: 67p_swarm
 channels:
   - conda-forge
   - defaults
