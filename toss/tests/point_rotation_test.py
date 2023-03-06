@@ -1,20 +1,12 @@
 
 """ This test checks whether or not a point rotation is performed correctly """
 
-print("Inside the code.")
-
-
-import os, sys
-#currentdir = os.path.dirname(os.path.realpath(__file__))
-#parentdir = os.path.dirname(currentdir)
-#sys.path.append(parentdir)
+import sys
 
 sys.path.append("../..")
 import toss
 from toss import mesh_utility
 from toss.EquationsOfMotion import EquationsOfMotion
-
-print("Imported the files anc classes")
 
 # Core packages
 from dotmap import DotMap
@@ -22,18 +14,10 @@ import math
 from math import pi, radians
 import numpy as np
 
-# For optimization using pygmo
-#from EquationsOfMotion import EquationsOfMotion
-
-# To define mesh
-#import mesh_utility
-
 # For computing rotations of orbits
 from pyquaternion import Quaternion
 
 def rotation_of_point_test():
-    print("We're inside!")
-
     # Body parameters
     body_args = DotMap()
     body_args.density = 533                  # https://sci.esa.int/web/rosetta/-/14615-comet-67p
@@ -81,10 +65,6 @@ def rotation_of_point_test():
                         [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
     rotated_position_analytical = np.around(np.dot(rotation_matrix, x), 5)
-
-    print("Analytical: ",rotated_position_analytical)
-    print("Quaternion: ", rotated_position_quaternion)
-
 
     # Check if both methods give equal rotation
     assert all(np.equal(rotated_position_analytical,rotated_position_quaternion))
