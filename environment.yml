@@ -12,6 +12,8 @@ dependencies:
   - pykep
   - pyquaternion
   - dotmap
+  - pytest
+  - python==3.8.15
   - pip:
       - tetgen
       - desolver
