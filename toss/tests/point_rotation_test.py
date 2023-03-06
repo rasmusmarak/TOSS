@@ -18,6 +18,20 @@ import numpy as np
 from pyquaternion import Quaternion
 
 def test_rotation_of_point():
+    """
+    This is a test verify that the chosen method, rotate_point, as defined
+    in EquationsOfMotion rotates a given point and axis correctly. To verify 
+    the results of rotate_point, the method is compared with the analytical 
+    rotation given by the Euler-Rodrigues formula.
+    
+    Sources:
+        - https://en.wikipedia.org/wiki/Euler–Rodrigues_formula
+        - Jian S. Dai, Euler–Rodrigues formula variations, quaternion conjugation 
+        and intrinsic connections, Mechanism and Machine Theory, Volume 92, 2015, 
+        Pages 144-152, ISSN 0094-114X, https://doi.org/10.1016/j.mechmachtheory.2015.03.004.
+
+    """
+
     # Body parameters
     body_args = DotMap()
     body_args.density = 533                  # https://sci.esa.int/web/rosetta/-/14615-comet-67p
