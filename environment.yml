@@ -9,7 +9,6 @@ dependencies:
   - pyvista
   - matplotlib
   - panel
-  - jupyter_backend
   - pykep
   - pyquaternion
   - dotmap
