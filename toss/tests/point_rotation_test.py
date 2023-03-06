@@ -2,8 +2,9 @@
 """ This test checks whether or not a point rotation is performed correctly """
 
 import sys
-
 sys.path.append("../..")
+
+# Import relevant modules
 import toss
 from toss import mesh_utility
 from toss.EquationsOfMotion import EquationsOfMotion
@@ -15,16 +16,18 @@ from math import pi, radians
 import numpy as np
 from numpy.random import randint, rand
 
-
 # For computing rotations of orbits
 from pyquaternion import Quaternion
+
 
 def test_rotation_of_point():
     """
     This is a test verify that the chosen method, rotate_point, as defined
     in EquationsOfMotion rotates a given point and axis correctly. To verify 
     the results of rotate_point, the method is compared with the analytical 
-    rotation given by the Euler-Rodrigues formula.
+    rotation given by the Euler-Rodrigues formula. This is done for a set of
+    random position vectors and rotation times. The number of such comparisons
+    is provided by the user in terms of n_max.
     
     Sources:
         - https://en.wikipedia.org/wiki/Euler–Rodrigues_formula
@@ -47,9 +50,9 @@ def test_rotation_of_point():
     # Setup equations of motion class
     eq_of_motion = EquationsOfMotion(mesh_vertices, mesh_faces, body_args)
 
-
     # Define number of rotations to evaluate
     n_max = 10
+
     for i in range(0, n_max-1):
         
         # Generate random 3-dim array representing a position [m]
