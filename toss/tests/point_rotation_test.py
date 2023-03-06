@@ -9,7 +9,7 @@ import os, sys
 sys.path.append("../..")
 import toss
 from toss import mesh_utility
-from toss import EquationsOfMotion
+from toss.EquationsOfMotion import EquationsOfMotion
 
 # Core packages
 from dotmap import DotMap
