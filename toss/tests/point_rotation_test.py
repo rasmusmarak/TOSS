@@ -13,7 +13,8 @@ from dotmap import DotMap
 import math
 from math import pi, radians
 import numpy as np
-from numpy.random import randint
+from numpy.random import randint, rand
+
 
 # For computing rotations of orbits
 from pyquaternion import Quaternion
