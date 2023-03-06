@@ -17,7 +17,7 @@ import numpy as np
 # For computing rotations of orbits
 from pyquaternion import Quaternion
 
-def rotation_of_point_test():
+def test_rotation_of_point():
     # Body parameters
     body_args = DotMap()
     body_args.density = 533                  # https://sci.esa.int/web/rosetta/-/14615-comet-67p
@@ -40,7 +40,7 @@ def rotation_of_point_test():
 
     ######### Rotation using Quaternion #########
     # Rotation of point: 
-    rotated_position_quaternion = np.around(eq_of_motion.rotate_point(t, x), 5)
+    rotated_position_quaternion = eq_of_motion.rotate_point(t, x)
     #############################################
 
     #########    Analtical rotation    #########
@@ -64,7 +64,7 @@ def rotation_of_point_test():
                         [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
                         [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
-    rotated_position_analytical = np.around(np.dot(rotation_matrix, x), 5)
+    rotated_position_analytical = np.dot(rotation_matrix, x)
 
     # Check if both methods give equal rotation
-    assert all(np.equal(rotated_position_analytical,rotated_position_quaternion))
+    assert all(np.isclose(rotated_position_analytical,rotated_position_quaternion,rtol=1e-5, atol=1e-5))
