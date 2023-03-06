@@ -73,6 +73,8 @@ class Trajectory:
             squared_altitudes (float): Sum of squared altitudes above origin for every position
             collision_penalty (bool): Penalty value given for the event of a collision with the celestial body.
         """
+        # Setup constants:
+        risk_zone_radius = self.radius_bounding_sphere
 
         # Integrate trajectory
         initial_state = D.array(x)
@@ -84,7 +86,7 @@ class Trajectory:
             dt = self.time_step, 
             rtol = 1e-12, 
             atol = 1e-12,
-            constants=dict(risk_zone_radius = self.radius_bounding_sphere))
+            constants=dict(risk_zone_radius = risk_zone_radius))
         trajectory.method = str(IntegrationScheme(self.algorithm).name)
 
         point_is_inside_risk_zone.is_terminal = False
