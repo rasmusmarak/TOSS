@@ -7,6 +7,7 @@ import math
 from math import pi, radians
 import numpy as np
 
+import toss
 # For optimization using pygmo
 from toss import EquationsOfMotion as EquationsOfMotion
 
