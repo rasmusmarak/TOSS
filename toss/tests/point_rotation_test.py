@@ -8,10 +8,10 @@ from math import pi, radians
 import numpy as np
 
 # For optimization using pygmo
-from EquationsOfMotion import EquationsOfMotion
+from toss import EquationsOfMotion as EquationsOfMotion
 
 # To define mesh
-import mesh_utility
+from toss import mesh_utility
 
 # For computing rotations of orbits
 from pyquaternion import Quaternion
