@@ -2,6 +2,9 @@
 """ This test checks whether or not a point rotation is performed correctly """
 
 import os, sys
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
 
 # Core packages
 from dotmap import DotMap
@@ -19,9 +22,6 @@ import mesh_utility
 from pyquaternion import Quaternion
 
 def rotation_of_point_test():
-    currentdir = os.path.dirname(os.path.realpath(__file__))
-    parentdir = os.path.dirname(currentdir)
-    sys.path.append(parentdir)
 
     # Body parameters
     body_args = DotMap()
@@ -73,4 +73,3 @@ def rotation_of_point_test():
 
     # Check if both methods give equal rotation
     assert all(np.equal(rotated_position_analytical,rotated_position_quaternion))
-
