@@ -2,9 +2,14 @@
 """ This test checks whether or not a point rotation is performed correctly """
 
 import os, sys
-currentdir = os.path.dirname(os.path.realpath(__file__))
-parentdir = os.path.dirname(currentdir)
-sys.path.append(parentdir)
+#currentdir = os.path.dirname(os.path.realpath(__file__))
+#parentdir = os.path.dirname(currentdir)
+#sys.path.append(parentdir)
+
+sys.path.append("../..")
+import toss
+from toss import mesh_utility
+from toss import EquationsOfMotion
 
 # Core packages
 from dotmap import DotMap
@@ -13,10 +18,10 @@ from math import pi, radians
 import numpy as np
 
 # For optimization using pygmo
-from EquationsOfMotion import EquationsOfMotion
+#from EquationsOfMotion import EquationsOfMotion
 
 # To define mesh
-import mesh_utility
+#import mesh_utility
 
 # For computing rotations of orbits
 from pyquaternion import Quaternion
@@ -73,3 +78,5 @@ def rotation_of_point_test():
 
     # Check if both methods give equal rotation
     assert all(np.equal(rotated_position_analytical,rotated_position_quaternion))
+
+rotation_of_point_test()
