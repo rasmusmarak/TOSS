@@ -1,4 +1,4 @@
-name: 67p_swarm
+name: toss
 channels:
   - conda-forge
   - defaults

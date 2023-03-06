@@ -1,18 +1,22 @@
 
 """ This test checks whether or not a point rotation is performed correctly """
 
+import os, sys
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
+
 # Core packages
 from dotmap import DotMap
 import math
 from math import pi, radians
 import numpy as np
 
-import toss
 # For optimization using pygmo
-from toss import EquationsOfMotion as EquationsOfMotion
+from EquationsOfMotion import EquationsOfMotion
 
 # To define mesh
-from toss import mesh_utility
+import mesh_utility
 
 # For computing rotations of orbits
 from pyquaternion import Quaternion
@@ -35,14 +39,13 @@ def rotation_of_point_test():
     x = [1000, 1000, 1000]
 
     # Define time for rotation (in seconds)
-    t = 20000 
+    t = 20000
 
 
     ######### Rotation using Quaternion #########
     # Rotation of point: 
-    rotated_position_quaternion = eq_of_motion.rotate_point(t, x)
+    rotated_position_quaternion = np.around(eq_of_motion.rotate_point(t, x), 5)
     #############################################
-
 
     #########    Analtical rotation    #########
     # Define spin axis as in EquationsOfMotion:
@@ -52,11 +55,12 @@ def rotation_of_point_test():
     q_axis = q_dec * q_ra  # Composite rotation of q1 then q2 expressed as standard multiplication
     spin_axis = q_axis.rotate([0,0,1])
 
-    # Define analytical rotation:
+
+    # Define analytical rotation (euler-rodrigues):
     axis = np.asarray(spin_axis)
     axis = axis / math.sqrt(np.dot(axis, axis))
-    a = math.cos((spin_velocity*t)/2.0)
-    b, c, d = -axis * math.sin((spin_velocity*t)/ 2.0)
+    a = math.cos((2*pi - (spin_velocity*t))/2.0)
+    b, c, d = -axis * math.sin((2*pi - (spin_velocity*t))/ 2.0)
     aa, bb, cc, dd = a * a, b * b, c * c, d * d
     bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
 
@@ -64,7 +68,8 @@ def rotation_of_point_test():
                         [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
                         [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
-    rotated_position_analytical = np.dot(rotation_matrix, x)
+    rotated_position_analytical = np.around(np.dot(rotation_matrix, x), 5)
 
+    # Check if both methods give equal rotation
+    assert all(np.equal(rotated_position_analytical,rotated_position_quaternion))
 
-    assert rotated_position_analytical == rotated_position_quaternion
