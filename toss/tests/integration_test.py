@@ -5,9 +5,8 @@ sys.path.append("../..")
 
 # Import relevant modules
 import toss
-from toss import mesh_utility
-from toss import equations_of_motion
-from toss import trajectory_tools
+from toss import equations_of_motion, trajectory_tools, mesh_utility
+
 
 # Core packages
 from dotmap import DotMap
