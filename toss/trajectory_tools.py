@@ -1,6 +1,6 @@
 # General
 import numpy as np
-from typing import Union
+from typing import Union, Callable
 
 # For Plotting
 import pyvista as pv
@@ -17,7 +17,7 @@ import desolver.backend as D
 D.set_float_fmt('float64')
 
 
-def compute_trajectory(x: np.ndarray, args, func: function) -> Union[np.ndarray, float, bool]:
+def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray, float, bool]:
     """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
     Args:
@@ -41,7 +41,7 @@ def compute_trajectory(x: np.ndarray, args, func: function) -> Union[np.ndarray,
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                 radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
                 event (int): Event configuration (0 = no event, 1 = collision with body detection)
-        func (function): A function handle for the state update equation required for integration.
+        func (Callable): A function handle for the state update equation required for integration.
 
     Returns:
         trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
@@ -72,12 +72,12 @@ def compute_trajectory(x: np.ndarray, args, func: function) -> Union[np.ndarray,
     return trajectory_info, squared_altitudes, collision_detected
 
 
-def integrate(func: function, x: np.ndarray, args) -> np.ndarray:
+def integrate(func: Callable, x: np.ndarray, args):
 
     """ Integrates trajectory numerically using DeSolver library.
 
     Args:
-        func (function): A function handle for the equ_rhs (state update equation) required for integration.
+        func (Callable): A function handle for the equ_rhs (state update equation) required for integration.
         x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates.
         args (dotmap.DotMap):
             body:
@@ -97,7 +97,8 @@ def integrate(func: function, x: np.ndarray, args) -> np.ndarray:
                 vertices (np.ndarray): Array containing all points on mesh.
                 faces (np.ndarray): Array containing all triangles on the mesh.
     Returns:
-        _type_: _description_
+        trajectory (desolver.differential_system.OdeSystem): The integration object provided by desolver.
+        trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
     """
 
     # Setup parameters
@@ -107,7 +108,6 @@ def integrate(func: function, x: np.ndarray, args) -> np.ndarray:
     dt = args.problem.initial_time_step
     rtol = args.integrator.rtol
     atol = args.integrator.atol
-    risk_zone_radius = args.problem.radius_bounding_sphere
     numerical_integrator = IntegrationScheme(args.integrator.algorithm).name
     event = args.problem.event
 

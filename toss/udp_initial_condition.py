@@ -90,7 +90,7 @@ class udp_initial_condition:
 
         Args:
             x (np.ndarray): State vector containing values for position and velocity of satelite in #D cartesian coordinates.
-            
+
         Returns:
             fitness value (_float_): Difference between squared values of current and target altitude of satellite.
         """
