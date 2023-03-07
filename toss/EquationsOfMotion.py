@@ -16,7 +16,7 @@ class EquationsOfMotion:
     body and its current position expressed in three dimensions.
     """
 
-    def __init__(self, mesh_vertices, mesh_faces, body_args):
+    def __init__(self, args):
         """
         Construtor for defining the celestial body as a mesh-based object.
 
@@ -30,27 +30,35 @@ class EquationsOfMotion:
                 right_ascension (float): Right ascension angle of spin axis.
                 spin_period (float): Rotational period around spin axis of the body.
         """
+        # Declerations
+        density = args.body.density
+        dec = args.body.declination
+        ra = args.body.right_ascension
+        period = args.body.spin_period
+
         # Assertion
-        assert body_args.density > 0
-        assert body_args.declination >= 0
-        assert body_args.right_ascension >= 0
-        assert body_args.spin_period >= 0
+        assert density > 0
+        assert dec >= 0
+        assert ra >= 0
+        assert period >= 0
 
         # Attributes relating to mesh 
-        self.mesh_vertices = mesh_vertices
-        self.mesh_faces = mesh_faces 
+        self.mesh_vertices = args.mesh.vertices
+        self.mesh_faces = args.mesh.faces 
 
         # Attributes relating to body
-        self.body_args = body_args 
+        self.args = args 
 
         # Compute angular velocity of spin using known rotational period.
-        self.spin_velocity = (2*pi)/body_args.spin_period
+        self.spin_velocity = (2*pi)/args.body.spin_period
 
         # Setup spin axis of the body
-        q_dec = Quaternion(axis=[1,0,0], angle=radians(self.body_args.declination)) # Rotate spin axis according to declination
-        q_ra = Quaternion(axis=[0,0,1], angle=radians(self.body_args.right_ascension)) # Rotate spin axis accordining to right ascension
+        q_dec = Quaternion(axis=[1,0,0], angle=radians(self.args.body.declination)) # Rotate spin axis according to declination
+        q_ra = Quaternion(axis=[0,0,1], angle=radians(self.args.body.right_ascension)) # Rotate spin axis accordining to right ascension
         q_axis = q_dec * q_ra  # Composite rotation of q1 then q2 expressed as standard multiplication
         self.spin_axis = q_axis.rotate([0,0,1])
+
+
 
     def compute_acceleration(self, x: np.ndarray) -> np.ndarray:
         """ 
@@ -63,7 +71,7 @@ class EquationsOfMotion:
         Returns:
             (np.ndarray): The acceleration at the given point x with respect to the mesh (celestial body).
         """
-        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.body_args.density, x)
+        _, a, _ = model.evaluate(self.mesh_vertices, self.mesh_faces, self.args.body.density, x)
         return -np.array(a)
 
     # Used by all RK-type algorithms
