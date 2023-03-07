@@ -14,7 +14,6 @@ from dotmap import DotMap
 from math import pi
 import numpy as np
 
-
 def test_integration():
 
     args = DotMap()
