@@ -17,6 +17,39 @@ import desolver.backend as D
 D.set_float_fmt('float64')
 
 
+def compute_trajectory(x: np.ndarray, args, func) -> Union[np.ndarray, float, bool]:
+    """compute_trajectory computes trajectory of satellite using numerical integation techniques 
+
+    Args:
+        x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates.
+
+    Returns:
+        trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
+        squared_altitudes (float): Sum of squared altitudes above origin for every position
+        collision_penalty (bool): Penalty value given for the event of a collision with the celestial body.
+    """
+    
+    # Compute trajectory by numerical integration
+    trajectory, trajectory_info = integrate(func, x, args)
+
+    # Compute average distance to target altitude
+    squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
+
+    # Check for potential collisions
+    points_inside_risk_zone = np.empty((len(trajectory.events), 3), dtype=np.float64)
+    i = 0
+    for j in trajectory.events:
+        points_inside_risk_zone[i,:] = j.y[0:3]
+        i += 1
+    
+    collisions_avoided = point_is_outside_mesh(points_inside_risk_zone, args.mesh.vertices, args.mesh.faces)
+    if all(collisions_avoided) == True:
+        collision_detected = False
+    else:
+        collision_detected = True
+    
+    # Return trajectory and neccessary values for computing fitness in udp.
+    return trajectory_info, squared_altitudes, collision_detected
 
 
 def integrate(func, x, args) -> np.ndarray:
@@ -42,7 +75,7 @@ def integrate(func, x, args) -> np.ndarray:
         dt = dt, 
         rtol = rtol, 
         atol = atol,
-        constants=dict(risk_zone_radius = risk_zone_radius))
+        constants=dict(args = args))
     trajectory.method = str(numerical_integrator)
 
     if event==0:
@@ -58,7 +91,7 @@ def integrate(func, x, args) -> np.ndarray:
     return trajectory, trajectory_info
 
 
-def point_is_inside_risk_zone(t: float, state: np.ndarray, risk_zone_radius: float) -> int:
+def point_is_inside_risk_zone(t: float, state: np.ndarray, args: float) -> int:
     """ Checks for event: collision with the celestial body.
 
     Args:
@@ -69,6 +102,7 @@ def point_is_inside_risk_zone(t: float, state: np.ndarray, risk_zone_radius: flo
     Returns:
         (int): Returns 1 when the satellite enters the risk-zone, and 0 otherwise.
     """
+    risk_zone_radius = args.problem.radius_bounding_sphere
     position = state[0:3]
     distance = risk_zone_radius**2 - position[0]**2 + position[1]**2 + position[2]**2
     if distance >= 0:

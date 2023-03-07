@@ -6,7 +6,7 @@ from typing import Union
 import trajectory_tools
 
 # For computing the next state
-from EquationsOfMotion import EquationsOfMotion
+import equations_of_motion
 
 # For orbit representation (reference frame)
 import pykep as pk
@@ -41,9 +41,6 @@ class udp_initial_condition:
             radius_bounding_sphere (float)_: Radius for the bounding sphere around mesh.
         """
 
-        # Setup equations of motion class
-        self.eq_of_motion = EquationsOfMotion(args)
-
         # Declerations
         self.target_sq_alt = args.problem.target_squared_altitude
         mu = args.body.mu
@@ -52,6 +49,10 @@ class udp_initial_condition:
         dt = args.problem.initial_time_step
         r_sphere = args.problem.radius_bounding_sphere
         largest_protuberant = args.mesh.largest_body_protuberant
+        density = args.body.density
+        dec = args.body.declination
+        ra = args.body.right_ascension
+        period = args.body.spin_period
 
         # Assertions:
         assert self.target_sq_alt > 0
@@ -60,6 +61,10 @@ class udp_initial_condition:
         assert tf > ti
         assert dt <= tf - ti
         assert r_sphere > largest_protuberant
+        assert density > 0
+        assert dec >= 0
+        assert ra >= 0
+        assert period >= 0
 
 
         # Additional hyperparameters
@@ -82,7 +87,7 @@ class udp_initial_condition:
         x_cartesian = np.array(r+v)
 
         # Integrate trajectory
-        _, squared_altitudes, collision_detected = self.compute_trajectory(x_cartesian)
+        _, squared_altitudes, collision_detected = trajectory_tools.compute_trajectory(x_cartesian, self.args, equations_of_motion.compute_motion)
 
         # Define fitness penalty in the event of at least one collision along the trajectory
         if collision_detected == True:
@@ -104,40 +109,3 @@ class udp_initial_condition:
             upper_bounds (np.ndarray): Lower boundary values for the initial state vector.
         """
         return (self.lower_bounds, self.upper_bounds)
-    
-
-
-    def compute_trajectory(self, x: np.ndarray) -> Union[np.ndarray, float, bool]:
-        """compute_trajectory computes trajectory of satellite using numerical integation techniques 
-
-        Args:
-            x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates.
-
-        Returns:
-            trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
-            squared_altitudes (float): Sum of squared altitudes above origin for every position
-            collision_penalty (bool): Penalty value given for the event of a collision with the celestial body.
-        """
-        
-        # Compute trajectory by numerical integration
-        trajectory, trajectory_info = trajectory_tools.integrate(self.eq_of_motion.compute_motion, x, self.args)
-
-        # Compute average distance to target altitude
-        squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
-
-        # Check for potential collisions
-        points_inside_risk_zone = np.empty((len(trajectory.events), 3), dtype=np.float64)
-        i = 0
-        for j in trajectory.events:
-            points_inside_risk_zone[i,:] = j.y[0:3]
-            i += 1
-        
-        collisions_avoided = trajectory_tools.point_is_outside_mesh(points_inside_risk_zone, self.args.mesh.vertices, self.args.mesh.faces)
-        if all(collisions_avoided) == True:
-            collision_detected = False
-        else:
-            collision_detected = True
-        
-        # Return trajectory and neccessary values for computing fitness in udp.
-        return trajectory_info, squared_altitudes, collision_detected
-
