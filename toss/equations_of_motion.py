@@ -10,6 +10,20 @@ from pyquaternion import Quaternion
 
 
 def setup_spin_axis(args):
+    """ 
+    Defines a spin axis given the declination and
+    right ascension of the body's rotation.
+
+    Args:
+        args (dotmap.DotMap):
+            body:
+                declination (float): Declination angle of spin axis.
+                right_ascension (float): Right ascension angle of spin axis.
+
+    Returns:
+        spin_axis (np.ndarray): The axis around which the body rotates.
+    """
+
     # Setup spin axis of the body
     q_dec = Quaternion(axis=[1,0,0], angle=radians(args.body.declination)) # Rotate spin axis according to declination
     q_ra = Quaternion(axis=[0,0,1], angle=radians(args.body.right_ascension)) # Rotate spin axis accordining to right ascension
@@ -25,6 +39,12 @@ def compute_acceleration(x: np.ndarray, args) -> np.ndarray:
 
     Args:
         x (np.ndarray): Vector containing information on current position expressed in 3D cartesian coordinates.
+        args (dotmap.DotMap):
+            body:
+                density (float): Mass density of celestial body.
+            mesh:
+                vertices (np.ndarray): Array containing all points on mesh.
+                faces (np.ndarray): Array containing all triangles on the mesh.
 
     Returns:
         (np.ndarray): The acceleration at the given point x with respect to the mesh (celestial body).
@@ -39,7 +59,14 @@ def compute_motion(t: float, x: np.ndarray, args) -> np.ndarray:
     Args:
         t (float): Time value in seconds corresponding to current state
         x (np.ndarray): State vector containing position and velocity expressed in 3D cartesian coordinates.
-        risk_zone_radius (float): Radius of bounding sphere around mesh with center at origin. 
+        args (dotmap.DotMap):
+            body:
+                density (float): Mass density of celestial body.
+                spin_velocity (float): Angular velocity of the body's rotation.
+                spin_axis (np.ndarray): The axis around which the body rotates.
+            mesh:
+                vertices (np.ndarray): Array containing all points on mesh.
+                faces (np.ndarray): Array containing all triangles on the mesh.
 
     Returns:
         (np.ndarray): K vector used for computing state at the following time step.
@@ -59,6 +86,10 @@ def rotate_point(t: float, x: np.ndarray, args) -> np.ndarray:
     Args:
         t (float): Time value in seconds when position x occurs.
         x (np.ndarray): Position of satellite expressed in the 3D cartesian coordinates.
+        args (dotmap.DotMap):
+            body:
+                spin_velocity (float): Angular velocity of the body's rotation.
+                spin_axis (np.ndarray): The axis around which the body rotates.
     Returns:
         x_rotated (np.ndarray): Rotated position of satellite expressed in the 3D cartesian coordinates.
     """

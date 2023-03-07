@@ -17,11 +17,31 @@ import desolver.backend as D
 D.set_float_fmt('float64')
 
 
-def compute_trajectory(x: np.ndarray, args, func) -> Union[np.ndarray, float, bool]:
+def compute_trajectory(x: np.ndarray, args, func: function) -> Union[np.ndarray, float, bool]:
     """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
     Args:
         x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates.
+        args (dotmap.DotMap):
+            body: Parameters related to the celestial body:
+                density (float): Mass density of celestial body.
+                mu (float): Gravitational parameter for celestial body.
+                declination (float): Declination angle of spin axis.
+                right_ascension (float): Right ascension angle of spin axis.
+                spin_velocity (float): Angular velocity of the body's rotation.
+                spin_axis (np.ndarray): The axis around which the body rotates.
+            integrator: Specific parameters related to the integrator:
+                algorithm (int): Integer representing specific integrator algorithm.
+                dense_output (bool): Dense output status of integrator.
+                rtol (float): Relative error tolerance for integration.
+                atol (float): Absolute error tolerance for integration.
+            problem: Parameters related to the problem:
+                start_time (float): Start time (in seconds) for the integration of trajectory.
+                final_time (float): Final time (in seconds) for the integration of trajectory.
+                initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
+                radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
+                event (int): Event configuration (0 = no event, 1 = collision with body detection)
+        func (function): A function handle for the state update equation required for integration.
 
     Returns:
         trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
@@ -52,7 +72,33 @@ def compute_trajectory(x: np.ndarray, args, func) -> Union[np.ndarray, float, bo
     return trajectory_info, squared_altitudes, collision_detected
 
 
-def integrate(func, x, args) -> np.ndarray:
+def integrate(func: function, x: np.ndarray, args) -> np.ndarray:
+
+    """ Integrates trajectory numerically using DeSolver library.
+
+    Args:
+        func (function): A function handle for the equ_rhs (state update equation) required for integration.
+        x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates.
+        args (dotmap.DotMap):
+            body:
+                density (float): Mass density of celestial body.
+            integrator: Specific parameters related to the integrator:
+                algorithm (int): Integer representing specific integrator algorithm.
+                dense_output (bool): Dense output status of integrator.
+                rtol (float): Relative error tolerance for integration.
+                atol (float): Absolute error tolerance for integration.
+            problem: Parameters related to the problem:
+                start_time (float): Start time (in seconds) for the integration of trajectory.
+                final_time (float): Final time (in seconds) for the integration of trajectory.
+                initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
+                radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
+                event (int): Event configuration (0 = no event, 1 = collision with body detection)
+            mesh:
+                vertices (np.ndarray): Array containing all points on mesh.
+                faces (np.ndarray): Array containing all triangles on the mesh.
+    Returns:
+        _type_: _description_
+    """
 
     # Setup parameters
     dense_output = args.integrator.dense_output
@@ -97,7 +143,9 @@ def point_is_inside_risk_zone(t: float, state: np.ndarray, args: float) -> int:
     Args:
         t (float): Current time step for integration.
         state (np.ndarray): Current state, i.e position and velocity
-        risk_zone_radius (float): Radius of bounding sphere around mesh. 
+        args (dotmap.DotMap):
+            problem:
+                radius_bounding_sphere (float): Radius of bounding sphere around mesh. 
 
     Returns:
         (int): Returns 1 when the satellite enters the risk-zone, and 0 otherwise.
@@ -117,6 +165,8 @@ def point_is_outside_mesh(x: np.ndarray, mesh_vertices: np.ndarray, mesh_faces: 
 
     Args:
         x (np.ndarray): Array containing current, or a set of, positions expressed in 3 dimensions.
+        mesh_vertices (np.ndarray): Array containing all points on mesh.
+        mesh_faces (np.ndarray): Array containing all triangles on the mesh.
 
     Returns:
         collision_boolean (bool): A one dimensional array with boolean values corresponding to each
@@ -132,6 +182,7 @@ def plot_trajectory(r_store: np.ndarray, mesh):
 
     Args:
         r_store (np.ndarray): Array containing values on position at each time step for the trajectory (columnwise).
+        mesh (tetgen.pytetgen.TetGen): Tetgen mesh object of celestial body.
     """
     # Plotting mesh of asteroid/comet
     mesh_plot = pv.Plotter(window_size=[500, 500])

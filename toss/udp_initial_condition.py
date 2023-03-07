@@ -25,20 +25,32 @@ class udp_initial_condition:
         """ Setup udp attributes.
 
         Args:
-            body_args (dotmap.DotMap): Paramteers relating to the celestial body:
-                density (float): Body density of celestial body.
-                mu (float): Gravitational parameter for celestial body.
-                declination (float): Declination angle of spin axis.
-                right_ascension (float): Right ascension angle of spin axis.
-                spin_period (float): Rotational period around spin axis of the body.
-            target_squared_altitude (float): Target altitude for satellite trajectory. 
-            final_time (float): Final time for integration.
-            start_time (float): Start time for integration of trajectory (often zero)
-            time_step (float): Step size for integration. 
+            args (dotmap.Dotmap)
+                body: Parameters related to the celestial body:
+                    density (float): Mass density of celestial body.
+                    mu (float): Gravitational parameter for celestial body.
+                    declination (float): Declination angle of spin axis.
+                    right_ascension (float): Right ascension angle of spin axis.
+                    spin_period (float): Rotational period around spin axis of the body.
+                    spin_velocity (float): Angular velocity of the body's rotation.
+                    spin_axis (np.ndarray): The axis around which the body rotates.
+                integrator: Specific parameters related to the integrator:
+                    algorithm (int): Integer representing specific integrator algorithm.
+                    dense_output (bool): Dense output status of integrator.
+                    rtol (float): Relative error tolerance for integration.
+                    atol (float): Absolute error tolerance for integration.
+                problem: Parameters related to the problem:
+                    start_time (float): Start time (in seconds) for the integration of trajectory.
+                    final_time (float): Final time (in seconds) for the integration of trajectory.
+                    initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
+                    target_squared_altitude (float): Squared value of the satellite's orbital target altitude.
+                    radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
+                    event (int): Event configuration (0 = no event, 1 = collision with body detection) 
+                mesh:
+                    vertices (np.ndarray): Array containing all points on mesh.
+                    faces (np.ndarray): Array containing all triangles on the mesh.
             lower_bounds (np.ndarray): Lower bounds for domain of initial state.
             upper_bounds (np.ndarray): Upper bounds for domain of initial state. 
-            algorithm (int): User defined algorithm of choice
-            radius_bounding_sphere (float)_: Radius for the bounding sphere around mesh.
         """
 
         # Declerations
@@ -77,8 +89,8 @@ class udp_initial_condition:
         """ fitness evaluates the proximity of the satallite to target altitude.
 
         Args:
-            x (np.ndarray): State vector containing values for position and velocity of satelite in #D cartesian coordinates. 
-
+            x (np.ndarray): State vector containing values for position and velocity of satelite in #D cartesian coordinates.
+            
         Returns:
             fitness value (_float_): Difference between squared values of current and target altitude of satellite.
         """
