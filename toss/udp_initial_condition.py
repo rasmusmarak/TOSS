@@ -8,7 +8,7 @@ from Trajectory import Trajectory
 # For orbit representation (reference frame)
 import pykep as pk
 
-# Class representing UDP
+# Class representing UDP 
 class udp_initial_condition:
     """ 
     Sets up the user defined problem (udp) for use with pygmo.

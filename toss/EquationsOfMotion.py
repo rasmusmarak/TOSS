@@ -8,7 +8,6 @@ import polyhedral_gravity as model
 # For computing rotations of orbits
 from pyquaternion import Quaternion
 
-
 class EquationsOfMotion:
     """
     Defining the celestial body of interest as a mesh object, as well as providing methods 
