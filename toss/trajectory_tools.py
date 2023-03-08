@@ -4,7 +4,7 @@ from typing import Union, Callable
 
 # For Plotting
 import pyvista as pv
-
+ 
 # For working with the mesh
 from toss.mesh_utility import is_outside
 
