@@ -1,6 +1,6 @@
 # General
 from enum import Enum
-
+ 
 class IntegrationScheme(Enum):
         """
          Describes different types of numerical integrators provided by Desolver.
