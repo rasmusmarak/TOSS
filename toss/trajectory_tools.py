@@ -17,6 +17,7 @@ import desolver.backend as D
 D.set_float_fmt('float64')
 
 
+
 def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray, float, bool]:
     """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
