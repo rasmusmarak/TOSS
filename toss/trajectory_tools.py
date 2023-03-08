@@ -6,10 +6,10 @@ from typing import Union, Callable
 import pyvista as pv
 
 # For working with the mesh
-import mesh_utility
+from toss.mesh_utility import is_outside
 
 # For choosing numerical integration method
-from Integrator import IntegrationScheme
+from toss.Integrator import IntegrationScheme
 
 # D-solver (performs integration)
 import desolver as de
@@ -173,7 +173,7 @@ def point_is_outside_mesh(x: np.ndarray, mesh_vertices: np.ndarray, mesh_faces: 
                                 position kept in x. Returns "False" if point is inside mesh, and 
                                 "True" if point is outside mesh (that is, there no collision).
     """
-    collision_boolean = mesh_utility.is_outside(x, mesh_vertices, mesh_faces)
+    collision_boolean = is_outside(x, mesh_vertices, mesh_faces)
     return collision_boolean
 
 
