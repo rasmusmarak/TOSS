@@ -1,7 +1,7 @@
 # General
 import numpy as np
 from typing import Union
-
+ 
 # For Plotting
 import pyvista as pv
 
@@ -27,11 +27,16 @@ class Trajectory:
     Desolver. The class also calls for files related to plotting the trajectory.
     """
 
-    def __init__(self, body_density, final_time, start_time, time_step, algorithm, radius_bounding_sphere):
+    def __init__(self, body_args, final_time, start_time, time_step, algorithm, radius_bounding_sphere):
         """ Setup udp attributes.
 
         Args:
-            body_density (float): Mass density of body of interest
+            body_args (dotmap.DotMap): Paramteers relating to the celestial body:
+                density (float): Body density of celestial body.
+                mu (float): Gravitational parameter for celestial body.
+                declination (float): Declination angle of spin axis.
+                right_ascension (float): Right ascension angle of spin axis.
+                spin_period (float): Rotational period around spin axis of the body.
             final_time (float): Final time for integration.
             start_time (float): Start time for integration of trajectory (often zero)
             time_step (float): Step size for integration. 
@@ -47,7 +52,7 @@ class Trajectory:
         assert radius_bounding_sphere > largest_body_protuberant
 
         # Setup equations of motion class
-        self.eq_of_motion = EquationsOfMotion(self.mesh_vertices, self.mesh_faces, body_density)
+        self.eq_of_motion = EquationsOfMotion(self.mesh_vertices, self.mesh_faces, body_args)
 
         # Additional hyperparameters
         self.start_time = start_time
@@ -57,17 +62,19 @@ class Trajectory:
         self.radius_bounding_sphere = radius_bounding_sphere
 
 
-    def integrate(self, x: np.ndarray) -> Union[np.ndarray, float, float]:
+    def integrate(self, x: np.ndarray) -> Union[np.ndarray, float, bool]:
         """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
         Args:
-            x (np.ndarray): State vector containing values for position and velocity of satelite in three dimensions.
+            x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates.
 
         Returns:
             trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
             squared_altitudes (float): Sum of squared altitudes above origin for every position
-            collision_penalty (float): Penalty value given for the event of a collision with the celestial body.
+            collision_penalty (bool): Penalty value given for the event of a collision with the celestial body.
         """
+        # Setup constants:
+        risk_zone_radius = self.radius_bounding_sphere
 
         # Integrate trajectory
         initial_state = D.array(x)
@@ -79,7 +86,7 @@ class Trajectory:
             dt = self.time_step, 
             rtol = 1e-12, 
             atol = 1e-12,
-            constants=dict(risk_zone_radius = self.radius_bounding_sphere)) #, mesh_vertices = self.mesh_vertices, mesh_faces = self.mesh_faces
+            constants=dict(risk_zone_radius = risk_zone_radius))
         trajectory.method = str(IntegrationScheme(self.algorithm).name)
 
         point_is_inside_risk_zone.is_terminal = False
@@ -105,8 +112,6 @@ class Trajectory:
         # Return trajectory and neccessary values for computing fitness in udp.
         return trajectory_info, squared_altitudes, collision_detected
 
-
-
     def plot_trajectory(self, r_store: np.ndarray):
         """plot_trajectory plots the body mesh and satellite trajectory.
 
@@ -116,7 +121,7 @@ class Trajectory:
         # Plotting mesh of asteroid/comet
         mesh_plot = pv.Plotter(window_size=[500, 500])
         mesh_plot.add_mesh(self.body_mesh.grid, show_edges=True)
-        mesh_plot.show_bounds(minor_ticks=True) #grid='front',location='outer',all_edges=True 
+        #mesh_plot.show_bounds() # minor_ticks=True, grid='front',location='outer',all_edges=True 
 
         # Plotting trajectory
         trajectory = np.transpose(r_store)

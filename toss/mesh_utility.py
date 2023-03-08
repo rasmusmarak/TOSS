@@ -8,7 +8,6 @@ from typing import Union
 import tetgen
 
 
-
 def read_pk_file(filename):
     """
     Reads in a .pk file and returns the vertices and triangles (faces)
@@ -46,7 +45,7 @@ def create_mesh() -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float
         largest_protuberant (float): Length of largest protuberant mass of the celestial body. (Computed from body centered at origin)
     """
 
-    path = str(pathlib.Path("Introductory Tests").parent.resolve())
+    path = str(pathlib.Path("toss").parent.resolve())
 
     # Read the input .pk file
     mesh_points, mesh_triangles = read_pk_file(path + "/3dmeshes/churyumov-gerasimenko_lp.pk")

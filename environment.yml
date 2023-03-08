@@ -1,16 +1,17 @@
-name: 67P_Swarm
+name: toss
 channels:
   - conda-forge
   - defaults
 dependencies:
-  - numpy
+  - numpy==1.23.5
   - pygmo
   - polyhedral-gravity-model
   - pyvista
   - matplotlib
   - panel
-  - jupyter_backend
   - pykep
+  - pyquaternion
+  - dotmap
   - pip:
       - tetgen
       - desolver
