@@ -57,7 +57,7 @@ def test_integration():
     final_state_new = trajectory_info[-1, 0:6]
 
     print("New", final_state_new)
-    print("new all: ", final_state_new[-1,:])
+    print("new all: ", trajectory_info[-1,:])
     print("new traj shape: ", trajectory_info.shape)
 
     assert all(np.isclose(final_state_historical,final_state_new,rtol=1e-5, atol=1e-5))
