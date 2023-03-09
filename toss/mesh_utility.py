@@ -45,10 +45,11 @@ def create_mesh() -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float
         largest_protuberant (float): Length of largest protuberant mass of the celestial body. (Computed from body centered at origin)
     """
 
-    path = str(pathlib.Path("toss").parent.resolve())
+    path = str(pathlib.Path("67P-Swarm").parent.resolve())
+    corrected_path = path.split('toss', 1)[0]
 
     # Read the input .pk file
-    mesh_points, mesh_triangles = read_pk_file(path + "/3dmeshes/churyumov-gerasimenko_lp.pk")
+    mesh_points, mesh_triangles = read_pk_file(corrected_path + "toss/3dmeshes/churyumov-gerasimenko_lp.pk")
 
     # Un-normalizing the scale
     #   Conversion factor [to metric meters]: 3126.6064453124995
