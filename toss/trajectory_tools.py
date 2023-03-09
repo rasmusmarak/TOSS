@@ -4,12 +4,15 @@ from typing import Union, Callable
 
 # For Plotting
 import pyvista as pv
- 
+
+# For orbit representation (reference frame)
+import pykep as pk
+
 # For working with the mesh
-from toss.mesh_utility import is_outside
+from mesh_utility import is_outside
 
 # For choosing numerical integration method
-from toss.Integrator import IntegrationScheme
+from Integrator import IntegrationScheme
 
 # D-solver (performs integration)
 import desolver as de
@@ -17,12 +20,11 @@ import desolver.backend as D
 D.set_float_fmt('float64')
 
 
-
 def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray, float, bool]:
     """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
     Args:
-        x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates.
+        x (np.ndarray): State vector.
         args (dotmap.DotMap):
             body: Parameters related to the celestial body:
                 density (float): Mass density of celestial body.
@@ -42,6 +44,12 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                 radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
                 event (int): Event configuration (0 = no event, 1 = collision with body detection)
+            mesh:
+                vertices (np.ndarray): Array containing all points on mesh.
+                faces (np.ndarray): Array containing all triangles on the mesh.
+            state: Parameters provided by the state vector
+                time_of_maneuver (float): Time for adding impulsive maneuver [seconds].
+                delta_v (np.ndarray): Array containing the cartesian componants of the impulsive maneuver.
         func (Callable): A function handle for the state update equation required for integration.
 
     Returns:
@@ -49,9 +57,16 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         squared_altitudes (float): Sum of squared altitudes above origin for every position
         collision_penalty (bool): Penalty value given for the event of a collision with the celestial body.
     """
-    
+    # Convert osculating orbital elements to cartesian for integration
+    r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
+    x_cartesian = np.array(r+v)
+
+    # Add state variables related to the impulsive maneuver in args
+    args.state.time_of_maneuver = x[6]
+    args.state.delta_v = np.array([x[7], x[8], x[9]])
+
     # Compute trajectory by numerical integration
-    trajectory, trajectory_info = integrate(func, x, args)
+    trajectory, trajectory_info = integrate(func, x_cartesian, args)
 
     # Compute average distance to target altitude
     squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
@@ -79,7 +94,7 @@ def integrate(func: Callable, x: np.ndarray, args):
 
     Args:
         func (Callable): A function handle for the equ_rhs (state update equation) required for integration.
-        x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates.
+        x (np.ndarray): Initial position and velocity of satelite in 3D cartesian coordinates.
         args (dotmap.DotMap):
             body:
                 density (float): Mass density of celestial body.
@@ -97,6 +112,9 @@ def integrate(func: Callable, x: np.ndarray, args):
             mesh:
                 vertices (np.ndarray): Array containing all points on mesh.
                 faces (np.ndarray): Array containing all triangles on the mesh.
+            state: Parameters provided by the state vector
+                time_of_maneuver (float): Time for adding impulsive maneuver [seconds].
+                delta_v (np.ndarray): Array containing the cartesian componants of the impulsive maneuver.
     Returns:
         trajectory (desolver.differential_system.OdeSystem): The integration object provided by desolver.
         trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).

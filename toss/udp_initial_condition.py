@@ -8,9 +8,6 @@ import trajectory_tools
 # For computing the next state
 import equations_of_motion
 
-# For orbit representation (reference frame)
-import pykep as pk
-
 # Class representing UDP 
 class udp_initial_condition:
     """ 
@@ -89,17 +86,14 @@ class udp_initial_condition:
         """ fitness evaluates the proximity of the satallite to target altitude.
 
         Args:
-            x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates. 
+            x (np.ndarray): State vector. 
 
         Returns:
             fitness value (_float_): Difference between squared values of current and target altitude of satellite.
         """
-        # Convert osculating orbital elements to cartesian for integration
-        r, v = pk.par2ic(E=x, mu=self.args.body.mu)
-        x_cartesian = np.array(r+v)
 
         # Integrate trajectory
-        _, squared_altitudes, collision_detected = trajectory_tools.compute_trajectory(x_cartesian, self.args, equations_of_motion.compute_motion)
+        _, squared_altitudes, collision_detected = trajectory_tools.compute_trajectory(x, self.args, equations_of_motion.compute_motion)
 
         # Define fitness penalty in the event of at least one collision along the trajectory
         if collision_detected == True:
