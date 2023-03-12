@@ -62,21 +62,45 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
     x_cartesian = np.array(r+v)
 
     # Add state variables related to the impulsive maneuver in args
-    args.state.time_of_maneuver = x[6]
+    args.state.time_of_maneuver = int(x[6])
     args.state.delta_v = np.array([x[7], x[8], x[9]])
 
-    # Compute trajectory by numerical integration
-    trajectory, trajectory_info = integrate(func, x_cartesian, args)
+    time_list = [args.problem.start_time, args.state.time_of_maneuver, args.problem.final_time]
+    for i in range(0, len(time_list)-1):
+        args.integrator.t0 = time_list[i]
+        args.integrator.tf = time_list[i+1]
+
+        if i > 0:
+            # Start at end position of previous interval, now adding impulsive manuever
+            x_cartesian = trajectory_info[0:6,-1]
+            x_cartesian[3:6] += args.state.delta_v
+
+        # Compute trajectory by numerical integration
+        trajectory, trajectory_memory = integrate_trajectory(func, x_cartesian, args)
+
+        if i == 0:
+            trajectory_info = trajectory_memory
+
+        else:
+            trajectory_info = np.hstack((trajectory_info[:,0:-1] ,trajectory_memory))
+
+        
+        # Check for potential collisions
+        event_triggers = np.empty((len(trajectory.events), 3), dtype=np.float64)
+        k = 0
+        for event in trajectory.events:
+            event_triggers[k,:] = event.y[0:3]
+            k += 1
+
+        if i == 0: 
+            points_inside_risk_zone = event_triggers
+        else:
+            points_inside_risk_zone = np.vstack((points_inside_risk_zone, event_triggers))
+
 
     # Compute average distance to target altitude
     squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
 
-    # Check for potential collisions
-    points_inside_risk_zone = np.empty((len(trajectory.events), 3), dtype=np.float64)
-    i = 0
-    for j in trajectory.events:
-        points_inside_risk_zone[i,:] = j.y[0:3]
-        i += 1
     
     collisions_avoided = point_is_outside_mesh(points_inside_risk_zone, args.mesh.vertices, args.mesh.faces)
     if all(collisions_avoided) == True:
@@ -88,7 +112,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
     return trajectory_info, squared_altitudes, collision_detected
 
 
-def integrate(func: Callable, x: np.ndarray, args):
+def integrate_trajectory(func: Callable, x: np.ndarray, args):
 
     """ Integrates trajectory numerically using DeSolver library.
 
@@ -122,13 +146,15 @@ def integrate(func: Callable, x: np.ndarray, args):
 
     # Setup parameters
     dense_output = args.integrator.dense_output
-    t0 = args.problem.start_time
-    tf = args.problem.final_time
+    t0 = args.integrator.t0
+    tf = args.integrator.tf
     dt = args.problem.initial_time_step
     rtol = args.integrator.rtol
     atol = args.integrator.atol
     numerical_integrator = IntegrationScheme(args.integrator.algorithm).name
     event = args.problem.event
+
+    print("time interval: ", "(", t0, tf, ")")
 
     # Integrate trajectory
     initial_state = D.array(x)
@@ -156,7 +182,7 @@ def integrate(func: Callable, x: np.ndarray, args):
     return trajectory, trajectory_info
 
 
-def point_is_inside_risk_zone(t: float, state: np.ndarray, args: float) -> int:
+def point_is_inside_risk_zone(t: float, state: np.ndarray, args) -> int:
     """ Checks for event: collision with the celestial body.
 
     Args:

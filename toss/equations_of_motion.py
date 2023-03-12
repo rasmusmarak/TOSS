@@ -77,12 +77,7 @@ def compute_motion(t: float, x: np.ndarray, args) -> np.ndarray:
     a = compute_acceleration(rotated_position, args)
 
     kx = x[3:6]
-
-    if (t >= args.state.time_of_maneuver - 50) and (t <= args.state.time_of_maneuver + 50):
-        print("maneuver used at t=", t)
-        kv = a + args.state.delta_v
-    else:
-        kv = a
+    kv = a
 
     return np.concatenate((kx, kv))
 
