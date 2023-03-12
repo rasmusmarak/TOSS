@@ -39,8 +39,8 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
                 rtol (float): Relative error tolerance for integration.
                 atol (float): Absolute error tolerance for integration.
             problem: Parameters related to the problem:
-                start_time (float): Start time (in seconds) for the integration of trajectory.
-                final_time (float): Final time (in seconds) for the integration of trajectory.
+                start_time (int): Start time (in seconds) for the integration of trajectory.
+                final_time (int): Final time (in seconds) for the integration of trajectory.
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                 radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
                 event (int): Event configuration (0 = no event, 1 = collision with body detection)
@@ -83,7 +83,6 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
 
         else:
             trajectory_info = np.hstack((trajectory_info[:,0:-1] ,trajectory_memory))
-
         
         # Check for potential collisions
         event_triggers = np.empty((len(trajectory.events), 3), dtype=np.float64)
@@ -100,8 +99,8 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
 
     # Compute average distance to target altitude
     squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
-
     
+    # Check for collisions
     collisions_avoided = point_is_outside_mesh(points_inside_risk_zone, args.mesh.vertices, args.mesh.faces)
     if all(collisions_avoided) == True:
         collision_detected = False
@@ -128,8 +127,8 @@ def integrate_trajectory(func: Callable, x: np.ndarray, args):
                 rtol (float): Relative error tolerance for integration.
                 atol (float): Absolute error tolerance for integration.
             problem: Parameters related to the problem:
-                start_time (float): Start time (in seconds) for the integration of trajectory.
-                final_time (float): Final time (in seconds) for the integration of trajectory.
+                start_time (int): Start time (in seconds) for the integration of trajectory.
+                final_time (int): Final time (in seconds) for the integration of trajectory.
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                 radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
                 event (int): Event configuration (0 = no event, 1 = collision with body detection)
@@ -153,8 +152,6 @@ def integrate_trajectory(func: Callable, x: np.ndarray, args):
     atol = args.integrator.atol
     numerical_integrator = IntegrationScheme(args.integrator.algorithm).name
     event = args.problem.event
-
-    print("time interval: ", "(", t0, tf, ")")
 
     # Integrate trajectory
     initial_state = D.array(x)
