@@ -72,6 +72,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
     else:
         time_list = [args.problem.start_time, args.state.time_of_maneuver, args.problem.final_time]
 
+    trajectory_info = 0
     # Integrate trajectory for each subinterval
     for i in range(0, len(time_list)-1):
         args.integrator.t0 = time_list[i]
