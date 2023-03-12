@@ -40,6 +40,7 @@ def test_integration():
     args.problem.initial_time_step = 600            # Initial time step size for integration [s]
     args.problem.radius_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
     args.problem.event = 1                          # Event configuration (0 = no event, 1 = collision with body detection)
+    args.problem.number_of_maneuvers = 0 
 
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = mesh_utility.create_mesh()
 

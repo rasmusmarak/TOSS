@@ -42,7 +42,8 @@ class udp_initial_condition:
                     initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                     target_squared_altitude (float): Squared value of the satellite's orbital target altitude.
                     radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
-                    event (int): Event configuration (0 = no event, 1 = collision with body detection) 
+                    event (int): Event configuration (0 = no event, 1 = collision with body detection).
+                    number_of_maneuvers (int): Number of possible maneuvers.
                 mesh:
                     vertices (np.ndarray): Array containing all points on mesh.
                     faces (np.ndarray): Array containing all triangles on the mesh.

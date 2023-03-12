@@ -43,7 +43,8 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
                 final_time (int): Final time (in seconds) for the integration of trajectory.
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                 radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
-                event (int): Event configuration (0 = no event, 1 = collision with body detection)
+                event (int): Event configuration (0 = no event, 1 = collision with body detection).
+                number_of_maneuvers (int): Number of possible maneuvers.
             mesh:
                 vertices (np.ndarray): Array containing all points on mesh.
                 faces (np.ndarray): Array containing all triangles on the mesh.
@@ -65,7 +66,13 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
     args.state.time_of_maneuver = int(x[6])
     args.state.delta_v = np.array([x[7], x[8], x[9]])
 
-    time_list = [args.problem.start_time, args.state.time_of_maneuver, args.problem.final_time]
+    # Setup time intervals with/without maneuvers
+    if args.problem.number_of_maneuvers == 0:
+        time_list = [args.problem.start_time, args.problem.final_time]
+    else:
+        time_list = [args.problem.start_time, args.state.time_of_maneuver, args.problem.final_time]
+
+    # Integrate trajectory for each subinterval
     for i in range(0, len(time_list)-1):
         args.integrator.t0 = time_list[i]
         args.integrator.tf = time_list[i+1]
