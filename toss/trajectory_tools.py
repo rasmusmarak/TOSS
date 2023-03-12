@@ -9,10 +9,10 @@ import pyvista as pv
 import pykep as pk
 
 # For working with the mesh
-from toss.mesh_utility import is_outside
+from mesh_utility import is_outside
 
 # For choosing numerical integration method
-from toss.Integrator import IntegrationScheme
+from Integrator import IntegrationScheme
 
 # D-solver (performs integration)
 import desolver as de
@@ -72,7 +72,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         time_list = [args.problem.start_time, args.state.time_of_maneuver, args.problem.final_time]
 
     # Integrate trajectory for each subinterval
-    trajectory_info = 0
+    #trajectory_info = 0
     for i in range(0, len(time_list)-1):
         args.integrator.t0 = time_list[i]
         args.integrator.tf = time_list[i+1]
