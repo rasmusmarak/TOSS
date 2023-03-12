@@ -62,18 +62,17 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
     r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
     x_cartesian = np.array(r+v)
 
-    # Add state variables related to the impulsive maneuver in args
-    args.state.time_of_maneuver = int(x[6])
-    args.state.delta_v = np.array([x[7], x[8], x[9]])
-
     # Setup time intervals with/without maneuvers
     if args.problem.number_of_maneuvers == 0:
         time_list = [args.problem.start_time, args.problem.final_time]
     else:
+        # Add state variables related to the impulsive maneuver in args
+        args.state.time_of_maneuver = int(x[6])
+        args.state.delta_v = np.array([x[7], x[8], x[9]])
         time_list = [args.problem.start_time, args.state.time_of_maneuver, args.problem.final_time]
 
-    trajectory_info = 0
     # Integrate trajectory for each subinterval
+    trajectory_info = 0
     for i in range(0, len(time_list)-1):
         args.integrator.t0 = time_list[i]
         args.integrator.tf = time_list[i+1]
