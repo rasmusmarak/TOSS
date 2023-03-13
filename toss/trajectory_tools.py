@@ -1,9 +1,6 @@
 # General
 import numpy as np
 from typing import Union, Callable
-
-# For Plotting
-import pyvista as pv
  
 # For working with the mesh
 from toss.mesh_utility import is_outside
@@ -176,30 +173,3 @@ def point_is_outside_mesh(x: np.ndarray, mesh_vertices: np.ndarray, mesh_faces: 
     """
     collision_boolean = is_outside(x, mesh_vertices, mesh_faces)
     return collision_boolean
-
-
-def plot_trajectory(r_store: np.ndarray, mesh):
-    """plot_trajectory plots the body mesh and satellite trajectory.
-
-    Args:
-        r_store (np.ndarray): Array containing values on position at each time step for the trajectory (columnwise).
-        mesh (tetgen.pytetgen.TetGen): Tetgen mesh object of celestial body.
-    """
-    # Plotting mesh of asteroid/comet
-    mesh_plot = pv.Plotter(window_size=[500, 500])
-    mesh_plot.add_mesh(mesh.grid, show_edges=True)
-    #mesh_plot.show_bounds() # minor_ticks=True, grid='front',location='outer',all_edges=True 
-
-    # Plotting trajectory
-    trajectory = np.transpose(r_store)
-    for i in range(0,len(r_store[0])-1):
-        traj = np.vstack((trajectory[i,:], trajectory[i+1,:]))
-        mesh_plot.add_lines(traj, color="red", width=40)
-                    
-    # Plotting final position as a white dot
-    trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
-    mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
-
-    mesh_plot.add_axes(x_color='red', y_color='green', z_color='blue', xlabel='X', ylabel='Y', zlabel='Z', line_width=2, shaft_length = 10)
-    
-    mesh_plot.show(jupyter_backend = 'panel') 
