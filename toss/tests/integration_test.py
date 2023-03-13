@@ -14,6 +14,7 @@ from toss import trajectory_tools
 from dotmap import DotMap
 from math import pi
 import numpy as np
+import pykep as pk
 
 def test_integration():
 
@@ -46,7 +47,8 @@ def test_integration():
 
 
     # Initial position for integration (in cartesian coordinates):
-    x_cartesian = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01, 0, 0, 0, 0]
+    x = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01, 0, 0, 0, 0]
+    x_cartesian = pk.ic2par(r=x[0:3], v=x[3:6], mu=args.body.mu)
 
     # Compute trajectory via numerical integration as in UDP.
     trajectory_info, _, _  = trajectory_tools.compute_trajectory(x_cartesian, args, equations_of_motion.compute_motion)
