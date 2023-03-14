@@ -48,12 +48,12 @@ def test_integration():
 
     # Initial position for integration (in cartesian coordinates):
     x = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01, 0, 0, 0, 0]
-    x_cartesian = pk.ic2par(r=x[0:3], v=x[3:6], mu=args.body.mu)
+    x_cartesian = pk.ic2par(r=x[0:3], v=x[3:6], mu=args.body.mu) #translate to osculating orbital element
 
     # Compute trajectory via numerical integration as in UDP.
     trajectory_info, _, _  = trajectory_tools.compute_trajectory(x_cartesian, args, equations_of_motion.compute_motion)
 
-    # Final state from previous working results:
+    # Final state from previous working results (in cartesian coordinates):
     final_state_historical = [3.07216681e+03, -2.45740917e+02, -9.03288997e+03, 2.48147088e-01, -2.18190890e-02, -2.68369809e-01]
 
     # New final state:
