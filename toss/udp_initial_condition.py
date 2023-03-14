@@ -98,6 +98,7 @@ class udp_initial_condition:
 
         # Define fitness penalty in the event of at least one collision along the trajectory
         if collision_detected == True:
+            # If collision detected, break due to infeasible trajectory.
             collision_penalty = 1e30
         else:
             collision_penalty = 0

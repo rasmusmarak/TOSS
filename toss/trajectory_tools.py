@@ -67,9 +67,16 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         time_list = [args.problem.start_time, args.problem.final_time]
     else:
         # Add state variables related to the impulsive maneuver in args
-        args.state.time_of_maneuver = int(x[6])
-        args.state.delta_v = np.array([x[7], x[8], x[9]])
-        time_list = [args.problem.start_time, args.state.time_of_maneuver, args.problem.final_time]
+        time_list = np.zeros((args.problem.number_of_maneuvers+2), dtype=np.float64)
+        time_list[0] = args.problem.start_time
+        time_list[-1] = args.problem.final_time
+        delta_v_array = np.empty((3, args.problem.number_of_maneuvers), dtype=np.float64)
+        m = 0
+
+        for n in range(6, len(x)-3, 4):
+            time_list[m+1] = int(x[n])
+            delta_v_array[:,m] = [x[n+1], x[n+2], x[n+3]]
+            m += 1
 
     # Integrate trajectory for each subinterval
     trajectory_info = 0
@@ -77,10 +84,12 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         args.integrator.t0 = time_list[i]
         args.integrator.tf = time_list[i+1]
 
+        print("time:  [",args.integrator.t0, " ,", args.integrator.tf, "]")
+
         if i > 0:
             # Start at end position of previous interval, now adding impulsive manuever
             x_cartesian = trajectory_info[0:6,-1]
-            x_cartesian[3:6] += args.state.delta_v
+            x_cartesian[3:6] += delta_v_array[:,i-1]
 
         # Compute trajectory by numerical integration
         trajectory, trajectory_memory = integrate_trajectory(func, x_cartesian, args)
