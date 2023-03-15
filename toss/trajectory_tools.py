@@ -2,9 +2,6 @@
 import numpy as np
 from typing import Union, Callable
 
-# For Plotting
-import pyvista as pv
-
 # For orbit representation (reference frame)
 import pykep as pk
 
