@@ -42,7 +42,7 @@ class udp_initial_condition:
                     initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                     target_squared_altitude (float): Squared value of the satellite's orbital target altitude.
                     radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
-                    event (int): Event configuration (0 = no event, 1 = collision with body detection).
+                    activate_event (bool): Event configuration (0 = no event, 1 = collision with body detection).
                     number_of_maneuvers (int): Number of possible maneuvers.
                 mesh:
                     vertices (np.ndarray): Array containing all points on mesh.
@@ -63,7 +63,8 @@ class udp_initial_condition:
         dec = args.body.declination
         ra = args.body.right_ascension
         period = args.body.spin_period
-
+        n_maneuvers = self.problem.number_of_maneuvers
+        activate_events = args.problem.activate_event
         # Assertions:
         assert self.target_sq_alt > 0
         assert all(np.greater(upper_bounds, lower_bounds))
@@ -75,6 +76,9 @@ class udp_initial_condition:
         assert dec >= 0
         assert ra >= 0
         assert period >= 0
+        assert n_maneuvers >= 0
+        assert type(n_maneuvers) == int
+        assert type(activate_events) == bool
 
 
         # Additional hyperparameters

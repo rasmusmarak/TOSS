@@ -40,7 +40,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
                 final_time (int): Final time (in seconds) for the integration of trajectory.
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                 radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
-                event (int): Event configuration (0 = no event, 1 = collision with body detection).
+                activate_event (bool): Event configuration (0 = no event, 1 = collision with body detection).
                 number_of_maneuvers (int): Number of possible maneuvers.
             mesh:
                 vertices (np.ndarray): Array containing all points on mesh.
@@ -147,7 +147,7 @@ def integrate_trajectory(func: Callable, x: np.ndarray, args):
                 final_time (int): Final time (in seconds) for the integration of trajectory.
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                 radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
-                event (int): Event configuration (0 = no event, 1 = collision with body detection)
+                activate_event (bool): Event configuration (0 = no event, 1 = collision with body detection)
             mesh:
                 vertices (np.ndarray): Array containing all points on mesh.
                 faces (np.ndarray): Array containing all triangles on the mesh.
@@ -167,7 +167,7 @@ def integrate_trajectory(func: Callable, x: np.ndarray, args):
     rtol = args.integrator.rtol
     atol = args.integrator.atol
     numerical_integrator = IntegrationScheme(args.integrator.algorithm).name
-    event = args.problem.event
+    activate_event = args.problem.activate_event
 
     # Integrate trajectory
     initial_state = D.array(x)
@@ -182,10 +182,10 @@ def integrate_trajectory(func: Callable, x: np.ndarray, args):
         constants=dict(args = args))
     trajectory.method = str(numerical_integrator)
 
-    if event==0:
+    if activate_event==False:
         trajectory.integrate()
 
-    elif event==1:
+    elif activate_event==True:
         point_is_inside_risk_zone.is_terminal = False
         trajectory.integrate(events=point_is_inside_risk_zone)
 
