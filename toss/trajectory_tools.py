@@ -87,6 +87,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
             print("I'm in correct func.")
             trajectory = integrate_system(func, initial_state, args)
             trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
+            print(trajectory_info[:,-1])
 
         else:
             initial_state = trajectory_info[0:6,-1]
