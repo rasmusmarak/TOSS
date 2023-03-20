@@ -63,8 +63,9 @@ class udp_initial_condition:
         dec = args.body.declination
         ra = args.body.right_ascension
         period = args.body.spin_period
-        n_maneuvers = self.problem.number_of_maneuvers
+        n_maneuvers = args.problem.number_of_maneuvers
         activate_events = args.problem.activate_event
+        
         # Assertions:
         assert self.target_sq_alt > 0
         assert all(np.greater(upper_bounds, lower_bounds))
@@ -110,8 +111,20 @@ class udp_initial_condition:
         # Compute fitness value for the integrated trajectory
         fitness_value = np.mean(np.abs(squared_altitudes-self.target_sq_alt)) + collision_penalty
 
-        return [fitness_value]
-
+        # Define discretization intervals for current integration.
+        if self.args.problem.number_of_maneuvers > 0:
+            integration_intervals, _ = trajectory_tools.setup_maneuvers(x, self.args)
+        else:
+            integration_intervals = [self.args.problem.start_time, self.args.problem.final_time]
+        
+        # Define inequality constraints for time of maneuvers
+        optimization_status = [fitness_value]
+        epsilon = 1 #small constant for strict inequality constraints. [seconds]
+        for idx in range(0, len(integration_intervals)-1):
+            ci = integration_intervals[idx] - integration_intervals[idx+1] #+ epsilon
+            #optimization_status.append(ci)
+        
+        return optimization_status
 
     def get_bounds(self) -> Union[np.ndarray, np.ndarray]:
         """get_bounds returns upper and lower bounds for the domain of the state vector.
@@ -121,3 +134,24 @@ class udp_initial_condition:
             upper_bounds (np.ndarray): Lower boundary values for the initial state vector.
         """
         return (self.lower_bounds, self.upper_bounds)
+    
+
+
+
+##########################################################################################
+    # NOTE: 
+    #   SADE supports neither constrained nor multi-objective optimization. 
+    #   Our options are therefore:
+    #       1. Choose another optimizer with these capabilities. 
+    #       2. Lagrangian relaxation of the constraint, while avoiding multi-objectives,
+
+
+    #def get_nic(self):
+    #     return (1+self.args.problem.number_of_maneuvers)
+    
+    #def get_nec(self):
+    #    return 0
+    
+
+
+
