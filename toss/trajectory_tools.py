@@ -55,9 +55,13 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         squared_altitudes (float): Sum of squared altitudes above origin for every position
         collision_penalty (bool): Penalty value given for the event of a collision with the celestial body.
     """
+    print("x (osculating): ", x)
+    
     # Separate initial state from chromosome and translate from osculating elements to cartesian frame.
     r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
     initial_state = np.array(r+v)
+
+    print("x (cartesian): ", initial_state)
 
     # In the case of maneuvers:
     if args.problem.number_of_maneuvers > 0:
@@ -206,6 +210,7 @@ def integrate_system(func: Callable, x: np.ndarray, args):
 
     # Integrate trajectory
     initial_state = D.array(x)
+    print("initial state integration: ", initial_state)
     trajectory = de.OdeSystem(
         func, 
         y0 = initial_state, 
@@ -218,9 +223,11 @@ def integrate_system(func: Callable, x: np.ndarray, args):
     trajectory.method = str(numerical_integrator)
 
     if activate_event==False:
+        print("No event.")
         trajectory.integrate()
 
     elif activate_event==True:
+        print("Event active.")
         point_is_inside_risk_zone.is_terminal = False
         trajectory.integrate(events=point_is_inside_risk_zone)
 
