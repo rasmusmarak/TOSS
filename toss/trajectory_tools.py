@@ -80,14 +80,16 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         args.integrator.tf = integration_intervals[time_idx+1]
 
         if time_idx == 0: # First integrated time-interval.
-            trajectory = integrate_system(func, initial_state, args)
-            trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
+            trajectory, traj_memory = integrate_system(func, initial_state, args)
+            trajectory_info = traj_memory
+            #trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
 
         else:
             initial_state = trajectory_info[0:6,-1]
             initial_state[3:6] = dv_of_maneuvers[:, time_idx-1]
-            trajectory = integrate_system(func, initial_state, args)
-            trajectory_info = np.hstack((trajectory_info[:,0:-1], np.vstack((np.transpose(trajectory.y), trajectory.t))))
+            trajectory, traj_memory = integrate_system(func, initial_state, args)
+            trajectory_info = np.hstack((trajectory_info[:,0:-1] ,traj_memory))
+            #trajectory_info = np.hstack((trajectory_info[:,0:-1], np.vstack((np.transpose(trajectory.y), trajectory.t))))
         
         # Save positions with risk-zone entries
         list_of_entry_points = np.empty((len(trajectory.events), 3), dtype=np.float64)
@@ -216,7 +218,12 @@ def integrate_system(func: Callable, x: np.ndarray, args):
         point_is_inside_risk_zone.is_terminal = False
         trajectory.integrate(events=point_is_inside_risk_zone)
 
-    return trajectory
+    #######
+    # Add integration times to trajectory info
+    trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
+    #######
+
+    return trajectory, trajectory_info
 
 
 def point_is_inside_risk_zone(t: float, state: np.ndarray, args) -> int:
