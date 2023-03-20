@@ -79,17 +79,15 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         args.integrator.t0 = integration_intervals[time_idx]
         args.integrator.tf = integration_intervals[time_idx+1]
 
-        #print("Time interval: [", args.integrator.t0, args.integrator.tf, "].")
-
         if time_idx == 0: # First integrated time-interval.
-            trajectory, trajectory_memory = integrate_trajectory(func, initial_state, args)
-            trajectory_info = trajectory_memory
+            trajectory = integrate_system(func, initial_state, args)
+            trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
 
         else:
             initial_state = trajectory_info[0:6,-1]
             initial_state[3:6] = dv_of_maneuvers[:, time_idx-1]
-            trajectory, trajectory_memory = integrate_trajectory(func, initial_state, args)
-            trajectory_info = np.hstack((trajectory_info[:,0:-1] ,trajectory_memory))
+            trajectory = integrate_system(func, initial_state, args)
+            trajectory_info = np.hstack((trajectory_info[:,0:-1], np.vstack((np.transpose(trajectory.y), trajectory.t))))
         
         # Save positions with risk-zone entries
         list_of_entry_points = np.empty((len(trajectory.events), 3), dtype=np.float64)
@@ -157,9 +155,9 @@ def setup_maneuvers(x:np.ndarray, args) -> Union[np.ndarray, np.ndarray]:
     return integration_intervals, dv_of_maneuvers
 
 
-def integrate_trajectory(func: Callable, x: np.ndarray, args):
+def integrate_system(func: Callable, x: np.ndarray, args):
 
-    """ Integrates trajectory numerically using DeSolver library.
+    """ Integrates system numerically using DeSolver library.
 
     Args:
         func (Callable): A function handle for the equ_rhs (state update equation) required for integration.
@@ -186,7 +184,6 @@ def integrate_trajectory(func: Callable, x: np.ndarray, args):
                 delta_v (np.ndarray): Array containing the cartesian componants of the impulsive maneuver.
     Returns:
         trajectory (desolver.differential_system.OdeSystem): The integration object provided by desolver.
-        trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
     """
 
     # Setup parameters
@@ -218,11 +215,8 @@ def integrate_trajectory(func: Callable, x: np.ndarray, args):
     elif activate_event==True:
         point_is_inside_risk_zone.is_terminal = False
         trajectory.integrate(events=point_is_inside_risk_zone)
-    
-    # Add integration times to trajectory info
-    trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
 
-    return trajectory, trajectory_info
+    return trajectory
 
 
 def point_is_inside_risk_zone(t: float, state: np.ndarray, args) -> int:
