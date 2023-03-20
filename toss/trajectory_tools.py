@@ -73,32 +73,37 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
     else:
         integration_intervals = [args.problem.start_time, args.problem.final_time]
 
+    print("integration_intervals: ", integration_intervals)
+
     # Integrate system for every defined time interval
-    trajectory_info = None
+    trajectory_info = 0 #None
     for time_idx in range(0, len(integration_intervals)-1):
         args.integrator.t0 = integration_intervals[time_idx]
         args.integrator.tf = integration_intervals[time_idx+1]
 
+        print("t0: ", args.integrator.t0, "   tf: ", args.integrator.tf)
+
         if time_idx == 0: # First integrated time-interval.
-            trajectory, traj_memory = integrate_system(func, initial_state, args)
-            trajectory_info = traj_memory
-            #trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
+            print("I'm in correct func.")
+            trajectory = integrate_system(func, initial_state, args)
+            trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
 
         else:
             initial_state = trajectory_info[0:6,-1]
             initial_state[3:6] = dv_of_maneuvers[:, time_idx-1]
-            trajectory, traj_memory = integrate_system(func, initial_state, args)
-            trajectory_info = np.hstack((trajectory_info[:,0:-1] ,traj_memory))
-            #trajectory_info = np.hstack((trajectory_info[:,0:-1], np.vstack((np.transpose(trajectory.y), trajectory.t))))
+            trajectory = integrate_system(func, initial_state, args)
+            trajectory_info = np.hstack((trajectory_info[:,0:-1], np.vstack((np.transpose(trajectory.y), trajectory.t))))
         
         # Save positions with risk-zone entries
         list_of_entry_points = np.empty((len(trajectory.events), 3), dtype=np.float64)
         array_idx = 0
-        for entry_point in trajectory.events:
-            list_of_entry_points[array_idx,:] = entry_point.y[0:3]
+        for event in trajectory.events:
+            list_of_entry_points[array_idx,:] = event.y[0:3]
             array_idx += 1
 
         if time_idx == 0: 
+            print("Still right.")
+            print("list_of_entry_points: ", list_of_entry_points)
             points_inside_risk_zone = list_of_entry_points
         else:
             points_inside_risk_zone = np.vstack((points_inside_risk_zone, list_of_entry_points))
@@ -218,12 +223,7 @@ def integrate_system(func: Callable, x: np.ndarray, args):
         point_is_inside_risk_zone.is_terminal = False
         trajectory.integrate(events=point_is_inside_risk_zone)
 
-    #######
-    # Add integration times to trajectory info
-    trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
-    #######
-
-    return trajectory, trajectory_info
+    return trajectory
 
 
 def point_is_inside_risk_zone(t: float, state: np.ndarray, args) -> int:
