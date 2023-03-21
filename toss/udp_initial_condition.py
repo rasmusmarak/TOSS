@@ -1,6 +1,7 @@
 # General
 import numpy as np
 from typing import Union
+from math import pi
 
 # For computing trajectory
 import trajectory_tools

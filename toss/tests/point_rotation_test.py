@@ -34,7 +34,9 @@ def test_rotation_of_point():
     """
 
     # Body parameters
-    args = DotMap()
+    args = DotMap(
+        body=DotMap(_dynamic=False),
+        _dynamic=False)
     args.body.density = 533                  # https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.mu = 665.666                   # Gravitational parameter for 67P/C-G
     args.body.declination = 64               # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p

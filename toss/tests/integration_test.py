@@ -18,7 +18,12 @@ import pykep as pk
 
 def test_integration():
 
-    args = DotMap()
+    args = DotMap(
+        body = DotMap(_dynamic=False),
+        integrator = DotMap(_dynamic=False),
+        problem = DotMap(_dynamic=False),
+        mesh = DotMap(_dynamic=False),
+        _dynamic=False)
 
     # Setup body parameters
     args.body.density = 533                  # https://sci.esa.int/web/rosetta/-/14615-comet-67p
