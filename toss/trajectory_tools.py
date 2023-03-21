@@ -54,14 +54,10 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
         squared_altitudes (float): Sum of squared altitudes above origin for every position
         collision_penalty (bool): Penalty value given for the event of a collision with the celestial body.
-    """
-    print("x (osculating): ", x)
-    
+    """    
     # Separate initial state from chromosome and translate from osculating elements to cartesian frame.
     r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
     initial_state = np.array(r+v)
-
-    print("x (cartesian): ", initial_state)
 
     # In the case of maneuvers:
     if args.problem.number_of_maneuvers > 0:
@@ -77,21 +73,15 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
     else:
         integration_intervals = [args.problem.start_time, args.problem.final_time]
 
-    print("integration_intervals: ", integration_intervals)
-
     # Integrate system for every defined time interval
-    trajectory_info = 0 #None
+    trajectory_info = None
     for time_idx in range(0, len(integration_intervals)-1):
         args.integrator.t0 = integration_intervals[time_idx]
         args.integrator.tf = integration_intervals[time_idx+1]
 
-        print("t0: ", args.integrator.t0, "   tf: ", args.integrator.tf)
-
         if time_idx == 0: # First integrated time-interval.
-            print("I'm in correct func.")
             trajectory = integrate_system(func, initial_state, args)
             trajectory_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
-            print(trajectory_info[:,-1])
 
         else:
             initial_state = trajectory_info[0:6,-1]
@@ -102,13 +92,11 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         # Save positions with risk-zone entries
         list_of_entry_points = np.empty((len(trajectory.events), 3), dtype=np.float64)
         array_idx = 0
-        for event in trajectory.events:
-            list_of_entry_points[array_idx,:] = event.y[0:3]
+        for entry_point in trajectory.events:
+            list_of_entry_points[array_idx,:] = entry_point.y[0:3]
             array_idx += 1
 
-        if time_idx == 0: 
-            print("Still right.")
-            print("list_of_entry_points: ", list_of_entry_points)
+        if time_idx == 0:
             points_inside_risk_zone = list_of_entry_points
         else:
             points_inside_risk_zone = np.vstack((points_inside_risk_zone, list_of_entry_points))
@@ -210,7 +198,6 @@ def integrate_system(func: Callable, x: np.ndarray, args):
 
     # Integrate trajectory
     initial_state = D.array(x)
-    print("initial state integration: ", initial_state)
     trajectory = de.OdeSystem(
         func, 
         y0 = initial_state, 
@@ -223,11 +210,9 @@ def integrate_system(func: Callable, x: np.ndarray, args):
     trajectory.method = str(numerical_integrator)
 
     if activate_event==False:
-        print("No event.")
         trajectory.integrate()
 
     elif activate_event==True:
-        print("Event active.")
         point_is_inside_risk_zone.is_terminal = False
         trajectory.integrate(events=point_is_inside_risk_zone)
 
