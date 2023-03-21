@@ -78,8 +78,8 @@ class udp_initial_condition:
         assert ra >= 0
         assert period >= 0
         assert n_maneuvers >= 0
-        assert type(n_maneuvers) == int
-        assert type(activate_events) == bool
+        assert isinstance(n_maneuvers, int)
+        assert isinstance(activate_events, bool)
 
 
         # Additional hyperparameters
