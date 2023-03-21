@@ -62,6 +62,10 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
     # In the case of maneuvers:
     if args.problem.number_of_maneuvers > 0:
         integration_intervals, dv_of_maneuvers = setup_maneuvers(x, args)
+
+        #   NOTE: We adjust each time value present in integration_intervals to
+        #         be integers since the used solver does not manage floating points
+        #         as boundaries for the integrated time interval very well.
         integration_intervals = integration_intervals.astype(np.int32)
 
         # Rearrange maneuvers into increasing order of time of execution
