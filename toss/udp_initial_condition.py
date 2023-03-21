@@ -134,24 +134,3 @@ class udp_initial_condition:
             upper_bounds (np.ndarray): Lower boundary values for the initial state vector.
         """
         return (self.lower_bounds, self.upper_bounds)
-    
-
-
-
-##########################################################################################
-    # NOTE: 
-    #   SADE supports neither constrained nor multi-objective optimization. 
-    #   Our options are therefore:
-    #       1. Choose another optimizer with these capabilities. 
-    #       2. Lagrangian relaxation of the constraint, while avoiding multi-objectives,
-
-
-    #def get_nic(self):
-    #     return (1+self.args.problem.number_of_maneuvers)
-    
-    #def get_nec(self):
-    #    return 0
-    
-
-
-
