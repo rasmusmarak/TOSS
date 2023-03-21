@@ -36,8 +36,8 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
                 rtol (float): Relative error tolerance for integration.
                 atol (float): Absolute error tolerance for integration.
             problem: Parameters related to the problem:
-                start_time (int): Start time (in seconds) for the integration of trajectory.
-                final_time (int): Final time (in seconds) for the integration of trajectory.
+                start_time (float): Start time (in seconds) for the integration of trajectory.
+                final_time (float): Final time (in seconds) for the integration of trajectory.
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                 radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
                 activate_event (bool): Event configuration (0 = no event, 1 = collision with body detection).
@@ -75,7 +75,8 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         dv_of_maneuvers = dv_of_maneuvers[:,correct_order_of_maneuvers]
         
     else:
-        integration_intervals = [args.problem.start_time, args.problem.final_time]
+        integration_intervals = np.array([args.problem.start_time, args.problem.final_time])
+        integration_intervals = integration_intervals.astype(np.int32)
 
     # Integrate system for every defined time interval
     trajectory_info = None
@@ -129,8 +130,8 @@ def setup_maneuvers(x:np.ndarray, args) -> Union[np.ndarray, np.ndarray]:
         x (np.ndarray): State vector.
         args (dotmap.DotMap):
             problem: Parameters related to the problem:
-                start_time (int): Start time (in seconds) for the integration of trajectory.
-                final_time (int): Final time (in seconds) for the integration of trajectory.
+                start_time (float): Start time (in seconds) for the integration of trajectory.
+                final_time (float): Final time (in seconds) for the integration of trajectory.
                 number_of_maneuvers (int): Number of possible maneuvers.
 
     Returns:
@@ -175,8 +176,6 @@ def integrate_system(func: Callable, x: np.ndarray, args):
                 rtol (float): Relative error tolerance for integration.
                 atol (float): Absolute error tolerance for integration.
             problem: Parameters related to the problem:
-                start_time (int): Start time (in seconds) for the integration of trajectory.
-                final_time (int): Final time (in seconds) for the integration of trajectory.
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                 radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
                 activate_event (bool): Event configuration (0 = no event, 1 = collision with body detection)
