@@ -110,21 +110,8 @@ class udp_initial_condition:
 
         # Compute fitness value for the integrated trajectory
         fitness_value = np.mean(np.abs(squared_altitudes-self.target_sq_alt)) + collision_penalty
-
-        # Define discretization intervals for current integration.
-        if self.args.problem.number_of_maneuvers > 0:
-            integration_intervals, _ = trajectory_tools.setup_maneuvers(x, self.args)
-        else:
-            integration_intervals = [self.args.problem.start_time, self.args.problem.final_time]
         
-        # Define inequality constraints for time of maneuvers
-        optimization_status = [fitness_value]
-        epsilon = 1 #small constant for strict inequality constraints. [seconds]
-        for idx in range(0, len(integration_intervals)-1):
-            ci = integration_intervals[idx] - integration_intervals[idx+1] #+ epsilon
-            #optimization_status.append(ci)
-        
-        return optimization_status
+        return [fitness_value]
 
     def get_bounds(self) -> Union[np.ndarray, np.ndarray]:
         """get_bounds returns upper and lower bounds for the domain of the state vector.
