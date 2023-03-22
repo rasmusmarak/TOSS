@@ -38,8 +38,8 @@ class udp_initial_condition:
                     rtol (float): Relative error tolerance for integration.
                     atol (float): Absolute error tolerance for integration.
                 problem: Parameters related to the problem:
-                    start_time (int): Start time (in seconds) for the integration of trajectory.
-                    final_time (int): Final time (in seconds) for the integration of trajectory.
+                    start_time (float): Start time (in seconds) for the integration of trajectory.
+                    final_time (float): Final time (in seconds) for the integration of trajectory.
                     initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                     target_squared_altitude (float): Squared value of the satellite's orbital target altitude.
                     radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
