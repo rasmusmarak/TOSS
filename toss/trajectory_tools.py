@@ -3,10 +3,10 @@ import numpy as np
 from typing import Union, Callable
  
 # For working with the mesh
-from mesh_utility import is_outside
+from toss.mesh_utility import is_outside
 
 # For choosing numerical integration method
-from Integrator import IntegrationScheme
+from toss.Integrator import IntegrationScheme
 
 # D-solver (performs integration)
 import desolver as de
