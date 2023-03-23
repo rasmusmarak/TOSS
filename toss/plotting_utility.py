@@ -22,11 +22,12 @@ def fitness_over_generations(fitness_list, number_of_generations):
     ax.grid('major')
     ax.set_title('Best individual of each generation', fontweight='bold')
     ax.set_xlabel('Number of generation')
-    ax.set_ylabel(r'UDP fitness value')
+    ax.set_ylabel('UDP fitness value')
     ax.legend(loc='upper right')
     ax.set_yscale('log')
     plt.tight_layout()
-    plt.show()
+    #plt.show()
+    plt.savefig('figures/67P/fitness_over_generations.png')
 
 
 def two_axis_trajectory(trajectory_info, axis_1, axis_2):
@@ -40,7 +41,9 @@ def two_axis_trajectory(trajectory_info, axis_1, axis_2):
     # Plot a two axis trajectory
     figure, ax = plt.subplots()
     ax.plot(trajectory_info[axis_1,:],trajectory_info[axis_2,:])
-    plt.show()
+    #plt.show()
+    plt.savefig('figures/67P/two_axis_plot.png')
+
 
 
 def plot_trajectory(r_store: np.ndarray, mesh):
@@ -68,3 +71,5 @@ def plot_trajectory(r_store: np.ndarray, mesh):
     mesh_plot.add_axes(x_color='red', y_color='green', z_color='blue', xlabel='X', ylabel='Y', zlabel='Z', line_width=2, shaft_length = 10)
     
     mesh_plot.show(jupyter_backend = 'panel') 
+
+    plt.savefig('figures/67P/trajectory_mesh_plot.png')
