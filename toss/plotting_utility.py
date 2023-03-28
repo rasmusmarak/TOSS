@@ -44,18 +44,23 @@ def two_axis_trajectory(trajectory_info, axis_1, axis_2):
     ax1.set_title("Axis: (x,y)")
 
     ax2.plot(trajectory_info[0,:],trajectory_info[2,:])
-    ax1.set_title("Axis: (x,z)")
+    ax2.set_title("Axis: (x,z)")
 
     ax3.plot(trajectory_info[2,:],trajectory_info[3,:])
-    ax1.set_title("Axis: (y,z)")
+    ax3.set_title("Axis: (y,z)")
 
     plt.savefig('figures/two_axis_plot.png')
 
-def plot_UDP(args, r_store: np.ndarray, plot_mesh, plot_trajectory, plot_risk_zone):
+def plot_UDP(args, r_store: np.ndarray, plot_mesh, plot_trajectory, plot_risk_zone, view_angle):
     """plot_trajectory plots the satellite trajectory.
 
     Args:
-        (3xN) r_store (np.ndarray): Array containing N positions (cartesian frame) on the trajectory.
+        args (dotmap.DotMap): Dotmap dictionary containing info on mesh and bounding sphere.
+        r_store (np.ndarray): (3xN) Array containing N positions (cartesian frame) on the trajectory.
+        plot_mesh (bool): Activation of plotting the mesh
+        plot_trajectory (bool): Activation of plotting the trajectory
+        plot_risk_zone (bool): Activation of plotting the bounding sphere (i.e risk-zone)
+        view_angle (list): List containing the view angle of the plot.
     """
     # Define figure
     #ax = plt.figure().add_subplot(projection='3d')
@@ -83,8 +88,8 @@ def plot_UDP(args, r_store: np.ndarray, plot_mesh, plot_trajectory, plot_risk_zo
         Z = r*np.cos(v)
         ax.plot_wireframe(X, Y, Z, color="r", alpha=0.1)
 
-    ax.set_title("Solution to UDP")
-    ax.view_init(15,-45)
+    ax.set_title("Solution to UDP.    View angle: ("+str(view_angle[0])+", "+str(view_angle[1])+")") # Solution to UDP
+    ax.view_init(view_angle[0],view_angle[1]) #ax.view_init(15,-45)
 
     # Make axes limits 
     xyzlim = np.array([ax.get_xlim3d(),ax.get_ylim3d(),ax.get_zlim3d()]).T
@@ -122,3 +127,40 @@ def plot_trajectory_with_mesh_pyvista(r_store: np.ndarray, mesh):
     
     #mesh_plot.show(jupyter_backend = 'panel')
     mesh_plot.save_graphic("figures/trajectory_mesh_plot.pdf")
+
+
+def plot_performance_scaling(core_counts, run_times):
+
+    # Setting up figure
+    figure, (ax1, ax2) = plt.subplots(1,2)
+    figure.tight_layout()
+
+    # Define ideal scaling:
+    lowest_core_count = core_counts[0]
+    measured_time_lowest_core_count = run_times[0]
+    ideal_time_n_cores=[]
+    speed_up = []
+    for i in range(0,len(core_counts)):
+        n_cores = core_counts[i]
+        ideal_time_n_cores.append((measured_time_lowest_core_count * lowest_core_count)/n_cores)
+        speed_up.append(measured_time_lowest_core_count/run_times[i])
+
+    # Plotting: run time vs core count (alongside corresponding ideal scaling)
+    ax1.plot(core_counts, run_times, 'o-r', label="10 Chromosomes/island")
+    ax1.plot(core_counts, ideal_time_n_cores, "--b", label="Ideal scaling")
+    ax1.legend()
+    ax1.set_xlabel("Number of Islands")
+    ax1.set_ylabel("Run time (Seconds)") 
+
+    # Plotting: efficiency vs core count (and a reference line representing 80%)
+    efficiency = []
+    for j in range(0,len(core_counts)):
+        efficiency.append(ideal_time_n_cores[j]/run_times[j])
+    ax2.plot(core_counts, efficiency, 'o-r', label="10 Chromosomes/island")
+    ax2.axhline(y=0.8, color="b", linestyle="--", label="80% Reference")
+    ax2.plot(core_counts, speed_up, "--g", label="Speed-up")
+
+
+    ax2.legend()
+    ax2.set_xlabel("Number of Islands")
+    ax2.set_ylabel("Efficiency")
