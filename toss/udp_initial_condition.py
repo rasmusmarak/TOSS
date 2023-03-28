@@ -1,15 +1,13 @@
 # General
 import numpy as np
 from typing import Union
+from math import pi
 
 # For computing trajectory
 import trajectory_tools
 
 # For computing the next state
 import equations_of_motion
-
-# For orbit representation (reference frame)
-import pykep as pk
 
 # Class representing UDP 
 class udp_initial_condition:
@@ -45,7 +43,8 @@ class udp_initial_condition:
                     initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                     target_squared_altitude (float): Squared value of the satellite's orbital target altitude.
                     radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
-                    event (int): Event configuration (0 = no event, 1 = collision with body detection) 
+                    activate_event (bool): Event configuration (0 = no event, 1 = collision with body detection).
+                    number_of_maneuvers (int): Number of possible maneuvers.
                 mesh:
                     vertices (np.ndarray): Array containing all points on mesh.
                     faces (np.ndarray): Array containing all triangles on the mesh.
@@ -65,7 +64,9 @@ class udp_initial_condition:
         dec = args.body.declination
         ra = args.body.right_ascension
         period = args.body.spin_period
-
+        n_maneuvers = args.problem.number_of_maneuvers
+        activate_events = args.problem.activate_event
+        
         # Assertions:
         assert self.target_sq_alt > 0
         assert all(np.greater(upper_bounds, lower_bounds))
@@ -77,6 +78,9 @@ class udp_initial_condition:
         assert dec >= 0
         assert ra >= 0
         assert period >= 0
+        assert n_maneuvers >= 0
+        assert isinstance(n_maneuvers, int)
+        assert isinstance(activate_events, bool)
 
 
         # Additional hyperparameters
@@ -89,29 +93,26 @@ class udp_initial_condition:
         """ fitness evaluates the proximity of the satallite to target altitude.
 
         Args:
-            x (np.ndarray): State vector containing values for position and velocity of satelite in 3D cartesian coordinates. 
+            x (np.ndarray): State vector. 
 
         Returns:
             fitness value (_float_): Difference between squared values of current and target altitude of satellite.
         """
-        # Convert osculating orbital elements to cartesian for integration
-        r, v = pk.par2ic(E=x, mu=self.args.body.mu)
-        x_cartesian = np.array(r+v)
 
         # Integrate trajectory
-        _, squared_altitudes, collision_detected = trajectory_tools.compute_trajectory(x_cartesian, self.args, equations_of_motion.compute_motion)
+        _, squared_altitudes, collision_detected = trajectory_tools.compute_trajectory(x, self.args, equations_of_motion.compute_motion)
 
         # Define fitness penalty in the event of at least one collision along the trajectory
         if collision_detected == True:
+            # If collision detected, break due to infeasible trajectory.
             collision_penalty = 1e30
         else:
             collision_penalty = 0
 
         # Compute fitness value for the integrated trajectory
         fitness_value = np.mean(np.abs(squared_altitudes-self.target_sq_alt)) + collision_penalty
-
+        
         return [fitness_value]
-
 
     def get_bounds(self) -> Union[np.ndarray, np.ndarray]:
         """get_bounds returns upper and lower bounds for the domain of the state vector.
