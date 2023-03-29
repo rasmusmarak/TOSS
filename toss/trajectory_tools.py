@@ -1,15 +1,16 @@
 # General
 import numpy as np
 from typing import Union, Callable
+from math import pi
 
 # For orbit representation (reference frame)
 import pykep as pk
 
 # For working with the mesh
-from toss.mesh_utility import is_outside
+from mesh_utility import is_outside
 
 # For choosing numerical integration method
-from toss.Integrator import IntegrationScheme
+from Integrator import IntegrationScheme
 
 # D-solver (performs integration)
 import desolver as de
@@ -17,7 +18,7 @@ import desolver.backend as D
 D.set_float_fmt('float64')
 
 
-def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray, float, bool]:
+def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray, float, bool, np.ndarray, float]:
     """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
     Args:
@@ -80,6 +81,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
 
     # Integrate system for every defined time interval
     trajectory_info = None
+    list_of_trajectory_objects = []
     for time_idx in range(0, len(integration_intervals)-1):
         args.integrator.t0 = integration_intervals[time_idx]
         args.integrator.tf = integration_intervals[time_idx+1]
@@ -106,6 +108,9 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         else:
             points_inside_risk_zone = np.vstack((points_inside_risk_zone, list_of_entry_points))
 
+        # Store OdeSystem trajectory object in list:
+        list_of_trajectory_objects.append(trajectory)
+
 
     # Compute average distance to target altitude
     squared_altitudes = trajectory_info[0,:]**2 + trajectory_info[1,:]**2 + trajectory_info[2,:]**2
@@ -116,9 +121,87 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         collision_detected = False
     else:
         collision_detected = True
-    
+
+    # Compute information on measured gravity signal and total covered measurement volume:
+    measurement_spheres_info = compute_measurement_sphere_info(args, list_of_trajectory_objects, integration_intervals)
+    measured_squared_volume = np.sum(measurement_spheres_info[4,:])
+
     # Return trajectory and neccessary values for computing fitness in udp.
-    return trajectory_info, squared_altitudes, collision_detected
+    return trajectory_info, squared_altitudes, collision_detected, measurement_spheres_info, measured_squared_volume
+
+
+
+def compute_measurement_sphere_info(args, list_of_trajectory_objects, integration_intervals):
+
+    # Define fixed time-steps of the satellite's position on the trajectory
+    measurement_period = 10
+    measurement_times = np.linspace(args.problem.start_time, args.problem.final_time, int((args.problem.final_time - args.problem.start_time)/measurement_period))
+
+    # Preparing storage of information regarding mission gravity signal measurements.
+    measurement_spheres_info = np.empty((5,len(measurement_times)), dtype=np.float64)
+
+    # Compute the satellite's position at equidistant time-steps using the dense output of each trajectory object.
+    object_idx = 0
+    initial_idx = 0
+    for time in integration_intervals[1:]:
+
+        # Estimate nearest covered index in measurement_times for current discretized time in integration intervals
+        estimated_time_idx = int(time/measurement_period)
+
+        # Verify estimated time index in measurement_times:
+        if time < measurement_times[estimated_time_idx]:
+            if time > measurement_times[estimated_time_idx-1]:
+                time_index = estimated_time_idx
+            else:
+                time_index = estimated_time_idx - 1
+
+        elif time > measurement_times[estimated_time_idx]:
+            if time < measurement_times[estimated_time_idx+1]:
+                time_index = estimated_time_idx
+            else:
+                time_index = estimated_time_idx + 1
+
+        # Compute satellite positions
+        trajectory_object = list_of_trajectory_objects[object_idx]
+        covered_measurement_times = measurement_times[initial_idx:(time_index+1)]
+        satellite_positions = np.transpose(trajectory_object._OdeSystem__sol(covered_measurement_times))
+
+        # Store trajectory positions:
+        measurement_spheres_info[0:3, initial_idx:(time_index + 1)] = satellite_positions
+
+        # Update index:
+        initial_idx = time_index + 1
+        object_idx += 1
+
+
+    # Compute and store information on spheres:
+    for i in range(0, len(measurement_times)):    
+        # Define radius of the current measurement sphere as the half distance to the previous position after a fixed time-step.
+        #  The origin of each sphere is therefore defined as the point-vector from the origin in the body-fixed frame.
+        #  NOTE: We consider the radius as the half-distance to the previous position in order to avoid overlapping volumes.
+        
+        sphere_i = measurement_spheres_info[0:3, i]
+        if i == 0:
+            # We consider the first two spheres to have equal radius
+            sphere_j = measurement_spheres_info[0:3, i+1]
+        else:
+            sphere_j = measurement_spheres_info[0:3, i-1]
+
+        squared_distance_sphere_ij = (((sphere_j[0]-sphere_i[0]))**2 + ((sphere_j[1]-sphere_i[1]))**2 + ((sphere_j[2]-sphere_i[2]))**2)
+        squared_radius_of_sphere_i = squared_distance_sphere_ij/4
+
+        # Compute volume of sphere i:
+        squared_volume_of_sphere_i = (4/3)**2 * pi**2 * (squared_radius_of_sphere_i**3)
+
+        # Store information on sphere i
+        measurement_spheres_info[3,i] = squared_radius_of_sphere_i
+        measurement_spheres_info[4,i] = squared_volume_of_sphere_i
+
+
+    # Return information on measurement spheres
+    return measurement_spheres_info
+
+
 
 
 def setup_maneuvers(x:np.ndarray, args) -> Union[np.ndarray, np.ndarray]:
