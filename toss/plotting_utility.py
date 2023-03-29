@@ -77,7 +77,7 @@ def plot_trajectory(r_store: np.ndarray, mesh):
 
 def drawSphere(r):
     #draw sphere
-    u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:40j]
+    u, v = np.mgrid[0:2*np.pi:15j, 0:np.pi:15j] #previously: 40j
     x=r*np.cos(u)*np.sin(v)
     y=r*np.sin(u)*np.sin(v)
     z=r*np.cos(v)
