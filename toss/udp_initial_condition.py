@@ -91,7 +91,7 @@ class udp_initial_condition:
 
 
     def fitness(self, x: np.ndarray) -> float:
-        """ fitness evaluates the proximity of the satallite to target altitude.
+        """ Objective value to be minimized.
 
         Args:
             x (np.ndarray): State vector. 
