@@ -81,6 +81,7 @@ class udp_initial_condition:
         assert n_maneuvers >= 0
         assert isinstance(n_maneuvers, int)
         assert isinstance(activate_events, bool)
+        assert (args.problem.measurable_squared_volume > 0)
 
 
         # Additional hyperparameters
@@ -100,17 +101,20 @@ class udp_initial_condition:
         """
 
         # Integrate trajectory
-        _, squared_altitudes, collision_detected = trajectory_tools.compute_trajectory(x, self.args, equations_of_motion.compute_motion)
+        _, squared_altitudes, collision_detected, _, measured_squared_volume = trajectory_tools.compute_trajectory(x, self.args, equations_of_motion.compute_motion)
 
         # Define fitness penalty in the event of at least one collision along the trajectory
         if collision_detected == True:
             # If collision detected, break due to infeasible trajectory.
             collision_penalty = 1e30
         else:
-            collision_penalty = 0
+            collision_penalty = 0 
+
+        # Compute ratio of measured volume  
+        measured_volume_ratio = measured_squared_volume / self.args.problem.measurable_squared_volume
 
         # Compute fitness value for the integrated trajectory
-        fitness_value = np.mean(np.abs(squared_altitudes-self.target_sq_alt)) + collision_penalty
+        fitness_value = np.mean(np.abs(squared_altitudes-self.target_sq_alt)) + collision_penalty + (1-measured_volume_ratio)
         
         return [fitness_value]
 
