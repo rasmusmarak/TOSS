@@ -134,7 +134,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
 def compute_measurement_sphere_info(args, list_of_trajectory_objects, integration_intervals):
 
     # Define fixed time-steps of the satellite's position on the trajectory
-    measurement_period = 10
+    measurement_period = 2500 #10
     measurement_times = np.linspace(args.problem.start_time, args.problem.final_time, int((args.problem.final_time - args.problem.start_time)/measurement_period))
 
     # Preparing storage of information regarding mission gravity signal measurements.
@@ -149,7 +149,10 @@ def compute_measurement_sphere_info(args, list_of_trajectory_objects, integratio
         estimated_time_idx = int(time/measurement_period)
 
         # Verify estimated time index in measurement_times:
-        if time < measurement_times[estimated_time_idx]:
+        if time == measurement_times[estimated_time_idx-1]:
+            time_index = estimated_time_idx - 1
+
+        elif time < measurement_times[estimated_time_idx]:
             if time > measurement_times[estimated_time_idx-1]:
                 time_index = estimated_time_idx
             else:
@@ -161,13 +164,14 @@ def compute_measurement_sphere_info(args, list_of_trajectory_objects, integratio
             else:
                 time_index = estimated_time_idx + 1
 
+
         # Compute satellite positions
         trajectory_object = list_of_trajectory_objects[object_idx]
         covered_measurement_times = measurement_times[initial_idx:(time_index+1)]
         satellite_positions = np.transpose(trajectory_object._OdeSystem__sol(covered_measurement_times))
 
         # Store trajectory positions:
-        measurement_spheres_info[0:3, initial_idx:(time_index + 1)] = satellite_positions
+        measurement_spheres_info[0:3, initial_idx:(time_index + 1)] = satellite_positions[0:3, :]
 
         # Update index:
         initial_idx = time_index + 1
