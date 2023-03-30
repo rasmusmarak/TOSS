@@ -129,12 +129,12 @@ def plot_UDP(args, r_store, plot_mesh, plot_trajectory, plot_risk_zone, view_ang
         ax.plot_wireframe(x, y, z, color="r", alpha=0.1)
 
     # Plot measurement spheres:
-    for i in range(0, len(measurement_spheres_info[0,:])):
+    for i in range(0, len(r_store[0,:])):
         print(i)
-        x_sphere = measurement_spheres_info[0,i]
-        y_sphere = measurement_spheres_info[1,i]
-        z_sphere = measurement_spheres_info[2,i]
-        r_sphere = (measurement_spheres_info[3,i])**(1/2)
+        x_sphere = r_store[0,i]
+        y_sphere = r_store[1,i]
+        z_sphere = r_store[2,i]
+        r_sphere = (measurement_spheres_info[0,i])**(1/2)
 
         (x_unscaled,y_unscaled,z_unscaled) = drawSphere(r_sphere)
          # shift and scale sphere
