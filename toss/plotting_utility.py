@@ -88,11 +88,11 @@ def drawSphere(r):
 def plot_UDP(args, r_store, plot_mesh, plot_trajectory, plot_risk_zone, view_angle, measurement_spheres_info):
     """plot_trajectory plots the satellite trajectory.
     Args:
-        args (dotmap.DotMap): Dotmap dictionary containing info on mesh and bounding sphere.
+        args (dotmap.DotMap): Dotmap dictionary containing info on mesh and bounding spheres.
         r_store (np.ndarray): (3xN) Array containing N positions (cartesian frame) on the trajectory.
         plot_mesh (bool): Activation of plotting the mesh
         plot_trajectory (bool): Activation of plotting the trajectory
-        plot_risk_zone (bool): Activation of plotting the bounding sphere (i.e risk-zone)
+        plot_risk_zone (bool): Activation of plotting the inner bounding sphere (i.e risk-zone)
         view_angle (list): List containing the view angle of the plot.
     """
     # Define figure
@@ -114,7 +114,7 @@ def plot_UDP(args, r_store, plot_mesh, plot_trajectory, plot_risk_zone, view_ang
 
     # Plot risk zone:
     if plot_risk_zone:
-        r = args.problem.radius_bounding_sphere
+        r = args.problem.radius_inner_bounding_sphere
         (x, y, z) = drawSphere(r)
         ax.plot_wireframe(x, y, z, color="r", alpha=0.1)
 

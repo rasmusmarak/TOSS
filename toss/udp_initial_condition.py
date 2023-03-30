@@ -42,7 +42,7 @@ class udp_initial_condition:
                     final_time (float): Final time (in seconds) for the integration of trajectory.
                     initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
                     target_squared_altitude (float): Squared value of the satellite's orbital target altitude.
-                    radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
+                    radius_inner_bounding_sphere (float): Radius of the inner bounding sphere representing risk zone for collisions with celestial body.
                     activate_event (bool): Event configuration (0 = no event, 1 = collision with body detection).
                     number_of_maneuvers (int): Number of possible maneuvers.
                 mesh:
@@ -58,7 +58,7 @@ class udp_initial_condition:
         ti = args.problem.start_time
         tf = args.problem.final_time
         dt = args.problem.initial_time_step
-        r_sphere = args.problem.radius_bounding_sphere
+        r_inner_sphere = args.problem.radius_inner_bounding_sphere
         largest_protuberant = args.mesh.largest_body_protuberant
         density = args.body.density
         dec = args.body.declination
@@ -73,7 +73,7 @@ class udp_initial_condition:
         assert mu > 0
         assert tf > ti
         assert dt <= tf - ti
-        assert r_sphere > largest_protuberant
+        assert r_inner_sphere > largest_protuberant
         assert density > 0
         assert dec >= 0
         assert ra >= 0

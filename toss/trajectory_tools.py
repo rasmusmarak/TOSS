@@ -40,7 +40,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
                 start_time (float): Start time (in seconds) for the integration of trajectory.
                 final_time (float): Final time (in seconds) for the integration of trajectory.
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
-                radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
+                radius_inner_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
                 activate_event (bool): Event configuration (0 = no event, 1 = collision with body detection).
                 number_of_maneuvers (int): Number of possible maneuvers.
             mesh:
@@ -264,7 +264,7 @@ def integrate_system(func: Callable, x: np.ndarray, args):
                 atol (float): Absolute error tolerance for integration.
             problem: Parameters related to the problem:
                 initial_time_step (float): Size of initial time step (in seconds) for integration of trajectory.
-                radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
+                radius_inner_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
                 activate_event (bool): Event configuration (0 = no event, 1 = collision with body detection)
             mesh:
                 vertices (np.ndarray): Array containing all points on mesh.
@@ -317,12 +317,12 @@ def point_is_inside_risk_zone(t: float, state: np.ndarray, args) -> int:
         state (np.ndarray): Current state, i.e position and velocity
         args (dotmap.DotMap):
             problem:
-                radius_bounding_sphere (float): Radius of bounding sphere around mesh. 
+                radius_inner_bounding_sphere (float): Radius of bounding sphere around mesh. 
 
     Returns:
         (int): Returns 1 when the satellite enters the risk-zone, and 0 otherwise.
     """
-    risk_zone_radius = args.problem.radius_bounding_sphere
+    risk_zone_radius = args.problem.radius_inner_bounding_sphere
     position = state[0:3]
     distance = risk_zone_radius**2 - position[0]**2 + position[1]**2 + position[2]**2
     if distance >= 0:
