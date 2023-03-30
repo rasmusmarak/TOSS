@@ -44,9 +44,13 @@ def test_multiple_impulsive_maneuvers():
     args.problem.start_time = 0                     # Starting time [s]
     args.problem.final_time = 20*3600.0             # Final time [s]
     args.problem.initial_time_step = 600            # Initial time step size for integration [s]
-    args.problem.radius_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
     args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
 
+    # Arguments concerning bounding spheres
+    args.problem.radius_inner_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
+    args.problem.measurement_period = 2500 # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
+    
+    # Create mesh of body.
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = mesh_utility.create_mesh()
 
     # Osculating orbital elements from initial state (position and velocity)
@@ -79,7 +83,7 @@ def test_multiple_impulsive_maneuvers():
                 chromosome = np.concatenate((chromosome, [time_of_maneuver, dv_x, dv_y, dv_z]), axis=None)
             
         # Compute trajectory via numerical integration as in UDP.
-        trajectory_info, _, _  = trajectory_tools.compute_trajectory(chromosome, args, equations_of_motion.compute_motion)
+        trajectory_info, _, _, _, _  = trajectory_tools.compute_trajectory(chromosome, args, equations_of_motion.compute_motion)
 
         # Check if compute_trajectory still produces the same trajectories.
         assert all(np.isclose(final_positions_array[:, number_of_maneuvers],trajectory_info[0:3, -1],rtol=1e-5, atol=1e-5))
