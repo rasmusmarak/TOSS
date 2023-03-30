@@ -83,7 +83,10 @@ def test_multiple_impulsive_maneuvers():
                 chromosome = np.concatenate((chromosome, [time_of_maneuver, dv_x, dv_y, dv_z]), axis=None)
             
         # Compute trajectory via numerical integration as in UDP.
-        trajectory_info, _, _, _, _  = trajectory_tools.compute_trajectory(chromosome, args, equations_of_motion.compute_motion)
+        _, list_of_trajectory_objects, _ = trajectory_tools.compute_trajectory(chromosome, args, equations_of_motion.compute_motion)
+
+        # Get integration info:
+        integration_info = trajectory_tools.get_integration_info(list_of_trajectory_objects)
 
         # Check if compute_trajectory still produces the same trajectories.
-        assert all(np.isclose(final_positions_array[:, number_of_maneuvers],trajectory_info[0:3, -1],rtol=1e-5, atol=1e-5))
+        assert all(np.isclose(final_positions_array[:, number_of_maneuvers],integration_info[0:3, -1],rtol=1e-5, atol=1e-5))
