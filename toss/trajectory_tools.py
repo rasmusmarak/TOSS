@@ -118,7 +118,6 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
         else:
             # If collision is detected, stop the integration.
             collision_detected = True
-            print("A collision with the body has been detected on the current trajectory.")
             break
 
     # Return trajectory and neccessary values for computing fitness in udp.
