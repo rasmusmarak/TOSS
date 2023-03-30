@@ -9,6 +9,9 @@ import trajectory_tools
 # For computing the next state
 import equations_of_motion
 
+# For choosing fitness function
+from fitness import FitnessScheme
+
 # Class representing UDP 
 class udp_initial_condition:
     """ 
@@ -76,7 +79,8 @@ class udp_initial_condition:
         n_maneuvers = args.problem.number_of_maneuvers
         activate_events = args.problem.activate_event
         meaurement_period = args.problem.measurement_period
-        
+        fitness_list = args.problem.selected_fitness_functions
+
         # Assertions:
         assert self.target_sq_alt > 0
         assert all(np.greater(upper_bounds, lower_bounds))
@@ -95,12 +99,14 @@ class udp_initial_condition:
         assert (v_outer_sphere > v_inner_sphere)
         assert (v_measurable > 0)
         assert (meaurement_period > 0)
+        assert (len(fitness_list) > 0)
 
 
         # Additional hyperparameters
         self.args = args
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
+        self.selected_fitness_functions = args.problem.selected_fitness_functions
 
 
     def fitness(self, x: np.ndarray) -> float:
@@ -114,22 +120,28 @@ class udp_initial_condition:
         """
 
         # Integrate trajectory
-        _, squared_altitudes, collision_detected, _, measured_squared_volume = trajectory_tools.compute_trajectory(x, self.args, equations_of_motion.compute_motion)
+        collision_detected, list_of_trajectory_objects, integration_intervals = trajectory_tools.compute_trajectory(x, self.args, equations_of_motion.compute_motion)
 
-        # Define fitness penalty in the event of at least one collision along the trajectory
-        if collision_detected == True:
-            # If collision detected, break due to infeasible trajectory.
-            collision_penalty = 1e30
-        else:
-            collision_penalty = 0 
+        # If collision detected => unfeasible trajectory:
+        if collision_detected:
+            fitness_value = 1e30
+            return [fitness_value]
 
-        # Compute ratio of measured volume  
-        measured_volume_ratio = measured_squared_volume / self.args.problem.measurable_squared_volume
+        # Compute fitness value:
+        fitness_value = 0
+        self.trajectory_info = trajectory_tools.get_trajectory_info(self.args, list_of_trajectory_objects, integration_intervals)
 
-        # Compute fitness value for the integrated trajectory
-        fitness_value = np.mean(np.abs(squared_altitudes-self.target_sq_alt)) + collision_penalty + (1-measured_volume_ratio)
-        
+        for fitness_id in self.selected_fitness_functions:
+            if fitness_id == 4:
+                # Compute information on total covered measurement volume (if needed)
+                self.measurement_spheres_info = trajectory_tools.compute_measurement_spheres_info(self.args, list_of_trajectory_objects, integration_intervals)
+
+            fitness_value += FitnessScheme(fitness_id).name()
+
+        # Return fitness value        
         return [fitness_value]
+
+
 
     def get_bounds(self) -> Union[np.ndarray, np.ndarray]:
         """get_bounds returns upper and lower bounds for the domain of the state vector.
@@ -139,3 +151,34 @@ class udp_initial_condition:
             upper_bounds (np.ndarray): Lower boundary values for the initial state vector.
         """
         return (self.lower_bounds, self.upper_bounds)
+    
+
+
+
+    def distance_to_target_altitude(self):
+        # Compute average distance to target altitude
+        squared_altitudes = self.trajectory_info[0,:]**2 + self.trajectory_info[1,:]**2 + self.trajectory_info[2,:]**2
+        np.mean(np.abs(squared_altitudes-self.args.problem.target_squared_altitude))
+        return squared_altitudes
+
+
+    def inner_sphere_entries(self):
+        r = self.trajectory_info[0:3, :]
+        r = (r[0,:]**2 + r[1,:]**2 + r[2, :]**2) - self.args.problem.radius_inner_boundings_sphere
+        r[r>0] = 0 #remove all positions outside the risk-zone.
+        average_distance = np.mean(r)
+        return average_distance
+
+
+    def outer_sphere_exits(self):
+        r = self.trajectory_info[0:3, :]
+        r = (r[0,:]**2 + r[1,:]**2 + r[2, :]**2) - self.args.problem.radius_outer_boundings_sphere
+        r[r<0] = 0 #remove all positions inside the measurement-zone.
+        average_distance = np.mean(r)
+        return average_distance
+
+
+    def unmeasured_volume(self):
+        measured_squared_volume = np.sum(self.measurement_spheres_info[4,:])
+        unmeasured_volume_ratio = 1 - (measured_squared_volume/self.args.problem.measurable_squared_volume)
+        return unmeasured_volume_ratio
