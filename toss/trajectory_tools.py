@@ -94,6 +94,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
             initial_state = final_state
             initial_state[3:6] = dv_of_maneuvers[:, time_idx-1]
             trajectory = integrate_system(func, initial_state, args)
+            final_state = trajectory.y[-1, 0:6]
         
         # Save positions with risk-zone entries
         list_of_entry_points = np.empty((len(trajectory.events), 3), dtype=np.float64)
@@ -117,6 +118,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
         else:
             # If collision is detected, stop the integration.
             collision_detected = True
+            print("A collision with the body has been detected on the current trajectory.")
             break
 
     # Return trajectory and neccessary values for computing fitness in udp.
