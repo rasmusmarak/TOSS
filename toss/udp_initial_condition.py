@@ -155,14 +155,24 @@ class udp_initial_condition:
 
 
 
-    def distance_to_target_altitude(self):
+    def distance_to_target_altitude(self) -> float:
+        """ Computes average distance to target altitude for satellite positions along the trajectory.
+
+        Returns:
+            average_distance (float): Average distance to target altitude.
+        """
         # Compute average distance to target altitude
         squared_altitudes = self.trajectory_info[0,:]**2 + self.trajectory_info[1,:]**2 + self.trajectory_info[2,:]**2
-        np.mean(np.abs(squared_altitudes-self.args.problem.target_squared_altitude))
-        return squared_altitudes
+        average_distance = np.mean(np.abs(squared_altitudes-self.args.problem.target_squared_altitude))
+        return average_distance
 
 
-    def inner_sphere_entries(self):
+    def inner_sphere_entries(self) -> float:
+        """ Computes average deviation from the inner-bounding sphere of satellite positions inside the inner bounding-sphere.
+
+        Returns:
+            average_distance (float): Average distance to radius of inner bounding-sphere.
+        """
         r = self.trajectory_info[0:3, :]
         r = (r[0,:]**2 + r[1,:]**2 + r[2, :]**2) - self.args.problem.radius_inner_boundings_sphere
         r[r>0] = 0 #remove all positions outside the risk-zone.
@@ -170,7 +180,12 @@ class udp_initial_condition:
         return average_distance
 
 
-    def outer_sphere_exits(self):
+    def outer_sphere_exits(self) -> float:
+        """ Computes average deviation from the outer-bounding sphere of satellite positions outside the outer bounding-sphere.
+
+        Returns:
+            average_distance (float): Average distance to radius of outer bounding-sphere.
+        """
         r = self.trajectory_info[0:3, :]
         r = (r[0,:]**2 + r[1,:]**2 + r[2, :]**2) - self.args.problem.radius_outer_boundings_sphere
         r[r<0] = 0 #remove all positions inside the measurement-zone.
@@ -178,7 +193,12 @@ class udp_initial_condition:
         return average_distance
 
 
-    def unmeasured_volume(self):
+    def unmeasured_volume(self) -> float:
+        """Computes the ration of unmeasured volume.
+
+        Returns:
+            unmeasured_volume_ratio (float): Ratio of unmeasured volume.
+        """
         measured_squared_volume = np.sum(self.measurement_spheres_info[4,:])
         unmeasured_volume_ratio = 1 - (measured_squared_volume/self.args.problem.measurable_squared_volume)
         return unmeasured_volume_ratio

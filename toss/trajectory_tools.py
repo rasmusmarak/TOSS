@@ -18,7 +18,7 @@ import desolver.backend as D
 D.set_float_fmt('float64')
 
 
-def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray, float, bool, np.ndarray, float]:
+def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list, np.ndarray]:
     """compute_trajectory computes trajectory of satellite using numerical integation techniques 
 
     Args:
@@ -53,11 +53,9 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         func (Callable): A function handle for the state update equation required for integration.
 
     Returns:
-        trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
-        squared_altitudes (float): Sum of squared altitudes above origin for every position
         collision_penalty (bool): Penalty value given for the event of a collision with the celestial body.
-        measurement_spheres_info (np.ndarray): (5,N) array containing information on gravity signal measurements (positions of satelite in cartesian frame, measurement sphere radius and volume.)
-        measured_squared_volume (float): Total measured volume during integrated interval.
+        list_of_trajectory_objects (list): List of OdeSystem integration objects (provided by DEsolver)
+        integration_intervals (np.ndarray): (1,N) Array containing the discretized and integrated time intervals. 
 
     """    
     # Separate initial state from chromosome and translate from osculating elements to cartesian frame.
@@ -125,7 +123,15 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
     return collision_detected, list_of_trajectory_objects, integration_intervals
 
 
-def get_integration_info(list_of_trajectory_objects):
+def get_integration_info(list_of_trajectory_objects: list) -> np.ndarray:
+    """ Returns the computed trajectory (position and time) as provided by DEsolver.
+
+    Args:
+        list_of_trajectory_objects (list): List of OdeSystem integration objects (provided by DEsolver)
+
+    Returns:
+        integration_info (np.ndarray): (4,N) Array containing position and time-steps of trajectory as provided by DEsolver (epressed in cartesian frame: (x,y,z,t))
+    """
     integration_info = None
     object_idx = 0
     for trajectory in list_of_trajectory_objects:
@@ -136,7 +142,7 @@ def get_integration_info(list_of_trajectory_objects):
     return integration_info
 
 
-def get_trajectory_info(args, list_of_trajectory_objects, integration_intervals):
+def get_trajectory_info(args, list_of_trajectory_objects: list, integration_intervals: np.ndarray) -> np.ndarray:
     """compute satellite positions on the integrated trajectory given an user-defined fixed time-step.
 
     Args:
@@ -198,7 +204,7 @@ def get_trajectory_info(args, list_of_trajectory_objects, integration_intervals)
     return trajectory_info
 
 
-def compute_measurement_spheres_info(trajectory_info):
+def compute_measurement_spheres_info(trajectory_info: np.ndarray) -> np.ndarray:
     """compute information on measurement spheres (radius and volume).
 
     Args:
