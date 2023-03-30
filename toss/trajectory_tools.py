@@ -102,6 +102,8 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         
         # Save positions with risk-zone entries
         list_of_entry_points = np.empty((len(trajectory.events), 3), dtype=np.float64)
+        list_of_exit_points = np.empty((len(trajectory.events), 3), dtype=np.float64)
+        
         array_idx = 0
         for entry_point in trajectory.events:
             list_of_entry_points[array_idx,:] = entry_point.y[0:3]
@@ -321,28 +323,49 @@ def integrate_system(func: Callable, x: np.ndarray, args):
 
     elif activate_event==True:
         point_is_inside_risk_zone.is_terminal = False
-        trajectory.integrate(events=point_is_inside_risk_zone)
+        point_is_outside_measurement_zone.is_terminal = False
+        trajectory.integrate(events=[point_is_inside_risk_zone, point_is_outside_measurement_zone])
 
     return trajectory
 
 
 def point_is_inside_risk_zone(t: float, state: np.ndarray, args) -> int:
-    """ Checks for event: collision with the celestial body.
+    """ Checks for event: Satellite entering inner bounding sphere, that is the risk-zone for body collisions.
 
     Args:
         t (float): Current time step for integration.
-        state (np.ndarray): Current state, i.e position and velocity
+        state (np.ndarray): Current state (position and velocity expressed in cartesian frame)
         args (dotmap.DotMap):
             problem:
                 radius_inner_bounding_sphere (float): Radius of bounding sphere around mesh. 
 
     Returns:
-        (int): Returns 1 when the satellite enters the risk-zone, and 0 otherwise.
+        (int): Returns 0 when the satellite enters the risk-zone, and 1 otherwise.
     """
     risk_zone_radius = args.problem.radius_inner_bounding_sphere
     position = state[0:3]
-    distance = risk_zone_radius**2 - position[0]**2 + position[1]**2 + position[2]**2
+    distance = risk_zone_radius**2 - (position[0]**2 + position[1]**2 + position[2]**2)
     if distance >= 0:
+        return 0
+    return 1
+
+def point_is_outside_measurement_zone(t: float, state: np.ndarray, args) -> int:
+    """ Checks for event: Satellite exits outer bounding sphere (measurement_zone), that is going too far away from body for feasible measurements.
+
+    Args:
+        t (float): Current time step for integration.
+        state (np.ndarray): Current state (position and velocity expressed in cartesian frame)
+        args (dotmap.DotMap):
+            problem:
+                radius_outer_bounding_sphere (float): Radius of outer bounding sphere around mesh. 
+
+    Returns:
+        (int): Returns 0 when the satellite exits measurament-zone, and 1 otherwise.
+    """
+    measurement_zone_radius = args.problem.radius_outer_bounding_sphere
+    position = state[0:3]
+    distance = measurement_zone_radius**2 - (position[0]**2 + position[1]**2 + position[2]**2)
+    if distance < 0:
         return 0
     return 1
 
