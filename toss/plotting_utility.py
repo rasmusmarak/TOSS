@@ -76,6 +76,14 @@ def plot_trajectory(r_store: np.ndarray, mesh):
 
 
 def drawSphere(r):
+    """ Generates (x,y,z) values for plotting a sphere of given radius r.
+
+    Args:
+        r (float): Radius of sphere.
+
+    Returns:
+        (x,y,z) (tuple): Arrays of values in cartesian frame, representing a sphere of radius r centered at origin.
+    """
     #draw sphere
     u, v = np.mgrid[0:2*np.pi:15j, 0:np.pi:15j] #previously: 40j
     x=r*np.cos(u)*np.sin(v)
@@ -94,6 +102,8 @@ def plot_UDP(args, r_store, plot_mesh, plot_trajectory, plot_risk_zone, view_ang
         plot_trajectory (bool): Activation of plotting the trajectory
         plot_risk_zone (bool): Activation of plotting the inner bounding sphere (i.e risk-zone)
         view_angle (list): List containing the view angle of the plot.
+        measurement_spheres_info (np.ndarray): (5,N) array containing information on gravity signal measurements (positions of satelite in cartesian frame, measurement sphere radius and volume.)
+
     """
     # Define figure
     #ax = plt.figure().add_subplot(projection='3d')

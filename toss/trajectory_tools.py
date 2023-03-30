@@ -43,6 +43,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
                 radius_inner_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
                 activate_event (bool): Event configuration (0 = no event, 1 = collision with body detection).
                 number_of_maneuvers (int): Number of possible maneuvers.
+                measurement_period (int): Period for which a measurment sphere is recognized and managed.
             mesh:
                 vertices (np.ndarray): Array containing all points on mesh.
                 faces (np.ndarray): Array containing all triangles on the mesh.
@@ -55,6 +56,9 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
         trajectory_info (np.ndarray): Numpy array containing information on position and velocity at every time step (columnwise).
         squared_altitudes (float): Sum of squared altitudes above origin for every position
         collision_penalty (bool): Penalty value given for the event of a collision with the celestial body.
+        measurement_spheres_info (np.ndarray): (5,N) array containing information on gravity signal measurements (positions of satelite in cartesian frame, measurement sphere radius and volume.)
+        measured_squared_volume (float): Total measured volume during integrated interval.
+
     """    
     # Separate initial state from chromosome and translate from osculating elements to cartesian frame.
     r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
@@ -132,10 +136,23 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[np.ndarray,
 
 
 def compute_measurement_sphere_info(args, list_of_trajectory_objects, integration_intervals):
+    """compute information on measurement spheres.
+
+    Args:
+        args (dotmap.DotMap):
+            problem:
+                start_time (int): Start time of integration.
+                final_time (int): Final time of integration.
+                measurement_period (int): Period for which a measurment sphere is recognized and managed.
+        list_of_trajectory_objects (list): List holding the OdeSystem trajectory object for each discretized integration interval.
+        integration_intervals (np.ndarray): Array containing the integrated discretized time-intervals.
+
+    Returns:
+        measurement_spheres_info (np.ndarray): (5,N) array containing information on gravity signal measurements (positions of satelite in cartesian frame, measurement sphere radius and volume.)
+    """
 
     # Define fixed time-steps of the satellite's position on the trajectory
-    measurement_period = 2500 #10
-    measurement_times = np.linspace(args.problem.start_time, args.problem.final_time, int((args.problem.final_time - args.problem.start_time)/measurement_period))
+    measurement_times = np.linspace(args.problem.start_time, args.problem.final_time, int((args.problem.final_time - args.problem.start_time)/args.problem.measurement_period))
 
     # Preparing storage of information regarding mission gravity signal measurements.
     measurement_spheres_info = np.empty((5,len(measurement_times)), dtype=np.float64)
@@ -146,7 +163,7 @@ def compute_measurement_sphere_info(args, list_of_trajectory_objects, integratio
     for time in integration_intervals[1:]:
 
         # Estimate nearest covered index in measurement_times for current discretized time in integration intervals
-        estimated_time_idx = int(time/measurement_period)
+        estimated_time_idx = int(time/args.problem.measurement_period)
 
         # Verify estimated time index in measurement_times:
         if time == measurement_times[estimated_time_idx-1]:
