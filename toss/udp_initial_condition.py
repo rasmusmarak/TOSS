@@ -134,9 +134,9 @@ class udp_initial_condition:
         for fitness_id in self.selected_fitness_functions:
             if fitness_id == 4:
                 # Compute information on total covered measurement volume (if needed)
-                self.measurement_spheres_info = trajectory_tools.compute_measurement_spheres_info(self.args, list_of_trajectory_objects, integration_intervals)
+                self.measurement_spheres_info = trajectory_tools.compute_measurement_spheres_info(self.trajectory_info)
 
-            fitness_value += FitnessScheme(fitness_id).name()
+            fitness_value += getattr(udp_initial_condition, FitnessScheme(1).name)(self)
 
         # Return fitness value        
         return [fitness_value]
