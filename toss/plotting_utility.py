@@ -51,57 +51,8 @@ def two_axis_trajectory(trajectory_info, axis_1, axis_2):
 
     plt.savefig('figures/two_axis_plot.png')
 
-def plot_UDP(args, r_store: np.ndarray, plot_mesh, plot_trajectory, plot_risk_zone, view_angle):
-    """plot_trajectory plots the satellite trajectory.
 
-    Args:
-        args (dotmap.DotMap): Dotmap dictionary containing info on mesh and bounding sphere.
-        r_store (np.ndarray): (3xN) Array containing N positions (cartesian frame) on the trajectory.
-        plot_mesh (bool): Activation of plotting the mesh
-        plot_trajectory (bool): Activation of plotting the trajectory
-        plot_risk_zone (bool): Activation of plotting the bounding sphere (i.e risk-zone)
-        view_angle (list): List containing the view angle of the plot.
-    """
-    # Define figure
-    #ax = plt.figure().add_subplot(projection='3d')
-    fig = plt.figure(figsize = (13,7))
-    ax = fig.add_subplot(projection='3d')
-
-    #Plot trajectory
-    if plot_trajectory:
-        x = r_store[0,:]
-        y = r_store[1,:]
-        z = r_store[2,:]
-        ax.plot(x, y, z, label='Trajectory')
-        ax.legend()
-
-    # Plot mesh:
-    if plot_mesh:
-        ax.plot_trisurf(args.mesh.vertices[:, 0], args.mesh.vertices[:,1], triangles=args.mesh.faces, Z=args.mesh.vertices[:,2], alpha=1, color='grey') 
-
-    # Plot risk zone:
-    if plot_risk_zone:
-        r = args.problem.radius_bounding_sphere
-        u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:40j]
-        X = r*np.cos(u)*np.sin(v)
-        Y = r*np.sin(u)*np.sin(v)
-        Z = r*np.cos(v)
-        ax.plot_wireframe(X, Y, Z, color="r", alpha=0.1)
-
-    ax.set_title("Solution to UDP.    View angle: ("+str(view_angle[0])+", "+str(view_angle[1])+")") # Solution to UDP
-    ax.view_init(view_angle[0],view_angle[1]) #ax.view_init(15,-45)
-
-    # Make axes limits 
-    xyzlim = np.array([ax.get_xlim3d(),ax.get_ylim3d(),ax.get_zlim3d()]).T
-    XYZlim = [min(xyzlim[0]),max(xyzlim[1])]
-    ax.set_xlim3d(XYZlim)
-    ax.set_ylim3d(XYZlim)
-    ax.set_zlim3d(XYZlim)
-
-    plt.savefig('figures/trajectory_plot.png')
-
-
-def plot_trajectory_with_mesh_pyvista(r_store: np.ndarray, mesh):
+def plot_trajectory(r_store: np.ndarray, mesh):
     """plot_trajectory plots the body mesh and satellite trajectory.
 
     Args:
@@ -125,8 +76,9 @@ def plot_trajectory_with_mesh_pyvista(r_store: np.ndarray, mesh):
 
     mesh_plot.add_axes(x_color='red', y_color='green', z_color='blue', xlabel='X', ylabel='Y', zlabel='Z', line_width=2, shaft_length = 10)
     
-    #mesh_plot.show(jupyter_backend = 'panel')
-    mesh_plot.save_graphic("figures/trajectory_mesh_plot.pdf")
+    mesh_plot.show(jupyter_backend = 'panel') 
+
+    plt.savefig('figures/67P/trajectory_mesh_plot.png')
 
 
 def plot_performance_scaling(core_counts, run_times):
