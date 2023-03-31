@@ -1,20 +1,17 @@
 # Core packages
 import pygmo as pg
-import numpy as np
 from math import pi
 from dotmap import DotMap
-
-# For creating mesh
-import mesh_utility
-
-# For computing the next state
-import equations_of_motion
+import numpy as np
 
 # For optimization using pygmo
 from udp_initial_condition import udp_initial_condition
 
+# For creating mesh
+import mesh_utility as mesh_utility
 
-
+# For computing the next state
+import equations_of_motion as equations_of_motion
 
 
 def setup_parameters():
@@ -70,12 +67,12 @@ def setup_parameters():
 
     # Setup problem parameters
     args.problem.start_time = 0                     # Starting time [s]
-    args.problem.final_time = 20*3600.0             # Final time [s]
+    args.problem.final_time = 20*3600               # Final time [s]
     args.problem.initial_time_step = 600            # Initial time step size for integration [s]
     args.problem.radius_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
     args.problem.target_squared_altitude = 8000**2  # Target altitude squared [m]
-    args.problem.event = 1                          # Event configuration (0 = no event, 1 = collision with body detection)
-    
+    args.problem.activate_event = True              # Event configuration (0 = no events, 1 = collision with body detection)
+    args.problem.number_of_maneuvers = 0            
 
     # Defining the parameter space for the optimization
     #   (Parameters are defined in osculating orbital elements)
@@ -93,11 +90,11 @@ def setup_parameters():
     # Optimization parameters
     population_size = 7
     number_of_generations = 4
-    number_of_islands = 4 # one per thread of the cpu
+    number_of_islands = 10 # one per thread of the cpu
 
     return args, lower_bounds, upper_bounds, population_size, number_of_generations, number_of_islands
 
-def pop_init(population_size, seed):
+def pop_init(population_size):    
 
     #print("Retrieving user defined parameters...")
     args, lower_bounds, upper_bounds, _, _, _ = setup_parameters()
@@ -116,4 +113,4 @@ def pop_init(population_size, seed):
     assert population_size >= 7
 
     # Return population
-    return pg.population(prob, population_size, seed=seed)
+    return pg.population(prob, population_size)
