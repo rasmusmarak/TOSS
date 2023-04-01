@@ -1,0 +1,29 @@
+[body]
+density = 533                           # https://sci.esa.int/web/rosetta/-/14615-comet-67p
+mu = 665.666                            # Gravitational parameter for 67P/C-G.
+declination = 64                        # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
+right_ascension = 69                    # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
+spin_period = 43416                     # 12.06h * 3600 [seconds] https://sci.esa.int/web/rosetta/-/14615-comet-67p
+
+[integrator]
+algorithm = 3                           # Integration algorithm, see:  "toss/Integrator.py".
+dense_output = true                     # Interpolates between integration steps and enable computation of arbitrary points on time-interval.
+rtol = 1e-12                            # Relative tolerance for chosen integration algorithm.
+atol = 1e-12                            # Absolute tolerance for chosen integration algorithm.
+
+[problem]
+start_time = 0                          # Starting time [seconds].
+final_time = 72000                      # (20h*3600) Final time [seconds].
+initial_time_step = 600                 # Initial time step size for integration [seconds].
+radius_bounding_sphere = 4000           # Radius of spherical risk-zone for collision with celestial body [meter].
+target_squared_altitude = 64000000      # (8000**2) Target altitude squared [meter].
+activate_event = true                   # Event configuration (False = no events, True = collision with body detection).
+number_of_maneuvers = 0                 # Maximum number of possible manuevers during mission.
+
+[optimization]          
+population_size = 7                     # Number of chromosomes per island for the pygmo-based optimization.
+number_of_generations = 1               # Number of generations for evolutionary optimization process.
+number_of_islands = 1                  # Number of islands in archipelago (i.e number of threads for parallelliztion of the optimization process).
+
+[mesh]
+# mesh is loaded outside of default_cfg.
