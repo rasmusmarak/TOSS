@@ -1,18 +1,20 @@
+import sys
+sys.path.append('..')
+
 # Core packages
 from math import pi
 import numpy as np
 import time
 import pygmo as pg
 
-# Load required modules
-from toss.scripts.setup_parameters import setup_parameters
-from toss.udp_initial_condition import udp_initial_condition
 
 def load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_size, number_of_generations):
     """
     Main function for optimizing the initial state for deterministic trajectories around a 
     small celestial body using a mesh.
     """
+    # Load required modules
+    from udp_initial_condition import udp_initial_condition
 
     start_time = time.time()
 
@@ -103,6 +105,8 @@ def weak_scaling(args, lower_bounds, upper_bounds, generations, islands, populat
 
 
 def run_scaling_benchmark():
+    # Load required modules
+    from setup_parameters import setup_parameters
 
     # Load default parameters
     args, lower_bounds, upper_bounds = setup_parameters()
