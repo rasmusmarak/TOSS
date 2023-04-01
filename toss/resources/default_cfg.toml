@@ -25,5 +25,17 @@ population_size = 7                     # Number of chromosomes per island for t
 number_of_generations = 1               # Number of generations for evolutionary optimization process.
 number_of_islands = 1                  # Number of islands in archipelago (i.e number of threads for parallelliztion of the optimization process).
 
+[algorithm]
+kernel_size = 13
+convergence_speed_parameter = 1.0
+oracle_parameter = 1e9
+accuracy_parameter = 0.0
+threshold_parameter = 1
+std_convergence_speed_parameter = 7
+improvement_stopping_criterion = 100000
+evaluation_stopping_criterion = 100000
+focus_parameter = 0.0
+memory_parameter = false
+
 [mesh]
 # mesh is loaded outside of default_cfg.
