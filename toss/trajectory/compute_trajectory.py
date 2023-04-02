@@ -1,25 +1,10 @@
-# General
+# Core packages
 import numpy as np
 from typing import Union, Callable
-from math import pi
-
-# For orbit representation (reference frame)
-import pykep as pk
-
-# For working with the mesh
-from toss.mesh_utility import is_outside
-
-# For choosing numerical integration method
-from toss.Integrator import IntegrationScheme
-
-# D-solver (performs integration)
-import desolver as de
-import desolver.backend as D
-D.set_float_fmt('float64')
 
 
 def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list, np.ndarray]:
-    """compute_trajectory computes trajectory of satellite using numerical integation techniques 
+    """Computes a single spacecraft trajectory for a given initial state by numerical integation using DEsolver. 
 
     Args:
         x (np.ndarray): State vector.
@@ -59,6 +44,7 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
 
     """    
     # Separate initial state from chromosome and translate from osculating elements to cartesian frame.
+    import pykep as pk
     r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
     initial_state = np.array(r+v)
 
@@ -87,21 +73,16 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
         args.integrator.t0 = integration_intervals[time_idx]
         args.integrator.tf = integration_intervals[time_idx+1]
 
-        if time_idx == 0: # First integrated time-interval.
-            trajectory = integrate_system(func, initial_state, args)
-            final_state = trajectory.y[-1, 0:6]
-        else:
+        if time_idx > 0: # First integrated time-interval.
             initial_state = final_state
             initial_state[3:6] = dv_of_maneuvers[:, time_idx-1]
-            trajectory = integrate_system(func, initial_state, args)
-            final_state = trajectory.y[-1, 0:6]
+        trajectory = integrate_system(func, initial_state, args)
+        final_state = trajectory.y[-1, 0:6]
         
         # Save positions with risk-zone entries
         list_of_entry_points = np.empty((len(trajectory.events), 3), dtype=np.float64)
-        array_idx = 0
-        for entry_point in trajectory.events:
+        for array_idx, entry_point in enumerate(trajectory.events):
             list_of_entry_points[array_idx,:] = entry_point.y[0:3]
-            array_idx += 1
 
         if time_idx == 0:
             points_inside_risk_zone = list_of_entry_points
@@ -111,141 +92,16 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
         # Store OdeSystem trajectory object in list:
         list_of_trajectory_objects.append(trajectory)
         
-        # Check for collisions with body
-        collisions_avoided = point_is_outside_mesh(points_inside_risk_zone, args.mesh.vertices, args.mesh.faces)
-        if all(collisions_avoided) == True:
-            collision_detected = False
-        else:
-            # If collision is detected, stop the integration.
-            collision_detected = True
-            break
+    # Check for collisions with body
+    collisions_avoided = point_is_outside_mesh(points_inside_risk_zone, args.mesh.vertices, args.mesh.faces)
+    if all(collisions_avoided) == True:
+        collision_detected = False
+    else:
+        # If collision is detected, stop the integration.
+        collision_detected = True
 
     # Return trajectory and neccessary values for computing fitness in udp.
     return collision_detected, list_of_trajectory_objects, integration_intervals
-
-
-def get_integration_info(list_of_trajectory_objects: list) -> np.ndarray:
-    """ Returns the computed trajectory (position and time) as provided by DEsolver.
-
-    Args:
-        list_of_trajectory_objects (list): List of OdeSystem integration objects (provided by DEsolver)
-
-    Returns:
-        integration_info (np.ndarray): (4,N) Array containing position and time-steps of trajectory as provided by DEsolver (epressed in cartesian frame: (x,y,z,t))
-    """
-    integration_info = None
-    object_idx = 0
-    for trajectory in list_of_trajectory_objects:
-        if object_idx == 0:
-            integration_info = np.vstack((np.transpose(trajectory.y), trajectory.t))
-        else:
-            integration_info = np.hstack((integration_info[:,0:-1], np.vstack((np.transpose(trajectory.y), trajectory.t))))
-    return integration_info
-
-
-def get_trajectory_info(args, list_of_trajectory_objects: list, integration_intervals: np.ndarray) -> np.ndarray:
-    """compute satellite positions on the integrated trajectory given an user-defined fixed time-step.
-
-    Args:
-        args (dotmap.DotMap):
-            problem:
-                start_time (int): Start time of integration.
-                final_time (int): Final time of integration.
-                measurement_period (int): Period for which a measurment sphere is recognized and managed.
-        list_of_trajectory_objects (list): List holding the OdeSystem trajectory object for each discretized integration interval.
-        integration_intervals (np.ndarray): Array containing the integrated discretized time-intervals.
-
-    Returns:
-        trajectory_info (np.ndarray): (4,N) array containing information given satellite positions at given times (expressed in cartesian frame as (x,y,z,t)).
-    """
-    
-    # Define fixed time-steps of the satellite's position on the trajectory
-    trajectory_times = np.linspace(args.problem.start_time, args.problem.final_time, int((args.problem.final_time - args.problem.start_time)/args.problem.measurement_period))
-    
-    # Preparing storage of information regarding mission gravity signal measurements.
-    trajectory_info = np.empty((4,len(trajectory_times)), dtype=np.float64)
-    trajectory_info[3,:] = trajectory_times
-
-    # Compute the satellite's position at equidistant time-steps using the dense output of each trajectory object.
-    object_idx = 0
-    initial_idx = 0
-    for time in integration_intervals[1:]:
-
-        # Estimate nearest covered index in measurement_times for current discretized time in integration intervals
-        estimated_time_idx = int(time/args.problem.measurement_period)
-
-        # Verify estimated time index in measurement_times:
-        if time == trajectory_times[estimated_time_idx-1]:
-            time_index = estimated_time_idx - 1
-
-        elif time < trajectory_times[estimated_time_idx]:
-            if time > trajectory_times[estimated_time_idx-1]:
-                time_index = estimated_time_idx
-            else:
-                time_index = estimated_time_idx - 1
-
-        elif time > trajectory_times[estimated_time_idx]:
-            if time < trajectory_times[estimated_time_idx+1]:
-                time_index = estimated_time_idx
-            else:
-                time_index = estimated_time_idx + 1
-
-        # Compute satellite positions
-        trajectory_object = list_of_trajectory_objects[object_idx]
-        covered_trajectory_times = trajectory_times[initial_idx:(time_index+1)]
-        satellite_positions = np.transpose(trajectory_object._OdeSystem__sol(covered_trajectory_times))
-
-        # Store trajectory positions:
-        trajectory_info[0:3, initial_idx:(time_index + 1)] = satellite_positions[0:3, :]
-
-        # Update index:
-        initial_idx = time_index + 1
-        object_idx += 1
-
-    return trajectory_info
-
-
-def compute_measurement_spheres_info(trajectory_info: np.ndarray) -> np.ndarray:
-    """compute information on measurement spheres (radius and volume).
-
-    Args:
-        trajectory_info (np.ndarray): (4,N) array containing information given satellite positions at given times (expressed in cartesian frame as (x,y,z,t)).
-
-    Returns:
-        measurement_spheres_info (np.ndarray): (2,N) array containing information on measurement-spheres' radius and volume.
-    """
-
-    # setup matrix to store information on measurement spheres:
-    measurement_spheres_info = np.empty((2,len(trajectory_info[0,:])), dtype=np.float64)
-
-    # Compute and store information on spheres:
-    for i in range(0, len(trajectory_info[0,:])):    
-        # Define radius of the current measurement sphere as the half distance to the previous position after a fixed time-step.
-        #  The origin of each sphere is therefore defined as the point-vector from the origin in the body-fixed frame.
-        #  NOTE: We consider the radius as the half-distance to the previous position in order to avoid overlapping volumes.
-        
-        sphere_i = trajectory_info[0:3, i]
-        if i == 0:
-            # We consider the first two spheres to have equal radius
-            sphere_j = trajectory_info[0:3, i+1]
-        else:
-            sphere_j = trajectory_info[0:3, i-1]
-
-        squared_distance_sphere_ij = (((sphere_j[0]-sphere_i[0]))**2 + ((sphere_j[1]-sphere_i[1]))**2 + ((sphere_j[2]-sphere_i[2]))**2)
-        squared_radius_of_sphere_i = squared_distance_sphere_ij/4
-
-        # Compute volume of sphere i:
-        squared_volume_of_sphere_i = (4/3)**2 * pi**2 * (squared_radius_of_sphere_i**3)
-
-        # Store information on sphere i
-        measurement_spheres_info[0,i] = squared_radius_of_sphere_i
-        measurement_spheres_info[1,i] = squared_volume_of_sphere_i
-
-
-    # Return information on measurement spheres
-    return measurement_spheres_info
-
-
 
 
 def setup_maneuvers(x:np.ndarray, args) -> Union[np.ndarray, np.ndarray]:
@@ -288,8 +144,7 @@ def setup_maneuvers(x:np.ndarray, args) -> Union[np.ndarray, np.ndarray]:
 
 
 def integrate_system(func: Callable, x: np.ndarray, args):
-
-    """ Integrates system numerically using DeSolver library.
+    """ Numerical integration of ODE system using DEsolver library.
 
     Args:
         func (Callable): A function handle for the equ_rhs (state update equation) required for integration.
@@ -313,8 +168,13 @@ def integrate_system(func: Callable, x: np.ndarray, args):
                 time_of_maneuver (float): Time for adding impulsive maneuver [seconds].
                 delta_v (np.ndarray): Array containing the cartesian componants of the impulsive maneuver.
     Returns:
-        trajectory (desolver.differential_system.OdeSystem): The integration object provided by desolver.
+        ode_object (desolver.differential_system.OdeSystem): The integration object provided by desolver.
     """
+    # Import required modules
+    from toss.trajectory.Integrator import IntegrationScheme
+    import desolver as de
+    import desolver.backend as D
+    D.set_float_fmt('float64')
 
     # Setup parameters
     dense_output = args.integrator.dense_output
@@ -325,10 +185,10 @@ def integrate_system(func: Callable, x: np.ndarray, args):
     atol = args.integrator.atol
     numerical_integrator = IntegrationScheme(args.integrator.algorithm).name
     activate_event = args.problem.activate_event
-
-    # Integrate trajectory
+    
+    # Integrate system
     initial_state = D.array(x)
-    trajectory = de.OdeSystem(
+    ode_object = de.OdeSystem(
         func, 
         y0 = initial_state, 
         dense_output = dense_output, 
@@ -337,23 +197,23 @@ def integrate_system(func: Callable, x: np.ndarray, args):
         rtol = rtol, 
         atol = atol,
         constants=dict(args = args))
-    trajectory.method = str(numerical_integrator)
+    ode_object.method = str(numerical_integrator)
 
     if activate_event==False:
-        trajectory.integrate()
+        ode_object.integrate()
 
     elif activate_event==True:
         point_is_inside_risk_zone.is_terminal = False
-        trajectory.integrate(events=[point_is_inside_risk_zone])
+        ode_object.integrate(events=[point_is_inside_risk_zone])
 
-    return trajectory
+    return ode_object
 
 
 def point_is_inside_risk_zone(t: float, state: np.ndarray, args) -> int:
     """ Checks for event: Satellite entering inner bounding sphere, that is the risk-zone for body collisions.
 
     Args:
-        t (float): Current time step for integration.
+        t (float): Current time step.
         state (np.ndarray): Current state (position and velocity expressed in cartesian frame)
         args (dotmap.DotMap):
             problem:
@@ -372,8 +232,7 @@ def point_is_inside_risk_zone(t: float, state: np.ndarray, args) -> int:
 
 def point_is_outside_mesh(x: np.ndarray, mesh_vertices: np.ndarray, mesh_faces: np.ndarray) -> bool:
     """
-    Uses is_outside to check if a set of positions (or current) x is is inside mesh.
-    Returns boolean with corresponding results.
+    Uses is_outside to check if a set of positions (or current) x is inside mesh.
 
     Args:
         x (np.ndarray): Array containing current, or a set of, positions expressed in 3 dimensions.
@@ -381,9 +240,10 @@ def point_is_outside_mesh(x: np.ndarray, mesh_vertices: np.ndarray, mesh_faces: 
         mesh_faces (np.ndarray): Array containing all triangles on the mesh.
 
     Returns:
-        collision_boolean (bool): A one dimensional array with boolean values corresponding to each
-                                position kept in x. Returns "False" if point is inside mesh, and 
-                                "True" if point is outside mesh (that is, there no collision).
+        collision_boolean (bool): Array with boolean values corresponding to each position in x. 
+                                  Returns "False" if point is inside mesh, and "True" if point is 
+                                  outside mesh (that is, there no collision).
     """
+    from toss.mesh.mesh_utility import is_outside
     collision_boolean = is_outside(x, mesh_vertices, mesh_faces)
     return collision_boolean
