@@ -46,11 +46,11 @@ def two_axis_trajectory(trajectory_info, axis_1, axis_2):
 
 
 
-def plot_trajectory(r_store: np.ndarray, mesh):
+def plot_trajectory(positions: np.ndarray, mesh):
     """plot_trajectory plots the body mesh and satellite trajectory.
 
     Args:
-        r_store (np.ndarray): Array containing values on position at each time step for the trajectory (columnwise).
+        positions (np.ndarray): (3,N) Array containing position along computed trajectory (expressed in cartesian frame).
         mesh (tetgen.pytetgen.TetGen): Tetgen mesh object of celestial body.
     """
     # Plotting mesh of asteroid/comet
@@ -59,13 +59,13 @@ def plot_trajectory(r_store: np.ndarray, mesh):
     #mesh_plot.show_bounds() # minor_ticks=True, grid='front',location='outer',all_edges=True 
 
     # Plotting trajectory
-    trajectory = np.transpose(r_store)
-    for i in range(0,len(r_store[0])-1):
+    trajectory = np.transpose(positions)
+    for i in range(0,len(positions[0])-1):
         traj = np.vstack((trajectory[i,:], trajectory[i+1,:]))
         mesh_plot.add_lines(traj, color="red", width=40)
                     
     # Plotting final position as a white dot
-    trajectory_plot = pv.PolyData(np.transpose(r_store[:,-1]))
+    trajectory_plot = pv.PolyData(np.transpose(positions[:,-1]))
     mesh_plot.add_mesh(trajectory_plot, color=[1.0, 1.0, 1.0], style='surface')
 
     mesh_plot.add_axes(x_color='red', y_color='green', z_color='blue', xlabel='X', ylabel='Y', zlabel='Z', line_width=2, shaft_length = 10)
@@ -93,16 +93,16 @@ def drawSphere(r):
     return (x,y,z)
 
 
-def plot_UDP(args, r_store, plot_mesh, plot_trajectory, plot_risk_zone, view_angle, measurement_spheres_info):
+def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, view_angle, measurement_radius):
     """plot_trajectory plots the satellite trajectory.
     Args:
         args (dotmap.DotMap): Dotmap dictionary containing info on mesh and bounding spheres.
-        r_store (np.ndarray): (3xN) Array containing N positions (cartesian frame) on the trajectory.
+        positions (np.ndarray): (3xN) Array containing N positions (cartesian frame) along the computed trajectory.
         plot_mesh (bool): Activation of plotting the mesh
         plot_trajectory (bool): Activation of plotting the trajectory
         plot_risk_zone (bool): Activation of plotting the inner bounding sphere (i.e risk-zone)
         view_angle (list): List containing the view angle of the plot.
-        measurement_spheres_info (np.ndarray): (5,N) array containing information on gravity signal measurements (positions of satelite in cartesian frame, measurement sphere radius and volume.)
+        measurement_radius (np.ndarray): (N) array containing radius of each measurement sphere at the sampled positions along the trajectory.
 
     """
     # Define figure
@@ -112,9 +112,9 @@ def plot_UDP(args, r_store, plot_mesh, plot_trajectory, plot_risk_zone, view_ang
 
     #Plot trajectory
     if plot_trajectory:
-        x = r_store[0,:]
-        y = r_store[1,:]
-        z = r_store[2,:]
+        x = positions[0,:]
+        y = positions[1,:]
+        z = positions[2,:]
         ax.plot(x, y, z, label='Trajectory')
         ax.legend()
 
@@ -129,12 +129,11 @@ def plot_UDP(args, r_store, plot_mesh, plot_trajectory, plot_risk_zone, view_ang
         ax.plot_wireframe(x, y, z, color="r", alpha=0.1)
 
     # Plot measurement spheres:
-    for i in range(0, len(r_store[0,:])):
-        print(i)
-        x_sphere = r_store[0,i]
-        y_sphere = r_store[1,i]
-        z_sphere = r_store[2,i]
-        r_sphere = (measurement_spheres_info[0,i])**(1/2)
+    for i in range(0, len(positions[0,:])):
+        x_sphere = positions[0,i]
+        y_sphere = positions[1,i]
+        z_sphere = positions[2,i]
+        r_sphere = measurement_radius[i]
 
         (x_unscaled,y_unscaled,z_unscaled) = drawSphere(r_sphere)
          # shift and scale sphere
