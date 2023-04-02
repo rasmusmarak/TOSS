@@ -1,25 +1,14 @@
 # General
 import numpy as np
 from typing import Union
-from math import pi
-
-# For computing trajectory
-import trajectory_tools
-
-# For computing the next state
-import equations_of_motion
-
-# For choosing fitness function
-from fitness import FitnessScheme
 
 # Class representing UDP 
 class udp_initial_condition:
     """ 
-    Sets up the user defined problem (udp) for use with pygmo.
-    The object holds attributes in terms of variables and constants that
-    are used for trajectory propagation. 
-    The methods of the class defines the objective function for the optimization problem,
-    boundaries for the state variables and computation of the fitness value for a given intial state. 
+    Sets up the user defined problem (udp) to be optimized with pygmo.
+    The object holds attributes that are mainly used for propagating the trajectory. 
+    The methods of the class mainly defines the objective function (fitness) for the 
+    optimization problem as well as the domain of the intial state vector. 
     """
 
     def __init__(self, args, lower_bounds, upper_bounds):
@@ -106,45 +95,44 @@ class udp_initial_condition:
         self.args = args
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
-        self.selected_fitness_functions = args.problem.selected_fitness_functions
 
 
     def fitness(self, x: np.ndarray) -> float:
-        """ Objective value to be minimized.
+        """ Evaluates and returns fitness of the computed trajectory.
 
         Args:
-            x (np.ndarray): State vector. 
+            x (np.ndarray): Initial state vector. 
 
         Returns:
-            fitness value (_float_): Difference between squared values of current and target altitude of satellite.
+            fitness (_float_): Evaluated fitness for user-specified fitness-function.
         """
 
-        # Integrate trajectory
-        collision_detected, list_of_trajectory_objects, integration_intervals = trajectory_tools.compute_trajectory(x, self.args, equations_of_motion.compute_motion)
+        # Compute trajectory
+        from trajectory.compute_trajectory import compute_trajectory
+        from trajectory.equations_of_motion import compute_motion 
+        collision_detected, list_of_ode_objects, _ = compute_trajectory(x, self.args, compute_motion)
 
-        # If collision detected => unfeasible trajectory:
+        # If collision detected => unfeasible trajectory
         if collision_detected:
-            fitness_value = 1e30
-            return [fitness_value]
+            fitness = 1e30
+            return [fitness]
+        
+        # Get positions on trajectory for a fixed time-step
+        from trajectory.trajectory_tools import get_trajectory_fixed_step
+        positions, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
 
-        # Compute fitness value:
-        fitness_value = 0
-        self.trajectory_info = trajectory_tools.get_trajectory_info(self.args, list_of_trajectory_objects, integration_intervals)
+        # Compute fitness:
+        from fitness.fitness_function_enums import FitnessFunctions
+        from fitness.fitness_functions import get_fitness_function
+        chosen_function = FitnessFunctions.CoveredVolumeFarDistancePenalty
+        fitness_function = get_fitness_function(chosen_function)
+        fitness = fitness_function(self.args, positions, timesteps)
 
-        for fitness_id in self.selected_fitness_functions:
-            if fitness_id == 4:
-                # Compute information on total covered measurement volume (if needed)
-                self.measurement_spheres_info = trajectory_tools.compute_measurement_spheres_info(self.trajectory_info)
-
-            fitness_value += getattr(udp_initial_condition, FitnessScheme(1).name)(self)
-
-        # Return fitness value        
-        return [fitness_value]
-
+        return [fitness]
 
 
     def get_bounds(self) -> Union[np.ndarray, np.ndarray]:
-        """get_bounds returns upper and lower bounds for the domain of the state vector.
+        """Returns upper and lower bounds for the domain of the initial state vector.
 
         Returns:
             lower_bounds (np.ndarray): Lower boundary values for the initial state vector.
@@ -152,53 +140,3 @@ class udp_initial_condition:
         """
         return (self.lower_bounds, self.upper_bounds)
     
-
-
-
-    def distance_to_target_altitude(self) -> float:
-        """ Computes average distance to target altitude for satellite positions along the trajectory.
-
-        Returns:
-            average_distance (float): Average distance to target altitude.
-        """
-        # Compute average distance to target altitude
-        squared_altitudes = self.trajectory_info[0,:]**2 + self.trajectory_info[1,:]**2 + self.trajectory_info[2,:]**2
-        average_distance = np.mean(np.abs(squared_altitudes-self.args.problem.target_squared_altitude))
-        return average_distance
-
-
-    def inner_sphere_entries(self) -> float:
-        """ Computes average deviation from the inner-bounding sphere of satellite positions inside the inner bounding-sphere.
-
-        Returns:
-            average_distance (float): Average distance to radius of inner bounding-sphere.
-        """
-        r = self.trajectory_info[0:3, :]
-        r = (r[0,:]**2 + r[1,:]**2 + r[2, :]**2) - self.args.problem.radius_inner_boundings_sphere
-        r[r>0] = 0 #remove all positions outside the risk-zone.
-        average_distance = np.mean(r)
-        return average_distance
-
-
-    def outer_sphere_exits(self) -> float:
-        """ Computes average deviation from the outer-bounding sphere of satellite positions outside the outer bounding-sphere.
-
-        Returns:
-            average_distance (float): Average distance to radius of outer bounding-sphere.
-        """
-        r = self.trajectory_info[0:3, :]
-        r = (r[0,:]**2 + r[1,:]**2 + r[2, :]**2) - self.args.problem.radius_outer_boundings_sphere
-        r[r<0] = 0 #remove all positions inside the measurement-zone.
-        average_distance = np.mean(r)
-        return average_distance
-
-
-    def unmeasured_volume(self) -> float:
-        """Computes the ration of unmeasured volume.
-
-        Returns:
-            unmeasured_volume_ratio (float): Ratio of unmeasured volume.
-        """
-        measured_squared_volume = np.sum(self.measurement_spheres_info[4,:])
-        unmeasured_volume_ratio = 1 - (measured_squared_volume/self.args.problem.measurable_squared_volume)
-        return unmeasured_volume_ratio
