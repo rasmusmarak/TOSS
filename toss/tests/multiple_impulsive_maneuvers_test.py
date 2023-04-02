@@ -1,13 +1,12 @@
 """ This test checks whether or not the integration is performed correctly """
-
 import sys
 sys.path.append("../..")
 
-# Import relevant modules
-import toss
-from toss import equations_of_motion
-from toss import mesh_utility
-from toss import trajectory_tools
+# Import required modules
+from toss.trajectory.equations_of_motion import compute_motion, setup_spin_axis
+from toss.mesh.mesh_utility import create_mesh
+from toss.trajectory.compute_trajectory import compute_trajectory
+from toss.trajectory.trajectory_tools import get_trajectory_adaptive_step
 
 # Core packages
 from dotmap import DotMap
@@ -32,7 +31,7 @@ def test_multiple_impulsive_maneuvers():
     args.body.right_ascension = 69           # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.spin_period = 12.06*3600       # [seconds] https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = equations_of_motion.setup_spin_axis(args)
+    args.body.spin_axis = setup_spin_axis(args)
 
     # Setup specific integrator parameters:
     args.integrator.algorithm = 3
@@ -51,7 +50,7 @@ def test_multiple_impulsive_maneuvers():
     args.problem.measurement_period = 2500 # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
     
     # Create mesh of body.
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = mesh_utility.create_mesh()
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
 
     # Osculating orbital elements from initial state (position and velocity)
     x_cartesian = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01]
@@ -83,10 +82,10 @@ def test_multiple_impulsive_maneuvers():
                 chromosome = np.concatenate((chromosome, [time_of_maneuver, dv_x, dv_y, dv_z]), axis=None)
             
         # Compute trajectory via numerical integration as in UDP.
-        _, list_of_trajectory_objects, _ = trajectory_tools.compute_trajectory(chromosome, args, equations_of_motion.compute_motion)
+        _, list_of_trajectory_objects, _ = compute_trajectory(chromosome, args, compute_motion)
 
         # Get integration info:
-        integration_info = trajectory_tools.get_integration_info(list_of_trajectory_objects)
+        integration_info = get_trajectory_adaptive_step(list_of_trajectory_objects)
 
         # Check if compute_trajectory still produces the same trajectories.
         assert all(np.isclose(final_positions_array[:, number_of_maneuvers],integration_info[0:3, -1],rtol=1e-5, atol=1e-5))

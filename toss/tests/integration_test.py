@@ -1,20 +1,19 @@
 """ This test checks whether or not the integration is performed correctly """
-
 import sys
 sys.path.append("../..")
 
-# Import relevant modules
-import toss
-from toss import equations_of_motion
-from toss import mesh_utility
-from toss import trajectory_tools
-
+# Import required modules
+from toss.trajectory.equations_of_motion import compute_motion, setup_spin_axis
+import toss.mesh.mesh_utility as mesh_utility
+from toss.trajectory.compute_trajectory import compute_trajectory
+from toss.trajectory.trajectory_tools import get_trajectory_adaptive_step
 
 # Core packages
 from dotmap import DotMap
 from math import pi
 import numpy as np
 import pykep as pk
+
 
 def test_integration():
 
@@ -32,7 +31,7 @@ def test_integration():
     args.body.right_ascension = 69           # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.spin_period = 12.06*3600       # [seconds] https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = equations_of_motion.setup_spin_axis(args)
+    args.body.spin_axis = setup_spin_axis(args)
 
     # Setup specific integrator parameters:
     args.integrator.algorithm = 3
@@ -59,10 +58,10 @@ def test_integration():
     x_osculating_elements = pk.ic2par(r=x[0:3], v=x[3:6], mu=args.body.mu) #translate to osculating orbital element
 
     # Compute trajectory via numerical integration as in UDP.
-    _, list_of_trajectory_objects, _ = trajectory_tools.compute_trajectory(x_osculating_elements, args, equations_of_motion.compute_motion)
+    _, list_of_trajectory_objects, _ = compute_trajectory(x_osculating_elements, args, compute_motion)
 
     # Get integration info:
-    integration_info = trajectory_tools.get_integration_info(list_of_trajectory_objects)
+    integration_info = get_trajectory_adaptive_step(list_of_trajectory_objects)
 
     # Final state from previous working results (in cartesian coordinates):
     final_state_historical = [3.07216681e+03, -2.45740917e+02, -9.03288997e+03, 2.48147088e-01, -2.18190890e-02, -2.68369809e-01]
