@@ -32,3 +32,16 @@ def estimate_covered_volume(positions: np.ndarray) -> float:
     estimated_volume = np.sum(sphere_volumes)
     
     return estimated_volume
+
+
+def _compute_squared_distance(arr,constant):
+    """ Compute squared distance from each point in a given array to some given constant.
+
+    Args:
+        arr (np.ndarray): (3,N) Array of values.
+        constant (float): Constant value. 
+
+    Returns:
+        (np.ndarray): (N) array containing average distance from each point in arr to constant.
+    """
+    return np.sum(np.power(arr,2), axis=0) - constant
