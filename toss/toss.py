@@ -1,11 +1,10 @@
+import sys
+sys.path.append('..')
+
 # Core packages
 from math import pi
 import numpy as np
 import pygmo as pg
-
-# Load required modules
-from toss.scripts.setup_parameters import setup_parameters
-from udp_initial_condition import udp_initial_condition
 
 # For cProfile evaluation
 import cProfile
@@ -19,6 +18,8 @@ def load_udp(args, lower_bounds, upper_bounds):
     Main function for optimizing the initial state for deterministic trajectories around a 
     small celestial body using a mesh.
     """
+    # Load required modules
+    from udp_initial_condition import udp_initial_condition
 
     # Setup User-Defined Problem (UDP)
     print("Setting up the UDP...")
@@ -75,6 +76,9 @@ def load_udp(args, lower_bounds, upper_bounds):
 
 
 def main():
+    # Load required modules
+    from scripts.setup_parameters import setup_parameters
+
     args, lower_bounds, upper_bounds = setup_parameters()
     load_udp(args, lower_bounds, upper_bounds)
 
