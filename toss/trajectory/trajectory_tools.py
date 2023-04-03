@@ -4,25 +4,25 @@ from typing import Union
 
 
 def get_trajectory_adaptive_step(list_of_ode_objects: list) -> Union[np.ndarray, np.ndarray]:
-    """ Returns the computed trajectory (position and time) as provided by DEsolver with adaptive step size.
+    """ Returns the computed trajectory (state and time) as provided by DEsolver with adaptive step size.
 
     Args:
         list_of_ode_objects (list): List of OdeSystem integration objects (provided by DEsolver)
 
     Returns:
-        positions (np.ndarray): (3,N) Array containing satelite position epressed in cartesian frame.
+        states (np.ndarray): (6,N) Array containing spacecraft positions and velocities expressed in cartesian frame.
         timesteps (np.ndarray): (N) Array containing adaptive time steps correspondning to positions. 
     """
     object_idx = 0
     for object_idx, ode_object in enumerate(list_of_ode_objects):
         if object_idx == 0:
-            positions = np.transpose(ode_object.y)
+            states = np.transpose(ode_object.y)
             timesteps = ode_object.t
         else:
-            positions = np.hstack((positions), np.transpose(ode_object.y))
+            states = np.hstack((states), np.transpose(ode_object.y))
             timesteps = np.hstack((timesteps, ode_object.t))
             
-    return positions, timesteps
+    return states, timesteps
 
 
 def get_trajectory_fixed_step(args, list_of_ode_objects: list) -> Union[np.ndarray, np.ndarray]:

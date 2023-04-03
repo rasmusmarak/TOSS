@@ -85,7 +85,7 @@ def test_multiple_impulsive_maneuvers():
         _, list_of_trajectory_objects, _ = compute_trajectory(chromosome, args, compute_motion)
 
         # Get integration info:
-        integration_info = get_trajectory_adaptive_step(list_of_trajectory_objects)
+        positions, _ = get_trajectory_adaptive_step(list_of_trajectory_objects)
 
         # Check if compute_trajectory still produces the same trajectories.
-        assert all(np.isclose(final_positions_array[:, number_of_maneuvers],integration_info[0:3, -1],rtol=1e-5, atol=1e-5))
+        assert all(np.isclose(final_positions_array[:, number_of_maneuvers],positions[0:3, -1],rtol=1e-5, atol=1e-5))
