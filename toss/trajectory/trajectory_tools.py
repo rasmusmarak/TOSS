@@ -19,7 +19,7 @@ def get_trajectory_adaptive_step(list_of_ode_objects: list) -> Union[np.ndarray,
             states = np.transpose(ode_object.y)
             timesteps = ode_object.t
         else:
-            states = np.hstack((states), np.transpose(ode_object.y))
+            states = np.hstack((states, np.transpose(ode_object.y)))
             timesteps = np.hstack((timesteps, ode_object.t))
             
     return states, timesteps
