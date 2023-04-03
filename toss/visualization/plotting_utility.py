@@ -98,17 +98,19 @@ def plot_performance_scaling(core_counts, run_times):
         speed_up.append(measured_time_lowest_core_count/run_times[i])
 
     # Plotting: run time vs core count (alongside corresponding ideal scaling)
-    ax1.plot(core_counts, run_times, 'o-r', label="10 Chromosomes/island")
+    ax1.plot(core_counts, run_times, 'o-r') #, label="10 Pop/Island"
     ax1.plot(core_counts, ideal_time_n_cores, "--b", label="Ideal scaling")
     ax1.legend()
     ax1.set_xlabel("Number of Islands")
     ax1.set_ylabel("Run time (Seconds)") 
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
 
     # Plotting: efficiency vs core count (and a reference line representing 80%)
     efficiency = []
     for j in range(0,len(core_counts)):
         efficiency.append(ideal_time_n_cores[j]/run_times[j])
-    ax2.plot(core_counts, efficiency, 'o-r', label="10 Chromosomes/island")
+    ax2.plot(core_counts, efficiency, 'o-r') #, label="10 Pop/Island"
     ax2.axhline(y=0.8, color="b", linestyle="--", label="80% Reference")
     ax2.plot(core_counts, speed_up, "--g", label="Speed-up")
 
@@ -116,3 +118,5 @@ def plot_performance_scaling(core_counts, run_times):
     ax2.legend()
     ax2.set_xlabel("Number of Islands")
     ax2.set_ylabel("Efficiency")
+    ax2.set_xscale("log")
+    ax2.set_yscale("log")

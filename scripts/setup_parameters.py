@@ -1,9 +1,15 @@
+import os
+import sys
+
+root_folder = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(root_folder)
+
 # Core packages
 from math import pi
 import numpy as np
 
 # Load required modules
-import toss.utilities.load_default_cfg as load_default_cfg
+from utilities.load_default_cfg import load_default_cfg
 import mesh_utility as mesh_utility
 import equations_of_motion as equations_of_motion
 
@@ -44,7 +50,7 @@ def setup_parameters():
     """
 
     # Load default constants value
-    args = load_default_cfg.load_default_cfg()
+    args = load_default_cfg()
     args.body.spin_velocity = (2*pi)/args.body.spin_period
     args.body.spin_axis = equations_of_motion.setup_spin_axis(args)
 
