@@ -69,11 +69,12 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
 
     # Integrate system for every defined time interval
     list_of_trajectory_objects = []
+    final_state = None
     for time_idx in range(0, len(integration_intervals)-1):
         args.integrator.t0 = integration_intervals[time_idx]
         args.integrator.tf = integration_intervals[time_idx+1]
 
-        if time_idx > 0: # First integrated time-interval.
+        if time_idx > 0:
             initial_state = final_state
             initial_state[3:6] = dv_of_maneuvers[:, time_idx-1]
         trajectory = integrate_system(func, initial_state, args)
