@@ -1,6 +1,13 @@
-# General
+# Core packages
 import numpy as np
 from typing import Union
+
+# Import required modules
+from trajectory.compute_trajectory import compute_trajectory
+from trajectory.equations_of_motion import compute_motion 
+from trajectory.trajectory_tools import get_trajectory_fixed_step
+from fitness.fitness_function_enums import FitnessFunctions
+from fitness.fitness_functions import get_fitness_function
 
 # Class representing UDP 
 class udp_initial_condition:
@@ -108,8 +115,6 @@ class udp_initial_condition:
         """
 
         # Compute trajectory
-        from trajectory.compute_trajectory import compute_trajectory
-        from trajectory.equations_of_motion import compute_motion 
         collision_detected, list_of_ode_objects, _ = compute_trajectory(x, self.args, compute_motion)
 
         # If collision detected => unfeasible trajectory
@@ -118,12 +123,9 @@ class udp_initial_condition:
             return [fitness]
         
         # Get positions on trajectory for a fixed time-step
-        from trajectory.trajectory_tools import get_trajectory_fixed_step
         positions, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
 
         # Compute fitness:
-        from fitness.fitness_function_enums import FitnessFunctions
-        from fitness.fitness_functions import get_fitness_function
         chosen_function = FitnessFunctions.CoveredVolumeFarDistancePenalty
         fitness_function = get_fitness_function(chosen_function)
         fitness = fitness_function(self.args, positions, timesteps)

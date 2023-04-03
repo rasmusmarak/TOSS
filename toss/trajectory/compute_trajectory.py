@@ -1,7 +1,14 @@
 # Core packages
 import numpy as np
 from typing import Union, Callable
+import pykep as pk
 
+# Import required modules
+from toss.mesh.mesh_utility import is_outside
+from toss.trajectory.Integrator import IntegrationScheme
+import desolver as de
+import desolver.backend as D
+D.set_float_fmt('float64')
 
 def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list, np.ndarray]:
     """Computes a single spacecraft trajectory for a given initial state by numerical integation using DEsolver. 
@@ -44,7 +51,6 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
 
     """    
     # Separate initial state from chromosome and translate from osculating elements to cartesian frame.
-    import pykep as pk
     r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
     initial_state = np.array(r+v)
 
@@ -171,11 +177,6 @@ def integrate_system(func: Callable, x: np.ndarray, args):
     Returns:
         ode_object (desolver.differential_system.OdeSystem): The integration object provided by desolver.
     """
-    # Import required modules
-    from toss.trajectory.Integrator import IntegrationScheme
-    import desolver as de
-    import desolver.backend as D
-    D.set_float_fmt('float64')
 
     # Setup parameters
     dense_output = args.integrator.dense_output
@@ -245,6 +246,5 @@ def point_is_outside_mesh(x: np.ndarray, mesh_vertices: np.ndarray, mesh_faces: 
                                   Returns "False" if point is inside mesh, and "True" if point is 
                                   outside mesh (that is, there no collision).
     """
-    from toss.mesh.mesh_utility import is_outside
     collision_boolean = is_outside(x, mesh_vertices, mesh_faces)
     return collision_boolean
