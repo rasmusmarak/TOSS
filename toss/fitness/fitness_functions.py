@@ -1,14 +1,18 @@
 # Core packages
 import numpy as np
-import typing
+from typing import Callable
 from toss.fitness.fitness_function_enums import FitnessFunctions
 from toss.fitness.fitness_function_utils import _compute_squared_distance
 from fitness_function_utils import estimate_covered_volume
 
 
-def get_fitness_function(chosen_function: FitnessFunctions):
-    """ 
-    Returns user specified fitness function.
+def get_fitness_function(chosen_function: FitnessFunctions) -> Callable:
+    """ Returns user specified fitness function.
+    Args:
+        chosen_function (FitnessFunctions): Chosen fitness function defined in enum class FitnessFunctions.
+
+    Returns:
+        (callable): The correct fitness function correspondning to chosen_function.
     """
 
     if chosen_function == FitnessFunctions.TargetAltitudeDistance:
@@ -78,7 +82,7 @@ def far_distance_penalty(args, positions: np.ndarray, timesteps: None) -> float:
     
     # We only want to penalize positions that are outside outer-sphere (i.e measurement-zone).
     # For positions outside sphere, identify the one farthest away from radius (i.e least accurate measurment)
-    maximum_distance = np.abs(np.min(distance_squared[distance_squared>0]))
+    maximum_distance = np.abs(np.max(distance_squared[distance_squared>0]))
     
     # Determine penalty P=[0,1] depending on distance. 
     penalty = maximum_distance/((maximum_distance + args.problem.radius_inner_boundings_sphere)/2)
