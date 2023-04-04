@@ -1,13 +1,13 @@
 """ This test checks whether or not the integration is performed correctly """
 
 import sys
+sys.path.append("..")
 sys.path.append("../..")
 
 # Import relevant modules
-import toss
-from toss import equations_of_motion
-from toss import mesh_utility
-from toss import trajectory_tools
+import equations_of_motion as equations_of_motion
+import mesh_utility as mesh_utility
+import trajectory_tools as trajectory_tools
 
 # Core packages
 from dotmap import DotMap

@@ -2,11 +2,11 @@
 """ This test checks whether or not a point rotation is performed correctly """
 
 import sys
+sys.path.append("..")
 sys.path.append("../..")
 
 # Import relevant modules
-import toss
-from toss import equations_of_motion
+import equations_of_motion as equations_of_motion
 
 # Core packages
 from dotmap import DotMap
