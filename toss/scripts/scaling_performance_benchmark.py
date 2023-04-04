@@ -151,7 +151,7 @@ if __name__ == "__main__":
     args.problem.number_of_maneuvers = 0
     args.problem.initial_time_step = 1
 
-    number_of_islands = 4
+    number_of_islands = 1
     population_size = 20
     number_of_generations = 20
     load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_size, number_of_generations)
