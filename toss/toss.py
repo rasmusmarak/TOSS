@@ -1,5 +1,6 @@
 import sys
-sys.path.append('..')
+sys.path.append("..")
+sys.path.append("../..")
 
 # Core packages
 from math import pi
@@ -10,6 +11,9 @@ import pygmo as pg
 import cProfile
 import pstats
 
+# Load required modules
+from udp_initial_condition import udp_initial_condition
+from scripts.setup_parameters import setup_parameters
 
 
 
@@ -18,8 +22,6 @@ def load_udp(args, lower_bounds, upper_bounds):
     Main function for optimizing the initial state for deterministic trajectories around a 
     small celestial body using a mesh.
     """
-    # Load required modules
-    from udp_initial_condition import udp_initial_condition
 
     # Setup User-Defined Problem (UDP)
     print("Setting up the UDP...")
@@ -44,43 +46,37 @@ def load_udp(args, lower_bounds, upper_bounds):
         args.algorithm.evaluation_stopping_criterion, 
         args.algorithm.focus_parameter, 
         args.algorithm.memory_parameter)
-    default_bfe = pg.bfe() # Default batch-fitness-evaluation for parallellized initialization of archipelago.
-    uda.set_bfe(default_bfe)
+    
+    # Setup BFE machinery
+    multi_process_bfe = pg.mp_bfe()
+    multi_process_bfe.resize_pool(args.optimization.number_of_islands)
+    bfe = pg.bfe(multi_process_bfe) 
+    uda.set_bfe(bfe)
     algo = pg.algorithm(uda)
-
-    # Create archipelago 
-    archi = pg.archipelago(n=args.optimization.number_of_islands, algo=algo, prob=prob, pop_size=args.optimization.population_size)
-    archi.set_topology(pg.fully_connected(len(archi))) #scale number of vertices with number of islands for a fully-connected topology.
-    archi.set_migration_type(pg.migration_type.broadcast)
+    
+    # Setup population
+    pop = pg.population(prob, size=args.optimization.population_size)
 
     # Evolve archipelago (Optimization process)
-    archi.evolve()
-    print(archi)
-    archi.wait()
+    algo.set_verbosity(1)
+    pop = algo.evolve(pop)
 
-    # Get champion
-    f_champion_per_island = archi.get_champions_f()
-    x_champion_per_island = archi.get_champions_x()
-    print("Champion fitness value: ", f_champion_per_island)
-    print("Champion chromosome: ", x_champion_per_island)
+    # Logs for output
+    champion_f = pop.champion_f
+    champion_x = pop.champion_x
+    print("Champion fitness value: ", champion_f) 
+    print("Champion chromosome: ", champion_x) 
 
-    f_champion_idx = np.where(f_champion_per_island == min(f_champion_per_island))[0]
-    x_champion = x_champion_per_island[f_champion_idx[0]]
-    f_champion = f_champion_per_island[f_champion_idx[0]][0]
+    # Shutdown pool to avoid mp_bfe bug for python==3.8
+    multi_process_bfe.shutdown_pool()
 
-    return x_champion
-
-
-
+    return champion_f, champion_x
 
 
 
 def main():
-    # Load required modules
-    from scripts.setup_parameters import setup_parameters
-
     args, lower_bounds, upper_bounds = setup_parameters()
-    load_udp(args, lower_bounds, upper_bounds)
+    champion_f, champion_x = load_udp(args, lower_bounds, upper_bounds)
 
 
 if __name__ == "__main__":

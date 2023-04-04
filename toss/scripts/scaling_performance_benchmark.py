@@ -1,5 +1,6 @@
 import sys
-sys.path.append('..')
+sys.path.append("..")
+sys.path.append("../..")
 
 # Core packages
 from math import pi
@@ -7,17 +8,15 @@ import numpy as np
 import time
 import pygmo as pg
 
+# Load required modules
+from udp_initial_condition import udp_initial_condition
+from scripts.setup_parameters import setup_parameters
 
 def load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_size, number_of_generations):
     """
     Main function for optimizing the initial state for deterministic trajectories around a 
     small celestial body using a mesh.
     """
-    # Load required modules
-    from udp_initial_condition import udp_initial_condition
-
-    start_time = time.time()
-
     # Setup User-Defined Problem (UDP)
     udp = udp_initial_condition(args, lower_bounds, upper_bounds)
     prob = pg.problem(udp)
@@ -35,50 +34,41 @@ def load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_siz
         args.algorithm.evaluation_stopping_criterion, 
         args.algorithm.focus_parameter, 
         args.algorithm.memory_parameter)
-    #uda = pg.moead_gen(gen=number_of_generations)
 
-    default_bfe = pg.bfe() # Default batch-fitness-evaluation for parallellized initialization of archipelago.
-    uda.set_bfe(default_bfe)
+    multi_process_bfe = pg.mp_bfe()
+    multi_process_bfe.resize_pool(number_of_islands)
+    bfe = pg.bfe(multi_process_bfe) 
+    uda.set_bfe(bfe)
+
     algo = pg.algorithm(uda)
 
     # Create archipelago 
-    archi = pg.archipelago(n=number_of_islands, algo=algo, prob=prob, pop_size=population_size)
-    archi.set_topology(pg.fully_connected(len(archi))) #scale number of vertices with number of islands for a fully-connected topology.
-    archi.set_migration_type(pg.migration_type.broadcast)
-
-
-    # Evolve archipelago (Optimization process)
-    list_fitness_over_gen = np.empty((number_of_generations), dtype=np.float64)
-    for i in range(0,number_of_generations):
-            
-        archi.evolve()
-        print(archi)
-        archi.wait()
-        print(dir(archi))
-        # Get champion
-        f_champion_per_island = archi.get_champions_f()
-        x_champion_per_island = archi.get_champions_x()
-        f_champion_idx = np.where(f_champion_per_island == min(f_champion_per_island))[0]
-        x_champion = x_champion_per_island[f_champion_idx[0]]
-        f_champion = f_champion_per_island[f_champion_idx[0]][0]
-
-        list_fitness_over_gen[i] = f_champion
-
+    start_time = time.time()
+    pop = pg.population(prob, size=population_size)
+    pop_time = time.time()
+    
+    # Evolve (Optimization process)
+    algo.set_verbosity(1)
+    pop = algo.evolve(pop)
     end_time = time.time()
 
-    np.savetxt("fitness_over_gen.csv", list_fitness_over_gen, delimiter=",")
+    # Logs for output
+    print("Champion fitness value: ", pop.champion_f) 
+    print("Champion chromosome: ", pop.champion_x) 
+    
+    # Shutdown pool to avoid mp_bfe bug for python==3.8
+    multi_process_bfe.shutdown_pool()
 
-    # Compute elapsed time:
+    # Compute elapsed times:
     elapsed_time = end_time - start_time
+    population_time = pop_time - start_time
+    evolve_time = end_time - pop_time
 
-    # Get champion
-    f_champion_per_island = archi.get_champions_f()
-    x_champion_per_island = archi.get_champions_x()
-    f_champion_idx = np.where(f_champion_per_island == min(f_champion_per_island))[0]
-    x_champion = x_champion_per_island[f_champion_idx[0]]
-    f_champion = f_champion_per_island[f_champion_idx[0]][0]
+    print("Elapsed time: ", elapsed_time)
+    print("Population time: ", population_time)
+    print("Evolve time: ", evolve_time)
 
-    return f_champion, x_champion, elapsed_time
+
 
 
 def scaling(args, lower_bounds, upper_bounds, generations, islands, populations):
@@ -108,8 +98,6 @@ def scaling(args, lower_bounds, upper_bounds, generations, islands, populations)
 
 
 def run_scaling_benchmark():
-    # Load required modules
-    from setup_parameters import setup_parameters
 
     # Load default parameters
     args, lower_bounds, upper_bounds = setup_parameters()
@@ -150,11 +138,8 @@ def run_scaling_benchmark():
 
 
 if __name__ == "__main__":
-    #run_scaling_benchmark()
 
-    # Load required modules
-    from setup_parameters import setup_parameters
-
+    ########## Run initial test ##########
     # Load default parameters
     args, lower_bounds, upper_bounds = setup_parameters()
 
@@ -163,8 +148,11 @@ if __name__ == "__main__":
     args.problem.number_of_maneuvers = 0
     args.problem.initial_time_step = 1
 
-    number_of_islands = 1#32
-    population_size = 7#100
-    number_of_generations = 4#50
-    f_champion, x_champion, elapsed_time = load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_size, number_of_generations)
-    
+    number_of_islands = 5
+    population_size = 20
+    number_of_generations = 20
+    load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_size, number_of_generations)
+
+
+    ####### Run scaling benchmark #######
+    run_scaling_benchmark()

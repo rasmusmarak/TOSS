@@ -6,10 +6,10 @@ from typing import Union, Callable
 import pykep as pk
 
 # For working with the mesh
-from toss.mesh_utility import is_outside
+from mesh_utility import is_outside
 
 # For choosing numerical integration method
-from toss.Integrator import IntegrationScheme
+from Integrator import IntegrationScheme
 
 # D-solver (performs integration)
 import desolver as de
