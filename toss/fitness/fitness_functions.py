@@ -11,19 +11,19 @@ def get_fitness_function(chosen_function: FitnessFunctions):
     Returns user specified fitness function.
     """
 
-    if chosen_function.value == 1:
+    if chosen_function == FitnessFunctions.TargetAltitudeDistance:
         return target_altitude_distance
     
-    elif chosen_function.value == 2:
+    elif chosen_function.value == FitnessFunctions.CloseDistancePenalty:
         return close_distance_penalty
     
-    elif chosen_function.value == 3:
+    elif chosen_function.value == FitnessFunctions.FarDistancePenalty:
         return far_distance_penalty
     
-    elif chosen_function.value == 4:
+    elif chosen_function.value == FitnessFunctions.CoveredVolume:
         return covered_volume
     
-    elif chosen_function.value == 5:
+    elif chosen_function.value == FitnessFunctions.CoveredVolumeFarDistancePenalty:
         return covered_volume_far_distance_penalty
 
 
@@ -43,38 +43,46 @@ def target_altitude_distance(args, positions: np.ndarray, timesteps: None) -> fl
 
 
 def close_distance_penalty(args, positions: np.ndarray, timesteps: None) -> float:
-    """ Computes average deviation from the inner-bounding sphere of satellite positions inside the inner bounding-sphere.
+    """ Computes penalty depending on the position closest to the body and inside risk-zone.
     Args:
         args (dotmap.DotMap): Dotmap with information on radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
         timesteps (None): (N) Array of time values for each position.  
 
     Returns:
-        fitness (float): Average distance to radius of inner bounding-sphere.
+        Penalty (float): Penalty defined between [0,1].
     """
-    r = _compute_squared_distance(positions, args.problem.radius_inner_boundings_sphere)
-    r = np.power(r[r<0], 2)
-    fitness = 0
-    for distance in r:
-        fitness += 1/distance
-    return fitness
+    # For each point along the trajectory, compute squared distance to inner sphere radius
+    distance_squared = _compute_squared_distance(positions, args.problem.radius_inner_boundings_sphere)
+    
+    # We only want to penalize positions that are inside inner-sphere (i.e risk-zone).
+    # For positions inside sphere, identify the one farthest away from radius (i.e with greatest risk)
+    maximum_distance = np.abs(np.min(distance_squared[distance_squared<0]))
+    
+    # Determine penalty P=[0,1] depending on distance. 
+    penalty = maximum_distance/((maximum_distance + args.problem.radius_inner_boundings_sphere)/2)
+    return penalty
 
 
 def far_distance_penalty(args, positions: np.ndarray, timesteps: None) -> float:
-    """ Computes average deviation from the outer-bounding sphere of satellite positions outside the outer bounding-sphere.
+    """ Computes penalty depending on the position farthest away from measurement-zone.
     Args:
         args (dotmap.DotMap): Dotmap with information on radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
         timesteps (None): (N) Array of time values for each position. 
     Returns:
-        fitness (float): Average distance to radius of outer bounding-sphere.
+        Penalty (float): Penalty defined between [0,1].
     """
-    r = _compute_squared_distance(positions, args.problem.radius_inner_boundings_sphere)
-    r = np.power(r[r>0], 2)
-    fitness = 0
-    for distance in r:
-        fitness += 1/distance
-    return fitness
+    # For each point along the trajectory, compute squared distance to inner sphere radius
+    distance_squared = _compute_squared_distance(positions, args.problem.radius_outer_boundings_sphere)
+    
+    # We only want to penalize positions that are outside outer-sphere (i.e measurement-zone).
+    # For positions outside sphere, identify the one farthest away from radius (i.e least accurate measurment)
+    maximum_distance = np.abs(np.min(distance_squared[distance_squared>0]))
+    
+    # Determine penalty P=[0,1] depending on distance. 
+    penalty = maximum_distance/((maximum_distance + args.problem.radius_inner_boundings_sphere)/2)
+    return penalty
 
 
 def covered_volume(args, positions: np.ndarray, timesteps: None) -> float:
