@@ -21,8 +21,8 @@ activate_event = true                   # Event configuration (False = no events
 number_of_maneuvers = 0                 # Maximum number of possible manuevers during mission.
 
 [optimization]          
-population_size = 7                     # Number of chromosomes per island for the pygmo-based optimization.
-number_of_generations = 1               # Number of generations for evolutionary optimization process.
+population_size = 20                     # Number of chromosomes per island for the pygmo-based optimization.
+number_of_generations = 20               # Number of generations for evolutionary optimization process.
 number_of_islands = 1                  # Number of islands in archipelago (i.e number of threads for parallelliztion of the optimization process).
 
 [algorithm]

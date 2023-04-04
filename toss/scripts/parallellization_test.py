@@ -72,74 +72,6 @@ def load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_siz
     print("Evolve time: ", evolve_time)
 
 
-
-
-def scaling(args, lower_bounds, upper_bounds, generations, islands, populations):
-    """
-    Generates results for a strong scaling test.
-    """
-    scaling_results = np.empty((8,len(islands)), dtype=np.float64)
-    for i in range(0,len(islands)):
-        number_of_islands = islands[i]
-        population_size = populations[i]
-        number_of_generations = generations[i]
-
-        # Load udp
-        f_champion, x_champion, elapsed_time = load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_size, number_of_generations)
-        
-        # Store results
-        scaling_results[0,i] = f_champion
-        scaling_results[1:7,i] = x_champion
-        scaling_results[7,i] = elapsed_time
-
-        # For logs:
-        print("Islands: ", number_of_islands, "   Pop: ", population_size,  "   Gen: ", number_of_generations)
-        print("f: ", f_champion, "   elapsed time: ", elapsed_time)
-
-    return scaling_results
-
-
-
-def run_scaling_benchmark():
-
-    # Load default parameters
-    args, lower_bounds, upper_bounds = setup_parameters()
-
-    # Adjust paramaters for benchmarking:
-    args.problem.final_time = 10
-    args.problem.number_of_maneuvers = 0
-    args.problem.initial_time_step = 1
-
-
-    # Initial test:
-    generations = [10]
-    islands = [1]
-    populations = [70]
-    initial_test_results = scaling(args, lower_bounds, upper_bounds, generations, islands, populations)
-    np.savetxt("initial_test_results.csv", initial_test_results, delimiter=",")
-
-    # Strong scaling, small run:
-    generations = [10, 10, 10, 10, 10, 10]
-    islands = [1, 2, 4, 8, 16, 32]
-    populations = [320, 160, 80, 40, 20, 10]
-    strong_scaling_results = scaling(args, lower_bounds, upper_bounds, generations, islands, populations)
-    np.savetxt("strong_scaling_small_run.csv", strong_scaling_results, delimiter=",")
-
-    # Strong scaling, large run:
-    generations = [32, 32, 32, 32, 32, 32]
-    islands = [1, 2, 4, 8, 16, 32]
-    populations = [320, 160, 80, 40, 20, 10]
-    strong_scaling_results = scaling(args, lower_bounds, upper_bounds, generations, islands, populations)
-    np.savetxt("strong_scaling_large_run.csv", strong_scaling_results, delimiter=",")
-
-    # Weak scaling
-    generations = [32, 32, 32, 32, 32, 32]
-    islands =  [1, 2, 4, 8, 16, 32]
-    populations = [10, 10, 10, 10, 10, 10]
-    weak_scaling_results = scaling(args, lower_bounds, upper_bounds, generations, islands, populations)
-    np.savetxt("weak_scaling.csv", weak_scaling_results, delimiter=",")
-
-
 if __name__ == "__main__":
 
     ########## Run initial test ##########
@@ -155,7 +87,3 @@ if __name__ == "__main__":
     population_size = 20
     number_of_generations = 20
     load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_size, number_of_generations)
-
-
-    ####### Run scaling benchmark #######
-    #run_scaling_benchmark()
