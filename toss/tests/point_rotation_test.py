@@ -2,7 +2,7 @@
 """ This test checks whether or not a point rotation is performed correctly """
 
 # Import required modules
-from equations_of_motion import setup_spin_axis, rotate_point
+from .. import setup_spin_axis, rotate_point
 
 # Core packages
 from dotmap import DotMap

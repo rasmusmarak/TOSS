@@ -1,9 +1,9 @@
 """ This test checks whether or not the integration is performed correctly """
 
 # Import required modules
-from equations_of_motion import setup_spin_axis, compute_motion
-from mesh_utility import create_mesh
-from trajectory_tools import compute_trajectory
+from .. import setup_spin_axis, compute_motion
+from .. import create_mesh
+from .. import compute_trajectory
 
 # Core packages
 from dotmap import DotMap
