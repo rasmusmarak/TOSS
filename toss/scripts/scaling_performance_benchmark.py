@@ -56,6 +56,8 @@ def load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_siz
     end_time = time.time()
 
     # Logs for output
+    f_champion = pop.champion_f
+    x_champion = pop.champion_x
     print("Champion fitness value: ", pop.champion_f) 
     print("Champion chromosome: ", pop.champion_x) 
     
@@ -70,6 +72,8 @@ def load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_siz
     print("Elapsed time: ", elapsed_time)
     print("Population time: ", population_time)
     print("Evolve time: ", evolve_time)
+
+    return f_champion, x_champion, elapsed_time
 
 
 
@@ -121,41 +125,24 @@ def run_scaling_benchmark():
     # Strong scaling, small run:
     generations = [10, 10, 10, 10, 10, 10]
     islands = [1, 2, 4, 8, 16, 32]
-    populations = [320, 160, 80, 40, 20, 10]
+    populations = [640, 320, 160, 80, 40, 20]
     strong_scaling_results = scaling(args, lower_bounds, upper_bounds, generations, islands, populations)
     np.savetxt("strong_scaling_small_run.csv", strong_scaling_results, delimiter=",")
 
     # Strong scaling, large run:
-    generations = [32, 32, 32, 32, 32, 32]
+    generations = [40, 40, 40, 40, 40, 40]
     islands = [1, 2, 4, 8, 16, 32]
-    populations = [320, 160, 80, 40, 20, 10]
+    populations = [640, 320, 160, 80, 40, 20]
     strong_scaling_results = scaling(args, lower_bounds, upper_bounds, generations, islands, populations)
     np.savetxt("strong_scaling_large_run.csv", strong_scaling_results, delimiter=",")
 
     # Weak scaling
-    generations = [32, 32, 32, 32, 32, 32]
+    generations = [40, 40, 40, 40, 40, 40]
     islands =  [1, 2, 4, 8, 16, 32]
-    populations = [10, 10, 10, 10, 10, 10]
+    populations = [20, 20, 20, 20, 20, 20]
     weak_scaling_results = scaling(args, lower_bounds, upper_bounds, generations, islands, populations)
     np.savetxt("weak_scaling.csv", weak_scaling_results, delimiter=",")
 
 
 if __name__ == "__main__":
-
-    ########## Run initial test ##########
-    # Load default parameters
-    args, lower_bounds, upper_bounds = setup_parameters()
-
-    # Adjust paramaters for benchmarking:
-    args.problem.final_time = 10
-    args.problem.number_of_maneuvers = 0
-    args.problem.initial_time_step = 1
-
-    number_of_islands = 1
-    population_size = 20
-    number_of_generations = 20
-    load_udp(args, lower_bounds, upper_bounds, number_of_islands, population_size, number_of_generations)
-
-
-    ####### Run scaling benchmark #######
-    #run_scaling_benchmark()
+    run_scaling_benchmark()    
