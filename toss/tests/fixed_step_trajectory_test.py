@@ -1,18 +1,10 @@
 """ This test checks whether or not the integration is performed correctly """
-import sys
-sys.path.append("..")
-sys.path.append("../..")
-
-import os
-root_folder = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root_folder)
 
 # Import required modules
-from trajectory.equations_of_motion import compute_motion, setup_spin_axis
-import mesh.mesh_utility as mesh_utility
-from trajectory.compute_trajectory import compute_trajectory
-from trajectory.trajectory_tools import get_trajectory_fixed_step
-
+from ..trajectory.equations_of_motion import compute_motion, setup_spin_axis
+from ..mesh.mesh_utility import create_mesh
+from ..trajectory.compute_trajectory import compute_trajectory
+from ..trajectory.trajectory_tools import get_trajectory_fixed_step
 
 # Core packages
 from dotmap import DotMap
@@ -56,7 +48,7 @@ def test_integration():
     args.problem.measurement_period = 2500 # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
 
     # Create mesh of body.
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = mesh_utility.create_mesh()
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
 
     # Initial position for integration (in cartesian coordinates):
     x = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01, 0, 0, 0, 0]

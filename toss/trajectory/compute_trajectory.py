@@ -1,15 +1,11 @@
-import sys
-sys.path.append("..")
-sys.path.append("../..")
+# Import required modules
+from ..mesh.mesh_utility import is_outside
+from ..trajectory.Integrator import IntegrationScheme
 
 # Core packages
 import numpy as np
 from typing import Union, Callable
 import pykep as pk
-
-# Import required modules
-from mesh.mesh_utility import is_outside
-from trajectory.Integrator import IntegrationScheme
 import desolver as de
 import desolver.backend as D
 D.set_float_fmt('float64')

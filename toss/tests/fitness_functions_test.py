@@ -1,18 +1,15 @@
 """ This test checks whether or not the integration is performed correctly """
-import sys
-sys.path.append("..")
-sys.path.append("../..")
 
-import os
-root_folder = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root_folder)
+#import os
+#root_folder = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#sys.path.append(root_folder)
 
 # Import required modules
-from trajectory.equations_of_motion import compute_motion, setup_spin_axis
-import mesh.mesh_utility as mesh_utility
-from trajectory.compute_trajectory import compute_trajectory
-from trajectory.trajectory_tools import get_trajectory_fixed_step
-from fitness.fitness_functions import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, covered_volume_far_distance_penalty 
+from ..trajectory.equations_of_motion import compute_motion, setup_spin_axis
+from ..mesh.mesh_utility import create_mesh
+from ..trajectory.compute_trajectory import compute_trajectory
+from ..trajectory.trajectory_tools import get_trajectory_fixed_step
+from ..fitness.fitness_functions import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, covered_volume_far_distance_penalty 
 
 # Core packages
 from dotmap import DotMap
@@ -67,7 +64,7 @@ def get_parameters():
     args.problem.measurable_volume = args.problem.squared_volume_outer_bounding_sphere - args.problem.squared_volume_inner_bounding_sphere
 
     # Create mesh of body.
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = mesh_utility.create_mesh()
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
 
     return args
 

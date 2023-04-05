@@ -1,14 +1,8 @@
-import sys
-sys.path.append("..")
-sys.path.append("../..")
-
 # Core packages
 import numpy as np
 from typing import Callable
-from fitness.fitness_function_enums import FitnessFunctions
-from fitness.fitness_function_utils import _compute_squared_distance
-from fitness.fitness_function_utils import estimate_covered_volume
-
+from .fitness_function_enums import FitnessFunctions
+from .fitness_function_utils import _compute_squared_distance, estimate_covered_volume
 
 def get_fitness_function(chosen_function: FitnessFunctions) -> Callable:
     """ Returns user specified fitness function.

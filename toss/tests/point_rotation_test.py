@@ -1,10 +1,8 @@
 
 """ This test checks whether or not a point rotation is performed correctly """
-import sys
-sys.path.append("../..")
 
 # Import required modules
-from toss.trajectory.equations_of_motion import setup_spin_axis, rotate_point
+from ..trajectory.equations_of_motion import setup_spin_axis, rotate_point
 
 # Core packages
 from dotmap import DotMap

@@ -3,11 +3,11 @@ import numpy as np
 from typing import Union
 
 # Import required modules
-from trajectory.compute_trajectory import compute_trajectory
-from trajectory.equations_of_motion import compute_motion 
-from trajectory.trajectory_tools import get_trajectory_fixed_step
-from fitness.fitness_function_enums import FitnessFunctions
-from fitness.fitness_functions import get_fitness_function
+from ..trajectory.compute_trajectory import compute_trajectory
+from ..trajectory.equations_of_motion import compute_motion 
+from ..trajectory.trajectory_tools import get_trajectory_fixed_step
+from ..fitness.fitness_function_enums import FitnessFunctions
+from ..fitness.fitness_functions import get_fitness_function
 
 # Class representing UDP 
 class udp_initial_condition:
