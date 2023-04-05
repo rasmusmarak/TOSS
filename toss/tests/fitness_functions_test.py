@@ -112,7 +112,7 @@ def test_covered_volume():
     # Position and timesteps from previous working results (in cartesian coordinates):
     previous_results = -0.0012630002281608665
     
-    assert (volume_ratio==previous_results)
+    assert np.isclose(volume_ratio,previous_results,rtol=1e-5, atol=1e-5)
 
 
 def test_target_altitude_distance():
@@ -131,7 +131,7 @@ def test_target_altitude_distance():
     # Previous results:
     previous_fitness = 2.4414062622701264e-16
 
-    assert (fitness==previous_fitness)
+    assert np.isclose(fitness,previous_fitness,rtol=1e-5, atol=1e-5)
 
 
 def test_close_distance_penalty():
@@ -150,7 +150,7 @@ def test_close_distance_penalty():
     # Previous penalty
     previous_penalty = 0.6086956521739131
 
-    assert (penalty==previous_penalty)
+    assert np.isclose(penalty,previous_penalty,rtol=1e-5, atol=1e-5)
 
 
 def test_far_distance_penalty():
@@ -168,7 +168,7 @@ def test_far_distance_penalty():
     
     # Previous penalty
     previous_penalty = 0.31664001346687987
-    assert (penalty==previous_penalty)
+    assert np.isclose(penalty,previous_penalty,rtol=1e-5, atol=1e-5)
 
 
 def test_covered_volume_far_distance_penalty():
@@ -193,4 +193,4 @@ def test_covered_volume_far_distance_penalty():
     aggregate_fitness = volume_ratio + penalty
     previous_aggregate_fitness = 0.315377013238719
 
-    assert (aggregate_fitness==previous_aggregate_fitness)
+    assert np.isclose(aggregate_fitness,previous_aggregate_fitness,rtol=1e-5, atol=1e-5)

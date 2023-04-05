@@ -67,22 +67,20 @@ def test_integration():
 
     # Get states along computed trajectory:
     positions, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
-    print(positions[:,0:11])
-    print(timesteps[0:11])
-
 
     # Position and timesteps from previous working results (in cartesian coordinates):
-    previous_positions = [[-1369.86549, -1662.82224042, -1893.8561803, -2021.71832499, -2017.25938447, -1870.22440711, -1591.62823709, -1210.46048601, -766.70404768, -304.28302656, 133.43805324]
-                          [-4531.13817, -4904.20028018, -5223.65538797, -5492.7850583, -5719.52297594, -5913.54217869, -6082.63727623, -6230.10562652, -6354.41963142, -6451.01289025, -6514.56664014]
-                          [-8418.16487, -7815.6605588, -7126.20143363, -6378.67721074, -5617.45877143, -4896.55819511, -4270.49836708, -3785.17218501, -3471.87383633, -3345.51777456, -3405.6781468 ]]
-    previous_timesteps = [0, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 22500, 25000]
+    previous_positions = np.array([[-1369.86549, -1662.82224042, -1893.8561803, -2021.71832499, -2017.25938447, -1870.22440711, -1591.62823709, -1210.46048601, -766.70404768, -304.28302656, 133.43805324],
+                          [-4531.13817, -4904.20028018, -5223.65538797, -5492.7850583, -5719.52297594, -5913.54217869, -6082.63727623, -6230.10562652, -6354.41963142, -6451.01289025, -6514.56664014],
+                          [-8418.16487, -7815.6605588, -7126.20143363, -6378.67721074, -5617.45877143, -4896.55819511, -4270.49836708, -3785.17218501, -3471.87383633, -3345.51777456, -3405.6781468 ]])
+    previous_timesteps = np.array([0, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 22500, 25000])
     
-    
-    assert all(np.isclose(previous_positions,positions,rtol=1e-5, atol=1e-5))
-    assert all(np.isclose(previous_timesteps,timesteps,rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_positions[0,:],positions[0,0:11],rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_positions[1,:],positions[1,0:11],rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_positions[2,:],positions[2,0:11],rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_timesteps,timesteps[0:11],rtol=1e-5, atol=1e-5))
 
     # Assert steps in timesteps remain fixed.
     timesteps_diff = []
-    for i in range(0,len(timesteps)):
+    for i in range(0,len(timesteps)-1):
         timesteps_diff.append(timesteps[i+1]-timesteps[i])
     assert all(x==timesteps_diff[0] for x in timesteps_diff)
