@@ -1,13 +1,9 @@
 """ This test checks whether or not the integration is performed correctly """
 
-import sys
-sys.path.append("..")
-sys.path.append("../..")
-
-# Import relevant modules
-import equations_of_motion as equations_of_motion
-import mesh_utility as mesh_utility
-import trajectory_tools as trajectory_tools
+# Import required modules
+from ..equations_of_motion import setup_spin_axis, compute_motion
+from ..mesh_utility import create_mesh
+from ..trajectory_tools import compute_trajectory
 
 # Core packages
 from dotmap import DotMap
@@ -32,7 +28,7 @@ def test_multiple_impulsive_maneuvers():
     args.body.right_ascension = 69           # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.spin_period = 12.06*3600       # [seconds] https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = equations_of_motion.setup_spin_axis(args)
+    args.body.spin_axis = setup_spin_axis(args)
 
     # Setup specific integrator parameters:
     args.integrator.algorithm = 3
@@ -47,7 +43,7 @@ def test_multiple_impulsive_maneuvers():
     args.problem.radius_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
     args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
 
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = mesh_utility.create_mesh()
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
 
     # Osculating orbital elements from initial state (position and velocity)
     x_cartesian = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01]
@@ -79,7 +75,7 @@ def test_multiple_impulsive_maneuvers():
                 chromosome = np.concatenate((chromosome, [time_of_maneuver, dv_x, dv_y, dv_z]), axis=None)
             
         # Compute trajectory via numerical integration as in UDP.
-        trajectory_info, _, _  = trajectory_tools.compute_trajectory(chromosome, args, equations_of_motion.compute_motion)
+        trajectory_info, _, _  = compute_trajectory(chromosome, args, compute_motion)
 
         # Check if compute_trajectory still produces the same trajectories.
         assert all(np.isclose(final_positions_array[:, number_of_maneuvers],trajectory_info[0:3, -1],rtol=1e-5, atol=1e-5))

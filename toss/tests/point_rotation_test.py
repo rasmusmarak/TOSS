@@ -1,12 +1,8 @@
 
 """ This test checks whether or not a point rotation is performed correctly """
 
-import sys
-sys.path.append("..")
-sys.path.append("../..")
-
-# Import relevant modules
-import equations_of_motion as equations_of_motion
+# Import required modules
+from ..equations_of_motion import setup_spin_axis, rotate_point
 
 # Core packages
 from dotmap import DotMap
@@ -43,7 +39,7 @@ def test_rotation_of_point():
     args.body.right_ascension = 69           # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.spin_period = 12.06*3600       # [seconds] https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = equations_of_motion.setup_spin_axis(args)
+    args.body.spin_axis = setup_spin_axis(args)
 
     # Define number of rotations to evaluate
     n_max = 10
@@ -59,7 +55,7 @@ def test_rotation_of_point():
 
         ######### Rotation using Quaternion #########
         # Rotation of point: 
-        rotated_position_quaternion = equations_of_motion.rotate_point(t, x, args)
+        rotated_position_quaternion = rotate_point(t, x, args)
 
         #########    Analtical rotation    #########
         # Define analytical rotation (euler-rodrigues):

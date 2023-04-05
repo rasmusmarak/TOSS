@@ -1,17 +1,11 @@
-import os
-import sys
-
-root_folder = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root_folder)
-
 # Core packages
 from math import pi
 import numpy as np
 
 # Load required modules
 from utilities.load_default_cfg import load_default_cfg
-import mesh_utility as mesh_utility
-import equations_of_motion as equations_of_motion
+from mesh_utility import create_mesh
+from equations_of_motion import setup_spin_axis
 
 
 def setup_parameters():
@@ -52,10 +46,10 @@ def setup_parameters():
     # Load default constants value
     args = load_default_cfg()
     args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = equations_of_motion.setup_spin_axis(args)
+    args.body.spin_axis = setup_spin_axis(args)
 
     # Create mesh of body:
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = mesh_utility.create_mesh()
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
 
     # Defining the state variable and its boundaries (parameter space):
     #   state: [a, e, o, w, i, ea, tm, dvx, dvy, dvz]

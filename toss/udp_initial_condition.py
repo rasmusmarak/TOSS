@@ -3,11 +3,9 @@ import numpy as np
 from typing import Union
 from math import pi
 
-# For computing trajectory
-import trajectory_tools
-
-# For computing the next state
-import equations_of_motion
+# Import required modules
+from trajectory_tools import compute_trajectory
+from equations_of_motion import compute_motion
 
 # Class representing UDP 
 class udp_initial_condition:
@@ -100,7 +98,7 @@ class udp_initial_condition:
         """
 
         # Integrate trajectory
-        _, squared_altitudes, collision_detected = trajectory_tools.compute_trajectory(x, self.args, equations_of_motion.compute_motion)
+        _, squared_altitudes, collision_detected = compute_trajectory(x, self.args, compute_motion)
 
         # Define fitness penalty in the event of at least one collision along the trajectory
         if collision_detected == True:

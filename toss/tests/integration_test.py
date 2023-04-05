@@ -1,13 +1,9 @@
 """ This test checks whether or not the integration is performed correctly """
 
-import sys
-sys.path.append("..")
-sys.path.append("../..")
-
-# Import relevant modules
-import equations_of_motion as equations_of_motion
-import mesh_utility as mesh_utility
-import trajectory_tools as trajectory_tools
+# Import required modules
+from ..equations_of_motion import setup_spin_axis, compute_motion
+from ..mesh_utility import create_mesh
+from ..trajectory_tools import compute_trajectory
 
 # Core packages
 from dotmap import DotMap
@@ -31,7 +27,7 @@ def test_integration():
     args.body.right_ascension = 69           # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.spin_period = 12.06*3600       # [seconds] https://sci.esa.int/web/rosetta/-/14615-comet-67p
     args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = equations_of_motion.setup_spin_axis(args)
+    args.body.spin_axis = setup_spin_axis(args)
 
     # Setup specific integrator parameters:
     args.integrator.algorithm = 3
@@ -47,7 +43,7 @@ def test_integration():
     args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
     args.problem.number_of_maneuvers = 0 
 
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = mesh_utility.create_mesh()
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
 
 
     # Initial position for integration (in cartesian coordinates):
@@ -55,7 +51,7 @@ def test_integration():
     x_osculating_elements = pk.ic2par(r=x[0:3], v=x[3:6], mu=args.body.mu) #translate to osculating orbital element
 
     # Compute trajectory via numerical integration as in UDP.
-    trajectory_info, _, _  = trajectory_tools.compute_trajectory(x_osculating_elements, args, equations_of_motion.compute_motion)
+    trajectory_info, _, _  = compute_trajectory(x_osculating_elements, args, compute_motion)
 
     # Final state from previous working results (in cartesian coordinates):
     final_state_historical = [3.07216681e+03, -2.45740917e+02, -9.03288997e+03, 2.48147088e-01, -2.18190890e-02, -2.68369809e-01]

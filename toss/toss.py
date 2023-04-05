@@ -1,13 +1,5 @@
-import sys
-sys.path.append("..")
-sys.path.append("../..")
-
 # Core packages
-from math import pi
-import numpy as np
 import pygmo as pg
-
-# For cProfile evaluation
 import cProfile
 import pstats
 

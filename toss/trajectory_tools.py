@@ -1,17 +1,11 @@
-# General
-import numpy as np
-from typing import Union, Callable
-
-# For orbit representation (reference frame)
-import pykep as pk
-
 # For working with the mesh
 from mesh_utility import is_outside
-
-# For choosing numerical integration method
 from Integrator import IntegrationScheme
 
-# D-solver (performs integration)
+# Import required packages
+import numpy as np
+from typing import Union, Callable
+import pykep as pk
 import desolver as de
 import desolver.backend as D
 D.set_float_fmt('float64')
