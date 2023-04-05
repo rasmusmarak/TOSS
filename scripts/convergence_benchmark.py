@@ -10,7 +10,7 @@ import pygmo as pg
 
 # Load required modules
 from udp_initial_condition import udp_initial_condition
-from scripts.setup_parameters import setup_parameters
+from toss.setup_parameters import setup_parameters
 
 
 def evolve_fitness_over_gen(args, lower_bounds, upper_bounds, number_of_islands, population_size, number_of_generations):
