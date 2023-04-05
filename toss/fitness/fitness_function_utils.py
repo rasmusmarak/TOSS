@@ -44,4 +44,4 @@ def _compute_squared_distance(arr,constant):
     Returns:
         (np.ndarray): (N) array containing average distance from each point in arr to constant.
     """
-    return np.sum(np.power(arr,2), axis=0) - constant
+    return np.power(arr,2) - constant**2

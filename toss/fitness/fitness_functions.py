@@ -1,9 +1,13 @@
+import sys
+sys.path.append("..")
+sys.path.append("../..")
+
 # Core packages
 import numpy as np
 from typing import Callable
-from toss.fitness.fitness_function_enums import FitnessFunctions
-from toss.fitness.fitness_function_utils import _compute_squared_distance
-from fitness_function_utils import estimate_covered_volume
+from fitness.fitness_function_enums import FitnessFunctions
+from fitness.fitness_function_utils import _compute_squared_distance
+from fitness.fitness_function_utils import estimate_covered_volume
 
 
 def get_fitness_function(chosen_function: FitnessFunctions) -> Callable:
@@ -41,8 +45,8 @@ def target_altitude_distance(args, positions: np.ndarray, timesteps: None) -> fl
     Returns:
         fitness (float): Average distance to target altitude.
     """    
-    average_distance = np.mean(np.abs(_compute_squared_distance(positions, args.problem.target_squared_altitude)))
-    fitness = 1/average_distance**2
+    average__squared_deviation_distance = np.mean(np.abs(_compute_squared_distance(positions, args.problem.target_squared_altitude)))
+    fitness = 1/average__squared_deviation_distance
     return fitness
 
 
@@ -57,14 +61,14 @@ def close_distance_penalty(args, positions: np.ndarray, timesteps: None) -> floa
         Penalty (float): Penalty defined between [0,1].
     """
     # For each point along the trajectory, compute squared distance to inner sphere radius
-    distance_squared = _compute_squared_distance(positions, args.problem.radius_inner_boundings_sphere)
+    distance_squared = _compute_squared_distance(positions, args.problem.radius_inner_bounding_sphere)
     
     # We only want to penalize positions that are inside inner-sphere (i.e risk-zone).
     # For positions inside sphere, identify the one farthest away from radius (i.e with greatest risk)
     maximum_distance = np.abs(np.min(distance_squared[distance_squared<0]))
     
     # Determine penalty P=[0,1] depending on distance. 
-    penalty = maximum_distance/((maximum_distance + args.problem.radius_inner_boundings_sphere)/2)
+    penalty = maximum_distance/((maximum_distance + (args.problem.radius_inner_bounding_sphere**2))/2)
     return penalty
 
 
@@ -78,14 +82,14 @@ def far_distance_penalty(args, positions: np.ndarray, timesteps: None) -> float:
         Penalty (float): Penalty defined between [0,1].
     """
     # For each point along the trajectory, compute squared distance to inner sphere radius
-    distance_squared = _compute_squared_distance(positions, args.problem.radius_outer_boundings_sphere)
+    distance_squared = _compute_squared_distance(positions, args.problem.radius_outer_bounding_sphere)
     
     # We only want to penalize positions that are outside outer-sphere (i.e measurement-zone).
     # For positions outside sphere, identify the one farthest away from radius (i.e least accurate measurment)
     maximum_distance = np.abs(np.max(distance_squared[distance_squared>0]))
     
     # Determine penalty P=[0,1] depending on distance. 
-    penalty = maximum_distance/((maximum_distance + args.problem.radius_inner_boundings_sphere)/2)
+    penalty = maximum_distance/((maximum_distance + (args.problem.radius_outer_bounding_sphere**2))/2)
     return penalty
 
 
