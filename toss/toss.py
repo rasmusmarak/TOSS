@@ -13,7 +13,7 @@ import pstats
 
 # Load required modules
 from udp_initial_condition import udp_initial_condition
-from scripts.setup_parameters import setup_parameters
+from setup_parameters import setup_parameters
 
 
 
@@ -46,7 +46,7 @@ def load_udp(args, lower_bounds, upper_bounds):
         args.algorithm.evaluation_stopping_criterion, 
         args.algorithm.focus_parameter, 
         args.algorithm.memory_parameter)
-    
+
     # Setup BFE machinery
     multi_process_bfe = pg.mp_bfe()
     multi_process_bfe.resize_pool(args.optimization.number_of_islands)
