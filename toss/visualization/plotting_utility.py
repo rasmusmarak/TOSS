@@ -101,7 +101,7 @@ def plot_performance_scaling(core_counts, run_times):
     ax1.plot(core_counts, run_times, 'o-r') #, label="10 Pop/Island"
     ax1.plot(core_counts, ideal_time_n_cores, "--b", label="Ideal scaling")
     ax1.legend()
-    ax1.set_xlabel("Number of Islands")
+    ax1.set_xlabel("Number of workers in pool")
     ax1.set_ylabel("Run time (Seconds)") 
     ax1.set_xscale("log")
     ax1.set_yscale("log")
@@ -116,7 +116,7 @@ def plot_performance_scaling(core_counts, run_times):
 
 
     ax2.legend()
-    ax2.set_xlabel("Number of Islands")
+    ax2.set_xlabel("Number of workers in pool")
     ax2.set_ylabel("Efficiency")
     ax2.set_xscale("log")
     ax2.set_yscale("log")
