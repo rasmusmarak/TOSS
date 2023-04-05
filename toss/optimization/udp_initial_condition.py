@@ -7,7 +7,7 @@ from ..trajectory.compute_trajectory import compute_trajectory
 from ..trajectory.equations_of_motion import compute_motion 
 from ..trajectory.trajectory_tools import get_trajectory_fixed_step
 from ..fitness.fitness_function_enums import FitnessFunctions
-from ..fitness.fitness_functions import get_fitness_function
+from ..fitness.fitness_functions import get_fitness
 
 # Class representing UDP 
 class udp_initial_condition:
@@ -126,10 +126,8 @@ class udp_initial_condition:
         positions, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
 
         # Compute fitness:
-        chosen_function = FitnessFunctions.CoveredVolumeFarDistancePenalty
-        fitness_function = get_fitness_function(chosen_function)
-        fitness = fitness_function(self.args, positions, timesteps)
-
+        chosen_fitness_function = FitnessFunctions.CoveredVolumeFarDistancePenalty
+        fitness = get_fitness(chosen_fitness_function, self.args, positions, timesteps)
         return [fitness]
 
 
