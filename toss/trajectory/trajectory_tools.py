@@ -56,7 +56,7 @@ def get_trajectory_fixed_step(args, list_of_ode_objects: list) -> Union[np.ndarr
             end_time_idx -= 1
         
         # Get positions using dense-output
-        positions[:, start_idx:end_time_idx] = np.transpose(ode_object._OdeSystem__sol(timesteps[start_idx:end_time_idx+1]))
+        positions[:, start_idx:end_time_idx] = np.transpose(ode_object._OdeSystem__sol(timesteps[start_idx:end_time_idx]))[0:3,:]
         start_idx = end_time_idx + 1
 
     return positions, timesteps
