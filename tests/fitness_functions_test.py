@@ -5,11 +5,11 @@
 #sys.path.append(root_folder)
 
 # Import required modules
-from ..trajectory.equations_of_motion import compute_motion, setup_spin_axis
-from ..mesh.mesh_utility import create_mesh
-from ..trajectory.compute_trajectory import compute_trajectory
-from ..trajectory.trajectory_tools import get_trajectory_fixed_step
-from ..fitness.fitness_functions import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, covered_volume_far_distance_penalty 
+from toss.trajectory.equations_of_motion import compute_motion, setup_spin_axis
+from toss.mesh.mesh_utility import create_mesh
+from toss.trajectory.compute_trajectory import compute_trajectory
+from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
+from toss.fitness.fitness_functions import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, covered_volume_far_distance_penalty 
 
 # Core packages
 from dotmap import DotMap

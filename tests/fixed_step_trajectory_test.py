@@ -1,10 +1,10 @@
 """ This test checks whether or not the integration is performed correctly """
 
 # Import required modules
-from ..trajectory.equations_of_motion import compute_motion, setup_spin_axis
-from ..mesh.mesh_utility import create_mesh
-from ..trajectory.compute_trajectory import compute_trajectory
-from ..trajectory.trajectory_tools import get_trajectory_fixed_step
+from toss.trajectory.equations_of_motion import compute_motion, setup_spin_axis
+from toss.mesh.mesh_utility import create_mesh
+from toss.trajectory.compute_trajectory import compute_trajectory
+from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
 
 # Core packages
 from dotmap import DotMap
