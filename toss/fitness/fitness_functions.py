@@ -59,12 +59,16 @@ def close_distance_penalty(radius_inner_bounding_sphere: float, positions: np.nd
     distance_squared = _compute_squared_distance(positions, radius_inner_bounding_sphere)
     
     # We only want to penalize positions that are inside inner-sphere (i.e risk-zone).
-    # For positions inside sphere, identify the one farthest away from radius (i.e with greatest risk)
-    maximum_distance = np.abs(np.min(distance_squared[distance_squared<0]))
-    
-    # Determine penalty P=[0,1] depending on distance. 
-    penalty = maximum_distance/((maximum_distance + (radius_inner_bounding_sphere**2))/2)
-    return penalty
+    distance_squared = distance_squared[distance_squared<0]
+    if len(distance_squared) == 0:
+        return 0
+    else:
+        # For positions inside sphere, identify the one farthest away from radius (i.e with greatest risk)
+        maximum_distance = np.abs(np.min(distance_squared))
+        
+        # Determine penalty P=[0,1] depending on distance. 
+        penalty = maximum_distance/((maximum_distance + (radius_inner_bounding_sphere**2))/2)
+        return penalty
 
 
 def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndarray) -> float:
@@ -80,12 +84,16 @@ def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndar
     distance_squared = _compute_squared_distance(positions, radius_outer_bounding_sphere)
     
     # We only want to penalize positions that are outside outer-sphere (i.e measurement-zone).
-    # For positions outside sphere, identify the one farthest away from radius (i.e least accurate measurment)
-    maximum_distance = np.abs(np.max(distance_squared[distance_squared>0]))
-    
-    # Determine penalty P=[0,1] depending on distance. 
-    penalty = maximum_distance/((maximum_distance + (radius_outer_bounding_sphere**2))/2)
-    return penalty
+    distance_squared = distance_squared[distance_squared>0]
+    if len(distance_squared)==0:
+        return 0
+    else:
+        # For positions outside sphere, identify the one farthest away from radius (i.e least accurate measurment)
+        maximum_distance = np.abs(np.max(distance_squared[distance_squared>0]))
+        
+        # Determine penalty P=[0,1] depending on distance. 
+        penalty = maximum_distance/((maximum_distance + (radius_outer_bounding_sphere**2))/2)
+        return penalty
 
 
 def covered_volume(measurable_volume: float, positions: np.ndarray) -> float:
