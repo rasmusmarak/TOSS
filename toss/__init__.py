@@ -7,6 +7,7 @@ from .trajectory.trajectory_tools import get_trajectory_fixed_step, get_trajecto
 from .fitness.fitness_functions import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, covered_volume_far_distance_penalty 
 from .mesh.mesh_utility import create_mesh, is_outside
 from .trajectory.Integrator import IntegrationScheme
+from .visualization.plotting_utility import plot_UDP
 
 
 __all__ = [
@@ -27,5 +28,6 @@ __all__ = [
     "covered_volume_far_distance_penalty",
     "create_mesh",
     "is_outside",
-    "IntegrationScheme"
+    "IntegrationScheme",
+    "plot_UDP"
 ]
