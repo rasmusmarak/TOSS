@@ -9,6 +9,7 @@ def estimate_covered_volume(positions: np.ndarray) -> float:
         positions (np.ndarray): (3,N) array containing information given satellite positions at given times (expressed in cartesian frame as (x,y,z)).
     
     Returns:
+        sphere_radii (np.ndarray): (1,N) array of radii for each measurement sphere corresponding to a given position.
         estimated_volume (float): Estimated volume covered by the trajectory.
     """
 
@@ -31,7 +32,7 @@ def estimate_covered_volume(positions: np.ndarray) -> float:
     # Compute estimated volume covered by the trajectory
     estimated_volume = np.sum(sphere_volumes)
     
-    return estimated_volume
+    return sphere_radii, estimated_volume
 
 
 def _compute_squared_distance(arr,constant):
@@ -44,4 +45,4 @@ def _compute_squared_distance(arr,constant):
     Returns:
         (np.ndarray): (N) array containing average distance from each point in arr to constant.
     """
-    return np.power(arr,2) - constant**2
+    return np.sum(np.power(arr,2), axis=0) - constant**2
