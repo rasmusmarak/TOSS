@@ -23,9 +23,13 @@ class FitnessFunctions(Enum):
     
         5. CoveredVolumeFarDistancePenalty:
             Combination of (3) and (4)
+        
+        6. CoveredVolumeCloseDistancePenaltyFarDistancePenalty:
+             Combination of (2), (3) and (4)
     """
     TargetAltitudeDistance = 1
     CloseDistancePenalty = 2
     FarDistancePenalty = 3
     CoveredVolume = 4
     CoveredVolumeFarDistancePenalty = 5
+    CoveredVolumeCloseDistancePenaltyFarDistancePenalty = 6 
