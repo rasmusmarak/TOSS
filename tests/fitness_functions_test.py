@@ -1,15 +1,10 @@
 """ This test checks whether or not the integration is performed correctly """
-
-#import os
-#root_folder = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-#sys.path.append(root_folder)
-
 # Import required modules
-from ..toss.trajectory.equations_of_motion import compute_motion, setup_spin_axis
-from ..toss.mesh.mesh_utility import create_mesh
-from ..toss.trajectory.compute_trajectory import compute_trajectory
-from ..toss.trajectory.trajectory_tools import get_trajectory_fixed_step
-from ..toss.fitness.fitness_functions import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, covered_volume_far_distance_penalty 
+from toss import compute_motion, setup_spin_axis
+from toss import create_mesh
+from toss import compute_trajectory
+from toss import get_trajectory_fixed_step
+from toss import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, total_covered_volume
 
 # Core packages
 from dotmap import DotMap
@@ -52,16 +47,17 @@ def get_parameters():
     args.problem.initial_time_step = 600            # Initial time step size for integration [s]
     args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
     args.problem.number_of_maneuvers = 0 
-    args.problem.measurement_period = 2500
     args.problem.target_squared_altitude = 8000**2  # Target altitude squared [m]
+    args.problem.activate_rotation = True
 
     # Arguments concerning bounding spheres
-    args.problem.measurement_period = 2500                # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
+    args.problem.measurement_period = 100                # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
     args.problem.radius_inner_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
     args.problem.radius_outer_bounding_sphere = 10000
     args.problem.squared_volume_inner_bounding_sphere = (4/3) * pi * (args.problem.radius_inner_bounding_sphere**3)
     args.problem.squared_volume_outer_bounding_sphere = (4/3) * pi * (args.problem.radius_outer_bounding_sphere**3)
-    args.problem.measurable_volume = args.problem.squared_volume_outer_bounding_sphere - args.problem.squared_volume_inner_bounding_sphere
+    args.problem.total_measurable_volume = args.problem.squared_volume_outer_bounding_sphere - args.problem.squared_volume_inner_bounding_sphere
+    args.problem.maximal_measurement_sphere_volume = (4/3) * pi * (35.95398913**3) #35.95398913 gathered from tests.
 
     # Create mesh of body.
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
@@ -81,34 +77,33 @@ def get_trajectory(args):
     """
 
     # Initial position for integration (in cartesian coordinates):
-    x = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01, 0, 0, 0, 0]
+    x = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01]
     x_osculating_elements = pk.ic2par(r=x[0:3], v=x[3:6], mu=args.body.mu) #translate to osculating orbital element
 
     # Compute trajectory via numerical integration as in UDP.
     _, list_of_ode_objects, _ = compute_trajectory(x_osculating_elements, args, compute_motion)
 
     # Get states along computed trajectory:
-    positions, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
+    positions, _, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
 
     return positions, timesteps
 
 
 def test_covered_volume():
     """
-    Test to verify that the fitness function for covered volume works as expected. 
+    Test to verify that the fitness function for covered volume by a single satellite works as expected. 
     """
     # Get parameters
     args = get_parameters()
 
     # Get trajectory
-    positions, timesteps = get_trajectory(args)
+    positions, _ = get_trajectory(args)
 
     # Compute volume ratio
-    volume_ratio = covered_volume(args, positions, timesteps)
+    volume_ratio = covered_volume(args.problem.maximal_measurement_sphere_volume, positions)
 
     # Position and timesteps from previous working results (in cartesian coordinates):
-    previous_results = -0.0012630002281608665
-    
+    previous_results = -0.0582962456868542
     assert np.isclose(volume_ratio,previous_results,rtol=1e-5, atol=1e-5)
 
 
@@ -120,14 +115,13 @@ def test_target_altitude_distance():
     args = get_parameters()
 
     # Get trajectory
-    positions, timesteps = get_trajectory(args)
+    positions, _ = get_trajectory(args)
 
     # Compute target altitude distance fitness. 
-    fitness = target_altitude_distance(args, positions, timesteps)
+    fitness = target_altitude_distance(args.problem.target_squared_altitude, positions)
 
     # Previous results:
-    previous_fitness = 2.4414062622701264e-16
-
+    previous_fitness = 0.6066007269357625
     assert np.isclose(fitness,previous_fitness,rtol=1e-5, atol=1e-5)
 
 
@@ -140,13 +134,14 @@ def test_close_distance_penalty():
 
     # Define points to evaluate
     list_of_positions = np.arange((args.problem.radius_inner_bounding_sphere-1000),(args.problem.radius_inner_bounding_sphere+1000), 100)
+    positions = np.zeros((3, len(list_of_positions)))
+    positions[0,:] = list_of_positions
 
     # Compute close distance penalty
-    penalty = close_distance_penalty(args, list_of_positions, None)
+    penalty = close_distance_penalty(args.problem.radius_inner_bounding_sphere, positions)
 
     # Previous penalty
-    previous_penalty = 0.6086956521739131
-
+    previous_penalty = 0.8132882808488928
     assert np.isclose(penalty,previous_penalty,rtol=1e-5, atol=1e-5)
 
 
@@ -159,35 +154,30 @@ def test_far_distance_penalty():
 
     # Define points to evaluate
     list_of_positions = np.arange((args.problem.radius_outer_bounding_sphere-1000),(args.problem.radius_outer_bounding_sphere+1000), 100)
+    positions = np.zeros((3, len(list_of_positions)))
+    positions[0,:] = list_of_positions
 
-    # Compute close distance penalty
-    penalty = far_distance_penalty(args, list_of_positions, None)
+    # Compute far distance penalty
+    penalty = far_distance_penalty(args.problem.radius_outer_bounding_sphere, positions)
     
     # Previous penalty
-    previous_penalty = 0.31664001346687987
+    previous_penalty = 0.5667412838561734
     assert np.isclose(penalty,previous_penalty,rtol=1e-5, atol=1e-5)
 
 
-def test_covered_volume_far_distance_penalty():
+def test_total_covered_volume():
     """
-    Test to verify that the aggregate fitness of covered volume and far distance penalty work as expected. 
+    Test to verify that the fitness function for total covered volume works as expected. 
     """
     # Get parameters
     args = get_parameters()
 
-    # Define points to evaluate
-    list_of_positions = np.arange((args.problem.radius_outer_bounding_sphere-1000),(args.problem.radius_outer_bounding_sphere+1000), 100)
-
-    # Compute close distance penalty
-    penalty = far_distance_penalty(args, list_of_positions, None)
-
     # Get trajectory
-    positions, timesteps = get_trajectory(args)
+    positions, _ = get_trajectory(args)
 
     # Compute volume ratio
-    volume_ratio = covered_volume(args, positions, timesteps)
+    volume_ratio = total_covered_volume(args.problem.total_measurable_volume, positions)
 
-    aggregate_fitness = volume_ratio + penalty
-    previous_aggregate_fitness = 0.315377013238719
-
-    assert np.isclose(aggregate_fitness,previous_aggregate_fitness,rtol=1e-5, atol=1e-5)
+    # Previous ratio
+    previous_ratio = -2.0841956392398177e-06
+    assert np.isclose(volume_ratio,previous_ratio,rtol=1e-5, atol=1e-5)

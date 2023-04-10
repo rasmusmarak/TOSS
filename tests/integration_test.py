@@ -1,10 +1,10 @@
 """ This test checks whether or not the integration is performed correctly """
 
 # Import required modules
-from ..toss.trajectory.equations_of_motion import compute_motion, setup_spin_axis
-from ..toss.mesh.mesh_utility import create_mesh
-from ..toss.trajectory.compute_trajectory import compute_trajectory
-from ..toss.trajectory.trajectory_tools import get_trajectory_adaptive_step
+from toss.trajectory.equations_of_motion import compute_motion, setup_spin_axis
+from toss.mesh.mesh_utility import create_mesh
+from toss.trajectory.compute_trajectory import compute_trajectory
+from toss.trajectory.trajectory_tools import get_trajectory_adaptive_step
 
 # Core packages
 from dotmap import DotMap
@@ -43,6 +43,7 @@ def test_integration():
     args.problem.initial_time_step = 600            # Initial time step size for integration [s]
     args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
     args.problem.number_of_maneuvers = 0 
+    args.problem.activate_rotation = True
 
     # Arguments concerning bounding spheres
     args.problem.radius_inner_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
