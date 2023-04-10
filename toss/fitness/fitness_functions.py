@@ -15,7 +15,6 @@ def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.n
     Returns:
         (float): The evaluated fitness value correspondning to chosen_function.
     """
-
     if chosen_fitness_function == FitnessFunctions.TargetAltitudeDistance:
         return target_altitude_distance(args.problem.target_squared_altitude, positions)
     
@@ -26,10 +25,16 @@ def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.n
         return far_distance_penalty(args.problem.radius_outer_bounding_sphere, positions)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredVolume:
-        return covered_volume(args.problem.measurable_volume, positions)
-    
+        return covered_volume(args.problem.maximal_measurement_sphere_volume, positions)
+
+    elif chosen_fitness_function == FitnessFunctions.TotalCoveredVolume:
+        return total_covered_volume(args.problem.total_measurable_volume, positions)
+
     elif chosen_fitness_function == FitnessFunctions.CoveredVolumeFarDistancePenalty:
-        return covered_volume_far_distance_penalty(args.problem.measurable_volume, args.problem.radius_outer_bounding_sphere, positions)
+        return covered_volume_far_distance_penalty(args.problem.maximal_measurement_sphere_volume, args.problem.radius_outer_bounding_sphere, positions)
+    
+    elif chosen_fitness_function == FitnessFunctions.CoveredVolumeCloseDistancePenaltyFarDistancePenalty:
+        return covered_volume_close_distance_penalty_far_distance_penalty(args.problem.maximal_measurement_sphere_volume, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions)
 
 
 def target_altitude_distance(target_squared_altitude: float, positions: np.ndarray) -> float:
@@ -41,8 +46,8 @@ def target_altitude_distance(target_squared_altitude: float, positions: np.ndarr
     Returns:
         fitness (float): Average distance to target altitude.
     """    
-    average__squared_deviation_distance = np.mean(np.abs(_compute_squared_distance(positions, target_squared_altitude)))
-    fitness = 1/average__squared_deviation_distance
+    average__squared_deviation_distance = np.mean(np.abs(_compute_squared_distance(positions, (target_squared_altitude**(1/2)))))
+    fitness = (average__squared_deviation_distance/target_squared_altitude)**(1/4)
     return fitness
 
 
@@ -57,7 +62,7 @@ def close_distance_penalty(radius_inner_bounding_sphere: float, positions: np.nd
     """
     # For each point along the trajectory, compute squared distance to inner sphere radius
     distance_squared = _compute_squared_distance(positions, radius_inner_bounding_sphere)
-    
+
     # We only want to penalize positions that are inside inner-sphere (i.e risk-zone).
     distance_squared = distance_squared[distance_squared<0]
     if len(distance_squared) == 0:
@@ -67,12 +72,13 @@ def close_distance_penalty(radius_inner_bounding_sphere: float, positions: np.nd
         maximum_distance = np.abs(np.min(distance_squared))
         
         # Determine penalty P=[0,1] depending on distance. 
-        penalty = maximum_distance/((maximum_distance + (radius_inner_bounding_sphere**2))/2)
+        penalty = (maximum_distance/(radius_inner_bounding_sphere**2))**(1/4)
+
         return penalty
 
 
 def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndarray) -> float:
-    """ Computes penalty depending on the position farthest away from measurement-zone.
+    """ Computes penalty depending on the mean distance to the measurement-zone.
     Args:
         radius_outer_bounding_sphere (float): Radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
@@ -88,36 +94,67 @@ def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndar
     if len(distance_squared)==0:
         return 0
     else:
-        # For positions outside sphere, identify the one farthest away from radius (i.e least accurate measurment)
-        maximum_distance = np.abs(np.max(distance_squared[distance_squared>0]))
+        # For positions outside sphere, identify the mean distande from radius
+        mean_distance = np.mean(distance_squared)
         
-        # Determine penalty P=[0,1] depending on distance. 
-        penalty = maximum_distance/((maximum_distance + (radius_outer_bounding_sphere**2))/2)
+        # Determine penalty depending on mean distance. 
+        penalty = (mean_distance/(radius_outer_bounding_sphere**2))**(1/4)
         return penalty
 
 
-def covered_volume(measurable_volume: float, positions: np.ndarray) -> float:
+def covered_volume(maximal_measurement_sphere_volume: float, positions: np.ndarray) -> float:
     """Computes the ration of unmeasured volume.
     Args:
-        measurable_volume (float): Total measurable volume between two target altitudes defined by the radius of corresponding bounding spheres.
+        maximal_measurement_sphere_volume (float): Total measurable volume for a measurement sphere at the inner bounding sphere radius positioned at estimated greatest gravitational influence from the body.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
 
     Returns:
         measured_volume_ratio (float): Ratio of unmeasured volume.
     """
-    estimated_volume = estimate_covered_volume(positions)
-    fitness = -(estimated_volume/measurable_volume)
+    _, estimated_volume = estimate_covered_volume(positions)
+    fitness = -(estimated_volume/(maximal_measurement_sphere_volume*len(positions[0,:])))
     return fitness
 
+def total_covered_volume(total_measurable_volume: float, positions: np.ndarray) -> float:
+    """
+    Computes the ratio of measured volume iniside the search space to
+    the total measurable volume defined by the measurement of a satellite
+    positioned at the inner-bounding-sphere radius in close proximity to a point
+    near the body's greatest gravitational influence.
 
-def covered_volume_far_distance_penalty(measurable_volume: float, radius_outer_bounding_sphere: float, positions: np.ndarray) -> float:
+    Args:
+        maximal_measurement_sphere_volume (float): Total measurable volume for a measurement sphere at the inner bounding sphere radius positioned at estimated greatest gravitational influence from the body.
+        positions (np.ndarray): (3,N) Array of positions along the trajectory.
+
+    Returns:
+        measured_volume_ratio (float): Ratio of unmeasured volume.
+    """
+    _, estimated_volume = estimate_covered_volume(positions)
+    fitness = -(estimated_volume/total_measurable_volume)
+    return fitness
+
+def covered_volume_far_distance_penalty(maximal_measurement_sphere_volume: float, radius_outer_bounding_sphere: float, positions: np.ndarray) -> float:
     """ Returns combined fitness value of CoveredVolume and FarDistancePenalty
     Args:
-        measurable_volume (float): Total measurable volume between two target altitudes defined by the radius of corresponding bounding spheres.
+        maximal_measurement_sphere_volume (float): Total measurable volume for a measurement sphere at the inner bounding sphere radius positioned at estimated greatest gravitational influence from the body.
         radius_outer_bounding_sphere (float): Radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
 
     Returns:
         (float): Aggregate fitness value.
     """
-    return (covered_volume(measurable_volume,positions) + far_distance_penalty(radius_outer_bounding_sphere,positions))
+    return (covered_volume(maximal_measurement_sphere_volume,positions) + far_distance_penalty(radius_outer_bounding_sphere,positions))
+
+
+def covered_volume_close_distance_penalty_far_distance_penalty(maximal_measurement_sphere_volume: float, radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray):
+    """ Returns aggregate fitness of covered_volume, close_distance_penalty and far_distance_penalty.
+    Args:
+        maximal_measurement_sphere_volume (float): Total measurable volume for a measurement sphere at the inner bounding sphere radius positioned at estimated greatest gravitational influence from the body.
+        radius_inner_bounding_sphere (float): Radius of inner bounding sphere.
+        radius_outer_bounding_sphere (float): Radius of outer bounding sphere.
+        positions (np.ndarray): (3,N) Array of positions along the trajectory.
+
+    Returns:
+        (float): Aggregate fitness value.
+    """
+    return (covered_volume(maximal_measurement_sphere_volume,positions) + close_distance_penalty(radius_inner_bounding_sphere, positions) + far_distance_penalty(radius_outer_bounding_sphere,positions))
