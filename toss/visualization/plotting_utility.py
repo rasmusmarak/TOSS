@@ -93,7 +93,7 @@ def drawSphere(r):
     return (x,y,z)
 
 
-def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, view_angle, measurement_radius):
+def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, plot_measurement_sphere, view_angle, measurement_radius):
     """plot_trajectory plots the satellite trajectory.
     Args:
         args (dotmap.DotMap): Dotmap dictionary containing info on mesh and bounding spheres.
@@ -101,6 +101,7 @@ def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, view_a
         plot_mesh (bool): Activation of plotting the mesh
         plot_trajectory (bool): Activation of plotting the trajectory
         plot_risk_zone (bool): Activation of plotting the inner bounding sphere (i.e risk-zone)
+        plot_measurement_sphere (bool): Activation of plotting measurement spheres.
         view_angle (list): List containing the view angle of the plot.
         measurement_radius (np.ndarray): (N) array containing radius of each measurement sphere at the sampled positions along the trajectory.
 
@@ -129,23 +130,24 @@ def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, view_a
         ax.plot_wireframe(x, y, z, color="r", alpha=0.1)
 
     # Plot measurement spheres:
-    for i in range(0, len(positions[0,:])):
-        x_sphere = positions[0,i]
-        y_sphere = positions[1,i]
-        z_sphere = positions[2,i]
-        r_sphere = measurement_radius[i]
+    if plot_measurement_sphere:
+        for i in range(0, len(positions[0,:])):
+            x_sphere = positions[0,i]
+            y_sphere = positions[1,i]
+            z_sphere = positions[2,i]
+            r_sphere = measurement_radius[i]
 
-        (x_unscaled,y_unscaled,z_unscaled) = drawSphere(r_sphere)
-         # shift and scale sphere
-        x_scaled = x_unscaled + x_sphere
-        y_scaled = y_unscaled + y_sphere
-        z_scaled = z_unscaled + z_sphere
+            (x_unscaled,y_unscaled,z_unscaled) = drawSphere(r_sphere)
+            # shift and scale sphere
+            x_scaled = x_unscaled + x_sphere
+            y_scaled = y_unscaled + y_sphere
+            z_scaled = z_unscaled + z_sphere
 
-        # Plot hollow wireframe:
-        #ax.plot_wireframe(xs, ys, zs, color="b", alpha=0.15)
+            # Plot hollow wireframe:
+            #ax.plot_wireframe(xs, ys, zs, color="b", alpha=0.15)
 
-        # Plot surface and wireframe of sphere:
-        ax.plot_surface(x_scaled, y_scaled, z_scaled, color="k", alpha=0.9, edgecolor="g")
+            # Plot surface and wireframe of sphere:
+            ax.plot_surface(x_scaled, y_scaled, z_scaled, color="k", alpha=0.9, edgecolor="g")
 
 
 
@@ -163,6 +165,10 @@ def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, view_a
     ax.set_zlim3d(XYZlim)
     ax.set_aspect("equal")
 
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+
     # Either display figure in jupyter or save to png.
     #plt.show()
-    plt.savefig('figures/trajectory_plot.png')
+    plt.savefig('toss/figures/trajectory_plot.png')
