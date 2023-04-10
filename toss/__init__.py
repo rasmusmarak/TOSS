@@ -4,7 +4,7 @@ from .fitness.fitness_functions import get_fitness
 from .trajectory.compute_trajectory import compute_trajectory
 from .trajectory.equations_of_motion import compute_motion, setup_spin_axis, rotate_point
 from .trajectory.trajectory_tools import get_trajectory_fixed_step, get_trajectory_adaptive_step
-from .fitness.fitness_functions import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, covered_volume_far_distance_penalty 
+from .fitness.fitness_functions import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, total_covered_volume 
 from .mesh.mesh_utility import create_mesh, is_outside
 from .trajectory.Integrator import IntegrationScheme
 from .visualization.plotting_utility import plot_UDP
@@ -25,7 +25,7 @@ __all__ = [
     "close_distance_penalty",
     "far_distance_penalty",
     "covered_volume",
-    "covered_volume_far_distance_penalty",
+    "total_covered_volume",
     "create_mesh",
     "is_outside",
     "IntegrationScheme",
