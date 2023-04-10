@@ -18,7 +18,13 @@ class FitnessFunctions(Enum):
             bounding-sphere for satellite positions outside the measurement-zone.
         
         4. CoveredVolume:
-            Computes the ratio of unmeasured volume iniside the search space
+            Computes the ratio of measured volume iniside the search space to
+            the total measurable volume defined by the measurement of a satellite
+            positioned at the inner-bounding-sphere radius in close proximity to a point
+            near the body's greatest gravitational influence.
+
+        5. TotalCoveredVolume:
+            Computes the ratio of measured volume iniside the search space
             defined by the radius of some inner and outer bounding sphere.
     
         5. CoveredVolumeFarDistancePenalty:
@@ -31,5 +37,6 @@ class FitnessFunctions(Enum):
     CloseDistancePenalty = 2
     FarDistancePenalty = 3
     CoveredVolume = 4
-    CoveredVolumeFarDistancePenalty = 5
-    CoveredVolumeCloseDistancePenaltyFarDistancePenalty = 6 
+    TotalCoveredVolume = 5
+    CoveredVolumeFarDistancePenalty = 6
+    CoveredVolumeCloseDistancePenaltyFarDistancePenalty = 7 
