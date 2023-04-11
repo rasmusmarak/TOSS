@@ -4,8 +4,8 @@ import numpy as np
 
 # Load required modules
 from utilities.load_default_cfg import load_default_cfg
-from mesh_utility import create_mesh
-from equations_of_motion import setup_spin_axis
+from mesh.mesh_utility import create_mesh
+from trajectory.equations_of_motion import setup_spin_axis
 
 
 def setup_parameters():
@@ -45,8 +45,16 @@ def setup_parameters():
 
     # Load default constants value
     args = load_default_cfg()
+
+    # Setup additional body properties
     args.body.spin_velocity = (2*pi)/args.body.spin_period
     args.body.spin_axis = setup_spin_axis(args)
+
+    # Setup additional problem properties
+    args.problem.squared_volume_inner_bounding_sphere = (4/3) * pi * (args.problem.radius_inner_bounding_sphere**3)
+    args.problem.squared_volume_outer_bounding_sphere = (4/3) * pi * (args.problem.radius_outer_bounding_sphere**3)
+    args.problem.total_measurable_volume = args.problem.squared_volume_outer_bounding_sphere - args.problem.squared_volume_inner_bounding_sphere
+    args.problem.maximal_measurement_sphere_volume = (4/3) * pi * (args.problem.maximal_measurement_sphere_radius**3)
 
     # Create mesh of body:
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
