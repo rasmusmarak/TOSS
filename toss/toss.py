@@ -4,7 +4,7 @@ import cProfile
 import pstats
 
 # Load required modules
-from udp_initial_condition import udp_initial_condition
+from optimization.udp_initial_condition import udp_initial_condition
 from setup_parameters import setup_parameters
 
 
