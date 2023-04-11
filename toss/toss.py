@@ -41,7 +41,7 @@ def load_udp(args, lower_bounds, upper_bounds):
 
     # Setup BFE machinery
     multi_process_bfe = pg.mp_bfe()
-    multi_process_bfe.resize_pool(args.optimization.number_of_islands)
+    multi_process_bfe.resize_pool(args.optimization.number_of_threads)
     bfe = pg.bfe(multi_process_bfe) 
     uda.set_bfe(bfe)
     algo = pg.algorithm(uda)
@@ -68,6 +68,14 @@ def load_udp(args, lower_bounds, upper_bounds):
 
 def main():
     args, lower_bounds, upper_bounds = setup_parameters()
+
+    # Adjust parameters for specific test:
+    args.problem.start_time = 0
+    args.problem.final_time = 10
+    args.problem.initial_time_step = 1
+    args.problem.measurement_period = 1
+    args.problem.maximal_measurement_sphere_radius = 0.3595398913
+
     champion_f, champion_x = load_udp(args, lower_bounds, upper_bounds)
 
 
