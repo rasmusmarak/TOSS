@@ -68,6 +68,24 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
         correct_order_of_maneuvers = np.argsort(maneuver_times)
         integration_intervals[1:-1] = maneuver_times[correct_order_of_maneuvers]
         dv_of_maneuvers = dv_of_maneuvers[:,correct_order_of_maneuvers]
+
+
+        # Adjust for simultaneous manuevers
+        for idx in range(0,len(integration_intervals)-1):    
+            if idx+1 == len(integration_intervals) or idx == len(integration_intervals):
+                break
+            duplicate_idx = idx
+            while integration_intervals[duplicate_idx] == integration_intervals[duplicate_idx+1]:
+                dv_of_maneuvers[:,idx] += dv_of_maneuvers[:,duplicate_idx+1]
+                duplicate_idx +=1
+
+                if duplicate_idx+1 == len(integration_intervals):
+                    break
+            
+            # Remove duplicate manuver time (and corresponding maneuver)
+            integration_intervals = np.delete(integration_intervals, np.arange(idx+1,duplicate_idx+1,1))
+            dv_of_maneuvers = np.delete(dv_of_maneuvers, np.arange(idx+1,duplicate_idx+1,1), axis=1)
+                
         
     else:
         integration_intervals = np.array([args.problem.start_time, args.problem.final_time])
@@ -128,7 +146,6 @@ def setup_maneuvers(x:np.ndarray, args) -> Union[np.ndarray, np.ndarray]:
         integration_intervals (np.ndarray): Array of discretized time steps for the integration.
         dv_of_maneuvers (np.ndarray): Array of the delta v corresponding to each maneuver.
     """
-
     # Separate maneuvers from chromosome
     list_of_maneuvers = np.array_split(np.array(x[6:]), len(x[6:])/4)
 
