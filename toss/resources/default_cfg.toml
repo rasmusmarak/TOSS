@@ -22,8 +22,8 @@ target_squared_altitude = 64000000      # (8000**2) Target altitude squared [met
 [optimization]          
 population_size = 80                    # Number of chromosomes for the pygmo-based optimization.
 number_of_generations = 30              # Number of generations for evolutionary optimization process.
-number_of_islands = 40                  # Number of threads for parallelliztion of the optimization process (Reasonably a multiple of population size).
-activate_rotation = true
+number_of_threads = 40                  # Number of threads for parallelliztion of the optimization process (Reasonably a multiple of population size).
+activate_rotation = true                # Toggles rotation of the body.
 measurement_period = 100                # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
 radius_inner_bounding_sphere = 4000     # Radius of spherical risk-zone for collision with celestial body [m]
 radius_outer_bounding_sphere = 10000    # Radius of spherical outer boundary sphere with celestial body [m]
