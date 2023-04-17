@@ -3,9 +3,9 @@ from math import pi
 import numpy as np
 
 # Load required modules
-from utilities.load_default_cfg import load_default_cfg
-from mesh.mesh_utility import create_mesh
-from trajectory.equations_of_motion import setup_spin_axis
+from .utilities.load_default_cfg import load_default_cfg
+from .mesh.mesh_utility import create_mesh
+from .trajectory.equations_of_motion import setup_spin_axis
 
 
 def setup_parameters():
@@ -92,7 +92,8 @@ def setup_parameters():
     dvz = [-1, 1]
     
     # Generate boundary state vectors:
-    lower_bounds = np.concatenate(([a[0], e[0], i[0], o[0], w[0], ea[0]], [tm[0], dvx[0], dvy[0], dvz[0]]*args.problem.number_of_maneuvers), axis=None)
-    upper_bounds = np.concatenate(([a[1], e[1], i[1], o[1], w[1], ea[1]], [tm[1], dvx[1], dvy[1], dvz[1]]*args.problem.number_of_maneuvers), axis=None)
+    lower_bounds = np.concatenate(([a[0], e[0], i[0], o[0], w[0], ea[0]], [tm[0], dvx[0], dvy[0], dvz[0]]*args.problem.number_of_maneuvers)*args.problem.number_of_spacecrafts, axis=None)
+    upper_bounds = np.concatenate(([a[1], e[1], i[1], o[1], w[1], ea[1]], [tm[1], dvx[1], dvy[1], dvz[1]]*args.problem.number_of_maneuvers)*args.problem.number_of_spacecrafts, axis=None)
+
 
     return args, lower_bounds, upper_bounds
