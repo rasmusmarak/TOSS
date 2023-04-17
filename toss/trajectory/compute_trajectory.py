@@ -66,27 +66,33 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
         # Rearrange maneuvers into increasing order of time of execution
         maneuver_times = integration_intervals[1:-1]
         correct_order_of_maneuvers = np.argsort(maneuver_times)
-        integration_intervals[1:-1] = maneuver_times[correct_order_of_maneuvers]
+        maneuver_times = maneuver_times[correct_order_of_maneuvers]
+        integration_intervals[1:-1] = maneuver_times
         dv_of_maneuvers = dv_of_maneuvers[:,correct_order_of_maneuvers]
 
-
         # Adjust for simultaneous manuevers
-        for idx in range(0,len(integration_intervals)-1):    
-            if idx+1 == len(integration_intervals) or idx == len(integration_intervals):
+        for idx in range(0,len(maneuver_times)-1):    
+            if idx+1 == len(maneuver_times) or idx == len(maneuver_times):
                 break
             duplicate_idx = idx
-            while integration_intervals[duplicate_idx] == integration_intervals[duplicate_idx+1]:
+            while maneuver_times[duplicate_idx] == maneuver_times[duplicate_idx+1]:
                 dv_of_maneuvers[:,idx] += dv_of_maneuvers[:,duplicate_idx+1]
                 duplicate_idx +=1
 
-                if duplicate_idx+1 == len(integration_intervals):
+                if duplicate_idx+1 == len(maneuver_times):
                     break
             
             # Remove duplicate manuver time (and corresponding maneuver)
-            integration_intervals = np.delete(integration_intervals, np.arange(idx+1,duplicate_idx+1,1))
+            maneuver_times = np.delete(maneuver_times, np.arange(idx+1,duplicate_idx+1,1))
             dv_of_maneuvers = np.delete(dv_of_maneuvers, np.arange(idx+1,duplicate_idx+1,1), axis=1)
-                
         
+        # Rescale intergration_intervals after treating possible simultaneous maneuvers 
+        time_intervals = np.empty((len(maneuver_times)+2))
+        time_intervals[0] = integration_intervals[0]
+        time_intervals[-1] = integration_intervals[-1]
+        time_intervals[1:-1] = maneuver_times
+        integration_intervals = time_intervals
+
     else:
         integration_intervals = np.array([args.problem.start_time, args.problem.final_time])
         integration_intervals = integration_intervals.astype(np.int32)
