@@ -33,6 +33,6 @@ jobs:
         shell: bash -l {0}
         run: |
           micromamba activate toss
-          cd TOSS/tests
+          cd toss/tests
           micromamba install pytest
           pytest
