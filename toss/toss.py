@@ -1,11 +1,13 @@
 # Core packages
+import numpy as np
+from math import pi
 import pygmo as pg
 import cProfile
 import pstats
 
 # Load required modules
-from optimization.udp_initial_condition import udp_initial_condition
-from setup_parameters import setup_parameters
+from toss.optimization.udp_initial_condition import udp_initial_condition
+from toss.setup_parameters import setup_parameters
 
 
 
@@ -65,30 +67,19 @@ def load_udp(args, lower_bounds, upper_bounds):
     return champion_f, champion_x
 
 
-
 def main():
     args, lower_bounds, upper_bounds = setup_parameters()
-
-    # Adjust parameters for specific test:
-    args.problem.start_time = 0
-    args.problem.final_time = 10
-    args.problem.initial_time_step = 1
-    args.problem.measurement_period = 1
-    args.problem.maximal_measurement_sphere_radius = 0.3595398913
-
     champion_f, champion_x = load_udp(args, lower_bounds, upper_bounds)
 
 
 if __name__ == "__main__":
-        
-    main()
-    #cProfile.run("main()", "output.dat")
+    cProfile.run("main()", "output.dat")
 
-    #with open("output_time.txt", "w") as f:
-    #    p = pstats.Stats("output.dat", stream=f)
-    #    p.sort_stats("time").print_stats()
+    with open("output_time.txt", "w") as f:
+        p = pstats.Stats("output.dat", stream=f)
+        p.sort_stats("time").print_stats()
     
-    #with open("output_calls.txt", "w") as f:
-    #    p = pstats.Stats("output.dat", stream=f)
-    #    p.sort_stats("calls").print_stats()
+    with open("output_calls.txt", "w") as f:
+        p = pstats.Stats("output.dat", stream=f)
+        p.sort_stats("calls").print_stats()
         
