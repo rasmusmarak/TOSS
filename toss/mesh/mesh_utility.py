@@ -49,7 +49,7 @@ def create_mesh() -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float
     corrected_path = path.split('TOSS', 1)[0]
 
     # Read the input .pk file
-    mesh_points, mesh_triangles = read_pk_file(corrected_path + "TOSS/toss/3dmeshes/churyumov-gerasimenko_lp.pk")
+    mesh_points, mesh_triangles = read_pk_file(corrected_path + "TOSS/3dmeshes/churyumov-gerasimenko_lp.pk")
 
     # Un-normalizing the scale
     #   Conversion factor [to metric meters]: 3126.6064453124995
