@@ -18,16 +18,17 @@ initial_time_step = 600                 # Initial time step size for integration
 activate_event = true                   # Event configuration (False = no events, True = collision with body detection).
 number_of_maneuvers = 0                 # Maximum number of possible manuevers during mission.
 target_squared_altitude = 64000000      # (8000**2) Target altitude squared [meter].
-
-[optimization]          
-population_size = 80                    # Number of chromosomes for the pygmo-based optimization.
-number_of_generations = 30              # Number of generations for evolutionary optimization process.
-number_of_threads = 40                  # Number of threads for parallelliztion of the optimization process (Reasonably a multiple of population size).
 activate_rotation = true                # Toggles rotation of the body.
 measurement_period = 100                # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
 radius_inner_bounding_sphere = 4000     # Radius of spherical risk-zone for collision with celestial body [m]
 radius_outer_bounding_sphere = 10000    # Radius of spherical outer boundary sphere with celestial body [m]
 maximal_measurement_sphere_radius = 35.95398913 # Radius found at point of greatest gravitational influence by the body for a spacecraft on the boundary of the inner bounding sphere with measurement period of 100 [s].
+number_of_spacecrafts = 2
+
+[optimization]          
+population_size = 80                    # Number of chromosomes for the pygmo-based optimization.
+number_of_generations = 30              # Number of generations for evolutionary optimization process.
+number_of_threads = 40                  # Number of threads for parallelliztion of the optimization process (Reasonably a multiple of population size).
 
 [algorithm]
 kernel_size = 13
