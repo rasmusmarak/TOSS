@@ -1,6 +1,4 @@
 # Core packages
-import numpy as np
-from math import pi
 import pygmo as pg
 import cProfile
 import pstats
