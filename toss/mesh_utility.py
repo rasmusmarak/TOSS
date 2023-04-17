@@ -45,7 +45,7 @@ def create_mesh() -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float
         largest_protuberant (float): Length of largest protuberant mass of the celestial body. (Computed from body centered at origin)
     """
 
-    path = str(pathlib.Path("67P-Swarm").parent.resolve())
+    path = str(pathlib.Path("TOSS").parent.resolve())
     corrected_path = path.split('toss', 1)[0]
 
     # Read the input .pk file
