@@ -1,7 +1,6 @@
 # core stuff
 import pickle as pk
 import numpy as np
-import pathlib
 from typing import Union
 
 import os
@@ -36,7 +35,7 @@ def read_pk_file(filename):
     return mesh_points, mesh_triangles
 
 
-def create_mesh(mesh_path) -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float]:
+def create_mesh(mesh_path: str) -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float]:
     """
     Creates a tetrahedralized mesh object representing the celestial body of interest.
 
@@ -53,7 +52,6 @@ def create_mesh(mesh_path) -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarr
     path = os.path.join(
         os.path.dirname(__file__).split('toss', 1)[0] + "/" + mesh_path
     )
-    print(path)
 
     # Read the input .pk file
     mesh_points, mesh_triangles = read_pk_file(path)
