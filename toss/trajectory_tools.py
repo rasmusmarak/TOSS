@@ -1,6 +1,6 @@
 # For working with the mesh
-from mesh_utility import is_outside
-from Integrator import IntegrationScheme
+from toss.mesh_utility import is_outside
+from toss.Integrator import IntegrationScheme
 
 # Import required packages
 import numpy as np

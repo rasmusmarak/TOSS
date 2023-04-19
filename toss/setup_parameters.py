@@ -3,9 +3,9 @@ from math import pi
 import numpy as np
 
 # Load required modules
-from utilities.load_default_cfg import load_default_cfg
-from mesh_utility import create_mesh
-from equations_of_motion import setup_spin_axis
+from toss.utilities.load_default_cfg import load_default_cfg
+from toss.mesh_utility import create_mesh
+from toss.equations_of_motion import setup_spin_axis
 
 
 def setup_parameters():

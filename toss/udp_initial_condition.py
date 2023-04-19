@@ -4,8 +4,8 @@ from typing import Union
 from math import pi
 
 # Import required modules
-from trajectory_tools import compute_trajectory
-from equations_of_motion import compute_motion
+from toss.trajectory_tools import compute_trajectory
+from toss.equations_of_motion import compute_motion
 
 # Class representing UDP 
 class udp_initial_condition:
