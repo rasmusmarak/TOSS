@@ -51,9 +51,12 @@ def create_mesh() -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float
     #corrected_path = path.split('TOSS', 1)[0]
 
     path = os.path.join(
-        os.path.dirname(__file__) + "../3dmeshes/churyumov-gerasimenko_lp.pk"
+        os.path.dirname(__file__).split('toss', 1)[0] + "/3dmeshes/churyumov-gerasimenko_lp.pk"
     )
     print(path)
+
+    #corrected_path = path.split('TOSS', 1)[0]
+    #print(corrected_path)
 
     # Read the input .pk file
     #mesh_points, mesh_triangles = read_pk_file(corrected_path + "TOSS/3dmeshes/churyumov-gerasimenko_lp.pk")
