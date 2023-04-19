@@ -46,20 +46,13 @@ def create_mesh() -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float
         mesh_triangles (np.ndarray): Array of all triangles on mesh.
         largest_protuberant (float): Length of largest protuberant mass of the celestial body. (Computed from body centered at origin)
     """
-
-    #path = str(pathlib.Path("TOSS").parent.resolve())
-    #corrected_path = path.split('TOSS', 1)[0]
-
+    # Adjust path to desired mesh
     path = os.path.join(
-        os.path.dirname(__file__).split('toss', 1)[0] + "/3dmeshes/churyumov-gerasimenko_lp.pk"
+        os.path.dirname(__file__).split('toss', 1)[0] + "/" + "3dmeshes/churyumov-gerasimenko_lp.pk"
     )
     print(path)
 
-    #corrected_path = path.split('TOSS', 1)[0]
-    #print(corrected_path)
-
     # Read the input .pk file
-    #mesh_points, mesh_triangles = read_pk_file(corrected_path + "TOSS/3dmeshes/churyumov-gerasimenko_lp.pk")
     mesh_points, mesh_triangles = read_pk_file(path)
 
     # Un-normalizing the scale
