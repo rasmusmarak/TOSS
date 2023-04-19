@@ -36,9 +36,12 @@ def read_pk_file(filename):
     return mesh_points, mesh_triangles
 
 
-def create_mesh() -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float]:
+def create_mesh(mesh_path) -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float]:
     """
     Creates a tetrahedralized mesh object representing the celestial body of interest.
+
+    Args:
+        mesh_path (str): Path of the userspecificed mesh (lies outside module).
 
     Returns:
         tgen (tetgen.pytetgen.TetGen): Tetgen mesh object of celestial body.
@@ -48,7 +51,7 @@ def create_mesh() -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float
     """
     # Adjust path to desired mesh
     path = os.path.join(
-        os.path.dirname(__file__).split('toss', 1)[0] + "/" + "3dmeshes/churyumov-gerasimenko_lp.pk"
+        os.path.dirname(__file__).split('toss', 1)[0] + "/" + mesh_path
     )
     print(path)
 

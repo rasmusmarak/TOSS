@@ -59,8 +59,9 @@ def get_parameters():
     args.problem.total_measurable_volume = args.problem.squared_volume_outer_bounding_sphere - args.problem.squared_volume_inner_bounding_sphere
     args.problem.maximal_measurement_sphere_volume = (4/3) * pi * (35.95398913**3) #35.95398913 gathered from tests.
 
-    # Create mesh of body.
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
+    # Arguments for mesh:
+    args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_lp.pk"
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
 
     return args
 
