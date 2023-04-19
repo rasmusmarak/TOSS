@@ -49,7 +49,7 @@ def setup_parameters():
     args.body.spin_axis = setup_spin_axis(args)
 
     # Create mesh of body:
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
 
     # Defining the state variable and its boundaries (parameter space):
     #   state: [a, e, o, w, i, ea, tm, dvx, dvy, dvz]

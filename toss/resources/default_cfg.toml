@@ -38,4 +38,4 @@ focus_parameter = 0.0
 memory_parameter = false
 
 [mesh]
-# mesh is loaded outside of default_cfg.
+mesh_path = "3dmeshes/churyumov-gerasimenko_lp.pk"

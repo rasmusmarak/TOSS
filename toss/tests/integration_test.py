@@ -43,7 +43,9 @@ def test_integration():
     args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
     args.problem.number_of_maneuvers = 0 
 
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
+    # Arguments for mesh
+    args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_lp.pk"
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
 
 
     # Initial position for integration (in cartesian coordinates):

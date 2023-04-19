@@ -43,7 +43,9 @@ def test_multiple_impulsive_maneuvers():
     args.problem.radius_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
     args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
 
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
+    # Arguments for mesh
+    args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_lp.pk"
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
 
     # Osculating orbital elements from initial state (position and velocity)
     x_cartesian = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01]
