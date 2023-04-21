@@ -61,15 +61,15 @@ def close_distance_penalty(radius_inner_bounding_sphere: float, positions: np.nd
         Penalty (float): Penalty defined between [0,1].
     """
     # For each point along the trajectory, compute squared distance to inner sphere radius
-    distance_squared = _compute_squared_distance(positions, radius_inner_bounding_sphere)
+    delta_distance_squared = _compute_squared_distance(positions, radius_inner_bounding_sphere)
 
     # We only want to penalize positions that are inside inner-sphere (i.e risk-zone).
-    distance_squared = distance_squared[distance_squared<0]
-    if len(distance_squared) == 0:
+    delta_distance_squared = delta_distance_squared[delta_distance_squared<0]
+    if len(delta_distance_squared) == 0:
         return 0
     else:
         # For positions inside sphere, identify the one farthest away from radius (i.e with greatest risk)
-        maximum_distance = np.abs(np.min(distance_squared))
+        maximum_distance = np.abs(np.min(delta_distance_squared))
         
         # Determine penalty P=[0,1] depending on distance. 
         penalty = (maximum_distance/(radius_inner_bounding_sphere**2))**(1/4)
@@ -86,16 +86,18 @@ def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndar
     Returns:
         Penalty (float): Penalty defined between [0,1].
     """
-    # For each point along the trajectory, compute squared distance to inner sphere radius
-    distance_squared = _compute_squared_distance(positions, radius_outer_bounding_sphere)
+    # For each point along the trajectory, compare the squared distance of the position with to the outer sphere radius
+    delta_distance_squared = _compute_squared_distance(positions, radius_outer_bounding_sphere)
     
     # We only want to penalize positions that are outside outer-sphere (i.e measurement-zone).
-    distance_squared = distance_squared[distance_squared>0]
-    if len(distance_squared)==0:
+    # That is whenever the distance from origin to the position is greater than the radius of the
+    # outer bounding sphere.
+    delta_distance_squared = delta_distance_squared[delta_distance_squared>0]
+    if len(delta_distance_squared)==0:
         return 0
     else:
         # For positions outside sphere, identify the mean distande from radius
-        mean_distance = np.mean(distance_squared)
+        mean_distance = np.mean(delta_distance_squared)
         
         # Determine penalty depending on mean distance. 
         penalty = (mean_distance/(radius_outer_bounding_sphere**2))**(1/4)
