@@ -27,11 +27,15 @@ class FitnessFunctions(Enum):
             Computes the ratio of measured volume iniside the search space
             defined by the radius of some inner and outer bounding sphere.
     
-        5. CoveredVolumeFarDistancePenalty:
+        6. CoveredVolumeFarDistancePenalty:
             Combination of (3) and (4)
         
-        6. CoveredVolumeCloseDistancePenaltyFarDistancePenalty:
+        7. CoveredVolumeCloseDistancePenaltyFarDistancePenalty:
              Combination of (2), (3) and (4)
+
+        8. CoveredSpace
+
+        9. Covered_spaceCloseDistancePenaltyFarDistancePenalty
     """
     TargetAltitudeDistance = 1
     CloseDistancePenalty = 2
@@ -40,3 +44,5 @@ class FitnessFunctions(Enum):
     TotalCoveredVolume = 5
     CoveredVolumeFarDistancePenalty = 6
     CoveredVolumeCloseDistancePenaltyFarDistancePenalty = 7 
+    CoveredSpace = 8
+    CoveredSpaceCloseDistancePenaltyFarDistancePenalty = 9
