@@ -77,7 +77,7 @@ def compute_motion(t: float, x: np.ndarray, args) -> np.ndarray:
     """
     position = x[0:3]
 
-    if args.problem.activate_rotation == True:
+    if args.problem.activate_rotation:
         rotated_position = rotate_point(t, x[0:3], args)
         position = rotated_position
 
