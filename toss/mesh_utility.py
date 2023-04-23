@@ -1,8 +1,8 @@
 # core stuff
 import pickle as pk
 import numpy as np
-import pathlib
 from typing import Union
+import os
 
 # meshing
 import tetgen
@@ -34,22 +34,24 @@ def read_pk_file(filename):
     return mesh_points, mesh_triangles
 
 
-def create_mesh() -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float]:
+def create_mesh(mesh_path: str) -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.ndarray, float]:
     """
     Creates a tetrahedralized mesh object representing the celestial body of interest.
-
+    Args:
+        mesh_path (str): Path of the userspecificed mesh (lies outside module).
     Returns:
         tgen (tetgen.pytetgen.TetGen): Tetgen mesh object of celestial body.
         mesh_points (np.ndarray): Array of all points on mesh.
         mesh_triangles (np.ndarray): Array of all triangles on mesh.
         largest_protuberant (float): Length of largest protuberant mass of the celestial body. (Computed from body centered at origin)
     """
-
-    path = str(pathlib.Path("67P-Swarm").parent.resolve())
-    corrected_path = path.split('toss', 1)[0]
+    # Adjust path to desired mesh
+    path = os.path.join(
+        os.path.dirname(__file__).split('toss', 1)[0] + "/" + mesh_path
+    )
 
     # Read the input .pk file
-    mesh_points, mesh_triangles = read_pk_file(corrected_path + "/toss/3dmeshes/churyumov-gerasimenko_lp.pk")
+    mesh_points, mesh_triangles = read_pk_file(path)
 
     # Un-normalizing the scale
     #   Conversion factor [to metric meters]: 3126.6064453124995
