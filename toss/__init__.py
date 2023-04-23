@@ -8,9 +8,11 @@ from .fitness.fitness_functions import target_altitude_distance, close_distance_
 from .mesh.mesh_utility import create_mesh, is_outside
 from .trajectory.Integrator import IntegrationScheme
 from .visualization.plotting_utility import plot_UDP
+from .utilities.load_default_cfg import load_default_cfg
+from .optimization.udp_initial_condition import udp_initial_condition
+from .setup_parameters import setup_parameters
 
-
-__all__ = [
+_all__ = [
     "FitnessFunctions",
     "estimate_covered_volume",
     "_compute_squared_distance",
@@ -29,5 +31,8 @@ __all__ = [
     "create_mesh",
     "is_outside",
     "IntegrationScheme",
-    "plot_UDP"
+    "plot_UDP",
+    "load_default_cfg",
+    "udp_initial_condition",
+    "setup_parameters"
 ]

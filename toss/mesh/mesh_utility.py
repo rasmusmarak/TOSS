@@ -2,6 +2,7 @@
 import pickle as pk
 import numpy as np
 from typing import Union
+import os
 
 import os
 
@@ -40,7 +41,7 @@ def create_mesh(mesh_path: str) -> Union[tetgen.pytetgen.TetGen, np.ndarray, np.
     Creates a tetrahedralized mesh object representing the celestial body of interest.
 
     Args:
-        mesh_path (str): Path of the userspecificed mesh (lies outside module).
+        mesh_path (str): Path of the user-specificed mesh (lies outside module).
 
     Returns:
         tgen (tetgen.pytetgen.TetGen): Tetgen mesh object of celestial body.
