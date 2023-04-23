@@ -4,8 +4,8 @@ import numpy as np
 
 # Load required modules
 from toss.utilities.load_default_cfg import load_default_cfg
-from toss.mesh_utility import create_mesh
-from toss.equations_of_motion import setup_spin_axis
+from toss.mesh.mesh_utility import create_mesh
+from toss.trajectory.equations_of_motion import setup_spin_axis
 
 
 def setup_parameters():
