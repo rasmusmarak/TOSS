@@ -96,9 +96,9 @@ def compute_space_coverage(positions, velocities, timesteps, radius_outer_boundi
     phi_points = phi_points[index_feasible_positions]
 
     # Find the indices of the closest values in the meshgrid for each point using broadcasting
-    i = np.argmin(np.abs(r_matrix - r_points[:, None, None, None]), axis=0) # indices along r axis
-    j = np.argmin(np.abs(theta_matrix - theta_points[:, None, None]), axis=1) # indices along theta axis
-    k = np.argmin(np.abs(phi_matrix - phi_points[:, None]), axis=2) # indices along phi axis
+    i = np.argmin(np.abs(r[:, np.newaxis] - r_points), axis=0) # indices along r axis
+    j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
+    k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
 
     # Create a boolean tensor with the same shape as the spherical meshgrid
     bool_array = np.zeros_like(r_matrix, dtype=bool) # initialize with False
