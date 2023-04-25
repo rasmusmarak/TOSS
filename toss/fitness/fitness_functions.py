@@ -4,13 +4,14 @@ import typing
 from .fitness_function_enums import FitnessFunctions
 from .fitness_function_utils import _compute_squared_distance, estimate_covered_volume, compute_space_coverage
 
-def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.ndarray, timesteps: None) -> float:
+def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.ndarray, velocities:np.ndarray, timesteps: np.ndarray) -> float:
     """ Returns user specified fitness function.
     Args:
         chosen_function (FitnessFunctions): Chosen fitness function as defined in enum class FitnessFunctions.
         args (dotmap.DotMap): Dotmap with the required values for each defined fitness function.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
-        timesteps (None): (N) Array of time values for each position. 
+        velocities (np.ndarray): (3,N) Array of velocities along the trajectory.
+        timesteps (np.ndarray): (N) Array of time values for each position. 
 
     Returns:
         (float): The evaluated fitness value correspondning to chosen_function.
@@ -37,10 +38,10 @@ def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.n
         return covered_volume_close_distance_penalty_far_distance_penalty(args.problem.maximal_measurement_sphere_volume, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredSpace:
-        return covered_space(args.problem.radius_outer_bounding_sphere, positions)
+        return covered_space(args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty:
-        return covered_space_close_distance_penalty_far_distance_penalty(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions)
+        return covered_space_close_distance_penalty_far_distance_penalty(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps)
 
 
 def target_altitude_distance(target_squared_altitude: float, positions: np.ndarray) -> float:
@@ -165,29 +166,33 @@ def covered_volume_close_distance_penalty_far_distance_penalty(maximal_measureme
     """
     return (covered_volume(maximal_measurement_sphere_volume,positions) + close_distance_penalty(radius_inner_bounding_sphere, positions) + far_distance_penalty(radius_outer_bounding_sphere,positions))
 
-def covered_space(radius_outer_bounding_sphere: float, positions: np.ndarray):
+def covered_space(radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray):
     """ Returns the ratio of visited points to a number of points definied inside the outer bounding sphere.
 
     Args:
         radius_outer_bounding_sphere (float):  Radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
+        velocities (np.ndarray): (3,N) Array of velocities along the trajectory.
+        timesteps (np.ndarray): (N) Array of time values for each position.
 
     Returns:
         visited_space_ratio (float): ratio of visited points to a number of points definied inside the outer bounding sphere.
     """
-    visited_space_ratio = compute_space_coverage(positions, radius_outer_bounding_sphere)
+    visited_space_ratio = compute_space_coverage(positions, velocities, timesteps, radius_outer_bounding_sphere)
     return visited_space_ratio
 
-def covered_space_close_distance_penalty_far_distance_penalty(radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray):
+def covered_space_close_distance_penalty_far_distance_penalty(radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray):
     """ Returns aggregate fitness of covered_space, close_distance_penalty and far_distance_penalty.
 
     Args:
         radius_inner_bounding_sphere (float): Radius of inner bounding sphere.
         radius_outer_bounding_sphere (float): Radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
+        velocities (np.ndarray): (3,N) Array of velocities along the trajectory.
+        timesteps (np.ndarray): (N) Array of time values for each position.
 
     Returns:
         (float): Aggregate fitness value.
     """
-    fitness = (compute_space_coverage(positions, radius_outer_bounding_sphere) + close_distance_penalty(radius_inner_bounding_sphere, positions) + far_distance_penalty(radius_outer_bounding_sphere,positions))
+    fitness = (compute_space_coverage(positions, velocities, timesteps, radius_outer_bounding_sphere) + close_distance_penalty(radius_inner_bounding_sphere, positions) + far_distance_penalty(radius_outer_bounding_sphere,positions))
     return fitness
