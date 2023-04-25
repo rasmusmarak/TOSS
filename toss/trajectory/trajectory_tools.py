@@ -39,7 +39,7 @@ def get_trajectory_fixed_step(args, list_of_ode_objects: list) -> Union[np.ndarr
     Returns:
         positions (np.ndarray): (3,N) Array containing satelite position epressed in cartesian frame.
         velocities (np.ndarray): (3,N) Array containing satelite velocities epressed in cartesian frame.
-        timesteps (np.ndarray): (N) Array containing adaptive time steps correspondning to positions. 
+        timesteps (np.ndarray): (N) Array containing fixed time steps correspondning to positions. 
     """
     
     # Define times-axis with a fixed time step
