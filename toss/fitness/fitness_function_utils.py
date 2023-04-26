@@ -75,7 +75,7 @@ def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_
     max_velocity = np.sqrt(np.max(velocities[0,:]**2 + velocities[1,:]**2 + velocities[2,:]**2))
     time_step = timesteps[1]-timesteps[0]
     max_distance_traveled = max_velocity * time_step
-    
+
     # Calculate and adjust grid spacing based on maximal velocity and time step
     r_steps = np.floor((radius_max-radius_min)/max_distance_traveled)
     theta_steps = np.floor(np.pi*radius_min / max_distance_traveled)
@@ -105,18 +105,24 @@ def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_
     theta_points = theta_points[index_feasible_positions]
     phi_points = phi_points[index_feasible_positions]
 
-    # Find the indices of the closest values in the meshgrid for each point using broadcasting
-    i = np.argmin(np.abs(r[:, np.newaxis] - r_points), axis=0) # indices along r axis
-    j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
-    k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
+    # Compute ratio of visited points. 
+    if len(r_points)==0 or len(theta_points)==0 or len(phi_points)==0:
+        ratio = 0
+        return ratio
+    
+    else: 
+        # Find the indices of the closest values in the meshgrid for each point using broadcasting
+        i = np.argmin(np.abs(r[:, np.newaxis] - r_points), axis=0) # indices along r axis
+        j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
+        k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
 
-    # Create a boolean tensor with the same shape as the spherical meshgrid
-    bool_array = np.zeros_like(r_matrix, dtype=bool) # initialize with False
+        # Create a boolean tensor with the same shape as the spherical meshgrid
+        bool_array = np.zeros_like(r_matrix, dtype=bool) # initialize with False
 
-    # Set the values to True where the points are located using advanced indexing
-    bool_array[j, i, k] = True
+        # Set the values to True where the points are located using advanced indexing
+        bool_array[j, i, k] = True
 
-    # Compute the ratio of True values to the total number of values in the boolean array
-    ratio = bool_array.sum() / bool_array.size
+        # Compute the ratio of True values to the total number of values in the boolean array
+        ratio = bool_array.sum() / bool_array.size
 
-    return ratio
+        return ratio
