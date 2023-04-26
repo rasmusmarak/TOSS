@@ -91,7 +91,7 @@ def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_
     # Convert the positions along the trajectory to spherical coordinates
     r_points = np.sqrt(positions[0,:]**2 + positions[1,:]**2 + positions[2,:]**2) # radial coordinates of points
     theta_points = np.arccos(positions[2,:] / r_points) # polar angle coordinates of points
-    phi_points = np.sign(positions[1,:]) * np.arccos(positions[0,:], np.sqrt(positions[0,:]**2 + positions[1,:]**2)) # azimuthal angle coordinates of points
+    phi_points = np.sign(positions[1,:]) * np.arccos(positions[0,:] / np.sqrt(positions[0,:]**2 + positions[1,:]**2)) # azimuthal angle coordinates of points
 
     # Remove points outside measurement zone (i.e outside outer-bounding sphere)
     index_feasible_positions = r_points <= radius_max
