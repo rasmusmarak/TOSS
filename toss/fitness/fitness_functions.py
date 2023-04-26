@@ -38,7 +38,7 @@ def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.n
         return covered_volume_close_distance_penalty_far_distance_penalty(args.problem.maximal_measurement_sphere_volume, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredSpace:
-        return covered_space(args.problem.radius_outer_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps)
+        return covered_space(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty:
         return covered_space_close_distance_penalty_far_distance_penalty(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps)
