@@ -81,9 +81,9 @@ def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_
     theta_steps = np.floor(np.pi*radius_min / max_distance_traveled)
     phi_steps = np.floor(2*np.pi*radius_min / max_distance_traveled)
 
-    r = np.linspace(radius_min, radius_max, r_steps) # Number of evenly spaced points along the radial axis
-    theta = np.linspace(0, np.pi, theta_steps) # Number of evenly spaced points along the polar angle (defined in between 0 and pi)
-    phi = np.linspace(0, 2 * np.pi, phi_steps) # Number of evenly spaced points along the azimuthal angle (defined in between 0 and 2*pi)
+    r = np.linspace(radius_min, radius_max, int(r_steps)) # Number of evenly spaced points along the radial axis
+    theta = np.linspace(0, np.pi, int(theta_steps)) # Number of evenly spaced points along the polar angle (defined in between 0 and pi)
+    phi = np.linspace(0, 2 * np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined in between 0 and 2*pi)
 
     # Create a spherical meshgrid
     r_matrix, theta_matrix, phi_matrix = np.meshgrid(r, theta, phi)
@@ -114,7 +114,7 @@ def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_
     bool_array = np.zeros_like(r_matrix, dtype=bool) # initialize with False
 
     # Set the values to True where the points are located using advanced indexing
-    bool_array[i, j, k] = True
+    bool_array[j, i, k] = True
 
     # Compute the ratio of True values to the total number of values in the boolean array
     ratio = bool_array.sum() / bool_array.size
