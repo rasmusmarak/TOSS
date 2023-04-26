@@ -48,7 +48,7 @@ def _compute_squared_distance(positions,constant):
     return np.sum(np.power(positions,2), axis=0) - constant**2
 
 
-def compute_space_coverage(positions, velocities, timesteps, radius_outer_bounding_sphere):
+def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_max):
     """
     In this function, we create a spherical meshgrid by defining a number of points
     inside the outer bounding sphere. We then generate a multidimensional array
@@ -64,22 +64,26 @@ def compute_space_coverage(positions, velocities, timesteps, radius_outer_boundi
         positions (np.ndarray): (3,N) Array of positions (in cartesian coordinates).
         velocities (np.ndarray): (3,N) Array of positions (in cartesian frame).
         timesteps (np.ndarray): (N) Array of time values for each position.
-        radius_outer_bounding_sphere (float): Radius of outer bounding sphere.
+        radius_min (float): Inner radius of spherical grid, typically radius_inner_bounding_sphere.
+        radius_max (float): Outer radius of spherical grid, typically radius_outer_bounding_sphere.
 
     Returns:
         ratio (float): Number of True values to the total number of values in the boolean array
     """
 
     # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
-    cfl = 1 # Courant number
-    v_max = np.sqrt(np.max(velocities[0,:]**2 + velocities[1,:]**2 + velocities[2,:]**2))
-    dt = timesteps[1]-timesteps[0]
+    max_velocity = np.sqrt(np.max(velocities[0,:]**2 + velocities[1,:]**2 + velocities[2,:]**2))
+    time_step = timesteps[1]-timesteps[0]
+    max_distance_traveled = max_velocity * time_step
     
-    # Calculate and adjust grid spacing based on the Courant number, maximal velocity, and time step
-    grid_spacing = v_max * dt / cfl
-    r = np.linspace(0, radius_outer_bounding_sphere, int(radius_outer_bounding_sphere / grid_spacing)) # Number of evenly spaced points along the radial axis
-    theta = np.linspace(0, np.pi, int(np.pi / grid_spacing)) # Number of evenly spaced points along the polar angle (defined in between 0 and pi)
-    phi = np.linspace(0, 2 * np.pi, int(2 * np.pi / grid_spacing)) # Number of evenly spaced points along the azimuthal angle (defined in between 0 and 2*pi)
+    # Calculate and adjust grid spacing based on maximal velocity and time step
+    r_steps = np.floor((radius_max-radius_min)/max_distance_traveled)
+    theta_steps = np.floor(np.pi*radius_min / max_distance_traveled)
+    phi_steps = np.floor(2*np.pi*radius_min / max_distance_traveled)
+
+    r = np.linspace(radius_min, radius_max, r_steps) # Number of evenly spaced points along the radial axis
+    theta = np.linspace(0, np.pi, theta_steps) # Number of evenly spaced points along the polar angle (defined in between 0 and pi)
+    phi = np.linspace(0, 2 * np.pi, phi_steps) # Number of evenly spaced points along the azimuthal angle (defined in between 0 and 2*pi)
 
     # Create a spherical meshgrid
     r_matrix, theta_matrix, phi_matrix = np.meshgrid(r, theta, phi)
@@ -87,10 +91,16 @@ def compute_space_coverage(positions, velocities, timesteps, radius_outer_boundi
     # Convert the positions along the trajectory to spherical coordinates
     r_points = np.sqrt(positions[0,:]**2 + positions[1,:]**2 + positions[2,:]**2) # radial coordinates of points
     theta_points = np.arccos(positions[2,:] / r_points) # polar angle coordinates of points
-    phi_points = np.arctan2(positions[1,:], positions[0,:]) # azimuthal angle coordinates of points
+    phi_points = np.sign(positions[1,:]) * np.arccos(positions[0,:], np.sqrt(positions[0,:]**2 + positions[1,:]**2)) # azimuthal angle coordinates of points
 
     # Remove points outside measurement zone (i.e outside outer-bounding sphere)
-    index_feasible_positions = r_points < radius_outer_bounding_sphere
+    index_feasible_positions = r_points <= radius_max
+    r_points = r_points[index_feasible_positions]
+    theta_points = theta_points[index_feasible_positions]
+    phi_points = phi_points[index_feasible_positions]
+
+    # Remove points inside safety-radius (i.e inside inner-bounding sphere)
+    index_feasible_positions = r_points >= radius_min
     r_points = r_points[index_feasible_positions]
     theta_points = theta_points[index_feasible_positions]
     phi_points = phi_points[index_feasible_positions]
@@ -104,7 +114,7 @@ def compute_space_coverage(positions, velocities, timesteps, radius_outer_boundi
     bool_array = np.zeros_like(r_matrix, dtype=bool) # initialize with False
 
     # Set the values to True where the points are located using advanced indexing
-    bool_array[j, i, k] = True
+    bool_array[i, j, k] = True
 
     # Compute the ratio of True values to the total number of values in the boolean array
     ratio = bool_array.sum() / bool_array.size
