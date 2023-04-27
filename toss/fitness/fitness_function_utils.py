@@ -1,8 +1,6 @@
 # Core packages
 import numpy as np
 import typing
-from ai.cs import cart2sp, sp2cart
-from astropy.coordinates import cartesian_to_spherical
 
 def estimate_covered_volume(positions: np.ndarray) -> float:
     """Estimates the volume covered by the trajectory through spheres around sampling points.

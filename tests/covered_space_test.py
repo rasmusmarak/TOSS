@@ -1,7 +1,5 @@
-
-from toss import compute_space_coverage, cart2sphere, sphere2cart
+from toss import compute_space_coverage, sphere2cart
 import numpy as np
-from ai.cs import sp2cart, cart2sp
 
 def test_large_random_sample():
     """
