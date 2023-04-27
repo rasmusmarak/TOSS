@@ -135,8 +135,8 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
 def cart2sphere(x, y, z) -> tuple:
     """
     Converts array of cartesian coordinates to corresponding spherical coordinates.
-    The elevation/polar angle is defined by from the Z-axis and down.
-    The azimuthal angle is defined on the x-y plane. 
+    The elevation/polar angle theta is defined from the x-y plane up.
+    The azimuthal angle phi is defined on the x-y plane. 
 
     NOTE: in mind:
     - arcsin is defined on [-pi, pi]
@@ -160,7 +160,7 @@ def cart2sphere(x, y, z) -> tuple:
         z = z[None]
         scalar_input = True
     r = np.sqrt(x**2+y**2+z**2)
-    theta = np.arcsin(z/r)
+    theta = np.arctan2(z,np.sqrt(x**2 + y**2))
     phi = np.arctan2(y, x)
     if scalar_input:
         return (r.squeeze(), theta.squeeze(), phi.squeeze())
