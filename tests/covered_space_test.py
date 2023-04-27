@@ -76,7 +76,7 @@ def test_perfect_ratio():
     # Evaluate the ration of visited points, where the positions are every point on the corresponding grid.
     x_pos, y_pos, z_pos = sp2cart(array_of_spherical_coordinates[0,:], array_of_spherical_coordinates[1,:], array_of_spherical_coordinates[2,:])
     noise = 1e-2
-    positions = np.vstack((x_pos,y_pos,z_pos)) + noise
+    positions = np.vstack((x_pos,y_pos,z_pos)) - noise
     ratio = compute_space_coverage(positions, velocities, timesteps, radius_min, radius_max)
 
     assert (ratio==float(1))
