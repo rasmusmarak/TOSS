@@ -28,8 +28,6 @@ def test_large_random_sample():
     # Compute ration of visited points on the spherical meshgrid
     ratio = compute_space_coverage(positions, velocities, timesteps, radius_min, radius_max)
 
-    print(ratio)
-
     assert (ratio >= 0)
 
 
