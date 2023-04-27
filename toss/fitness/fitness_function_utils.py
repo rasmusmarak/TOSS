@@ -1,6 +1,7 @@
 # Core packages
 import numpy as np
 import typing
+from ai.cs import cart2sp, sp2cart
 
 def estimate_covered_volume(positions: np.ndarray) -> float:
     """Estimates the volume covered by the trajectory through spheres around sampling points.
@@ -82,21 +83,26 @@ def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_
     phi_steps = np.floor(2*np.pi*radius_min / max_distance_traveled)
 
     r = np.linspace(radius_min, radius_max, int(r_steps)) # Number of evenly spaced points along the radial axis
-    theta = np.linspace(0, np.pi, int(theta_steps)) # Number of evenly spaced points along the polar angle (defined in between 0 and pi)
-    phi = np.linspace(0, 2 * np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined in between 0 and 2*pi)
+    #theta = np.linspace(0, np.pi, int(theta_steps)) # Number of evenly spaced points along the polar angle (defined in between 0 and pi)
+    #phi = np.linspace(0, 2 * np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined in between 0 and 2*pi)
+    theta = np.linspace(-np.pi/2, np.pi/2, int(theta_steps))
+    phi = np.linspace(-np.pi, np.pi, int(phi_steps))
 
     # Create a spherical meshgrid
     r_matrix, theta_matrix, phi_matrix = np.meshgrid(r, theta, phi)
 
     # Convert the positions along the trajectory to spherical coordinates
-    r_points = np.sqrt(positions[0,:]**2 + positions[1,:]**2 + positions[2,:]**2) # radial coordinates of points
-    theta_points = np.arccos(positions[2,:] / r_points) # polar angle coordinates of points
-
+    #r_points = np.sqrt(positions[0,:]**2 + positions[1,:]**2 + positions[2,:]**2) # radial coordinates of points
+    #theta_points = np.arccos(positions[2,:] / r_points) # polar angle coordinates of points
+    
     # When retrieving phi values, also adjust for angular poles
-    denominator = np.sqrt(positions[0,:]**2 + positions[1,:]**2)
-    angular_poles = np.where(denominator == float(0))[0]
-    denominator[angular_poles] = 1e-8
-    phi_points = np.sign(positions[1,:]) * np.arccos(positions[0,:] / denominator) # azimuthal angle coordinates of points
+    #denominator = np.sqrt(positions[0,:]**2 + positions[1,:]**2)
+    #angular_poles = np.where(denominator == float(0))[0]
+    #denominator[angular_poles] = 1e-8
+    #phi_points = np.sign(positions[1,:]) * np.arccos(positions[0,:] / denominator) # azimuthal angle coordinates of points
+
+    r_points, theta_points, phi_points = cart2sp(positions[0,:], positions[1,:], positions[2,:])
+
 
     # Remove points outside measurement zone (i.e outside outer-bounding sphere)
     index_feasible_positions = r_points <= radius_max
