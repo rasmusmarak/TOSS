@@ -35,9 +35,7 @@ def test_perfect_ratio():
     """
     In this test we systematically test every point and see of we get a ration of 1.0.
     """
-
-    number_of_samples = 1000
-
+    
     # Defining dt=1
     timesteps = [0, 1]
 
@@ -45,11 +43,13 @@ def test_perfect_ratio():
     radius_min = 2
     radius_max = 8
 
-    # Generate random sample of velocities defined on [-1, 1]
-    velocities = 2*np.random.random_sample((3,number_of_samples)) - 1
+    # Fixed maximal velocity from previously defined trajectory. 
+    scaling_factor = 2
+    velocities = np.array([-0.02826052, 0.1784372, -0.29885126]) * scaling_factor
     
     # Define frequency of points on grid:
-    max_velocity = np.sqrt(np.max(velocities[0,:]**2 + velocities[1,:]**2 + velocities[2,:]**2))
+    #max_velocity = np.sqrt(np.max(velocities[0,:]**2 + velocities[1,:]**2 + velocities[2,:]**2))
+    max_velocity = np.max(np.linalg.norm(velocities))
     time_step = timesteps[1] - timesteps[0]
     max_distance_traveled = max_velocity * time_step
 
