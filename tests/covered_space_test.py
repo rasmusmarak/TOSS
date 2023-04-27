@@ -1,7 +1,7 @@
 
-from toss import compute_space_coverage
+from toss import compute_space_coverage, cart2sphere, sphere2cart
 import numpy as np
-from ai.cs import sp2cart
+from ai.cs import sp2cart, cart2sp
 
 def test_large_random_sample():
     """
@@ -28,7 +28,7 @@ def test_large_random_sample():
     # Compute ration of visited points on the spherical meshgrid
     ratio = compute_space_coverage(positions, velocities, timesteps, radius_min, radius_max)
 
-    assert (ratio >= 0)
+    assert (ratio >= 0) and (ratio <= 1)
 
 
 def test_perfect_ratio():
@@ -82,8 +82,9 @@ def test_perfect_ratio():
     array_of_spherical_coordinates = array_of_spherical_coordinates[:, 0:idx]
 
     # Evaluate the ration of visited points, where the positions are every point on the corresponding grid.
-    x_pos, y_pos, z_pos = sp2cart(array_of_spherical_coordinates[0,:], array_of_spherical_coordinates[1,:], array_of_spherical_coordinates[2,:])
+    x_pos, y_pos, z_pos = sphere2cart(array_of_spherical_coordinates[0,:], array_of_spherical_coordinates[1,:], array_of_spherical_coordinates[2,:])
     positions = np.vstack((x_pos,y_pos,z_pos))
+
     ratio = compute_space_coverage(positions, fixed_velocity, timesteps, radius_min, radius_max)
 
-    assert (ratio==float(1))
+    assert np.isclose(ratio, 1, rtol=1e-5, atol=1e-5)

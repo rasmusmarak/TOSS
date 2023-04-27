@@ -2,6 +2,7 @@
 import numpy as np
 import typing
 from ai.cs import cart2sp, sp2cart
+from astropy.coordinates import cartesian_to_spherical
 
 def estimate_covered_volume(positions: np.ndarray) -> float:
     """Estimates the volume covered by the trajectory through spheres around sampling points.
@@ -96,7 +97,7 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
     phi = np.linspace(-np.pi, np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined on [-pi, pi])
 
     # Convert the positions along the trajectory to spherical coordinates
-    r_points, theta_points, phi_points = cart2sp(positions[0,:], positions[1,:], positions[2,:])
+    r_points, theta_points, phi_points = cart2sphere(positions[0,:], positions[1,:], positions[2,:])
 
     # Remove points outside measurement zone (i.e outside outer-bounding sphere)
     index_feasible_positions = np.where(r_points <= radius_max) # Addition of noise to cover approximation error
@@ -131,3 +132,66 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
         ratio = bool_tensor.sum() / bool_tensor.size
 
         return ratio
+
+
+def cart2sphere(x, y, z) -> tuple:
+    """
+    Converts array of cartesian coordinates to corresponding spherical coordinates.
+    The elevation/polar angle is defined by from the Z-axis and down.
+    The azimuthal angle is defined on the x-y plane. 
+
+    NOTE: in mind:
+    - arcsin is defined on [-pi, pi]
+    - arctan2 is defined on [-pi/2, pi/2]
+
+    Args:
+        x (scalar or array_like): X-component of data.
+        y (scalar or array_like): Y-component of data.
+        z (scalar or array_like): Z-component of data.
+
+    Returns:
+        tuple (r, theta, phi) of data in spherical coordinates.
+    """
+    x = np.asarray(x)
+    y = np.asarray(y)
+    z = np.asarray(z)
+    scalar_input = False
+    if x.ndim == 0 and y.ndim == 0 and z.ndim == 0:
+        x = x[None]
+        y = y[None]
+        z = z[None]
+        scalar_input = True
+    r = np.sqrt(x**2+y**2+z**2)
+    theta = np.arcsin(z/r)
+    phi = np.arctan2(y, x)
+    if scalar_input:
+        return (r.squeeze(), theta.squeeze(), phi.squeeze())
+    return (r, theta, phi)
+
+def sphere2cart(r, theta, phi) -> tuple:
+    """
+    Converts array of spherical coordinates to corresponding cartesian coordinates.
+
+    Args:
+        r (scalar or array_like): R-component of data.
+        theta (scalar or array_like): Theta-component of data.
+        phi (scalar or array_like): Phi-component of data.
+
+    Returns:
+        tuple (x, y, z) of data in cartesian coordinates.
+    """
+    r = np.asarray(r)
+    theta = np.asarray(theta)
+    phi = np.asarray(phi)
+    scalar_input = False
+    if r.ndim == 0 and theta.ndim == 0 and phi.ndim == 0:
+        r = r[None]
+        theta = theta[None]
+        phi = phi[None]
+        scalar_input = True
+    x = r*np.cos(theta)*np.cos(phi)
+    y = r*np.cos(theta)*np.sin(phi)
+    z = r*np.sin(theta)
+    if scalar_input:
+        return (x.squeeze(), y.squeeze(), z.squeeze())
+    return (x, y, z)
