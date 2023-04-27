@@ -36,7 +36,7 @@ def estimate_covered_volume(positions: np.ndarray) -> float:
     return sphere_radii, estimated_volume
 
 
-def _compute_squared_distance(positions,constant):
+def _compute_squared_distance(positions: np.ndarray, constant: float) -> np.ndarray:
     """ Compute squared distance from each point in a given array to some given constant.
 
     Args:
@@ -49,7 +49,7 @@ def _compute_squared_distance(positions,constant):
     return np.sum(np.power(positions,2), axis=0) - constant**2
 
 
-def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_max):
+def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float) -> float:
     """
     In this function, we create a spherical meshgrid by defining a number of points
     inside the outer bounding sphere. We then generate a multidimensional array
@@ -72,8 +72,18 @@ def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_
         ratio (float): Number of True values to the total number of values in the boolean array
     """
 
+    # Fixed maximal velocity from previously defined trajectory. 
+    # We use a fixed value to avoid prioritizing higher velocities. 
+    #
+    # NOTE: The fitness value for covered volume will not be feasible if
+    #        its maximal velocity exceeds the provided value below as the grid
+    #        spacing will be too small. Please use the scaling factor to adapt for this.
+    scaling_factor = 2
+    velocities = np.array([-0.02826052, 0.1784372, -0.29885126]) * scaling_factor
+
     # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
-    max_velocity = np.sqrt(np.max(velocities[0,:]**2 + velocities[1,:]**2 + velocities[2,:]**2))
+    #max_velocity = np.max(np.sqrt(velocities[0,:]**2 + velocities[1,:]**2 + velocities[2,:]**2))
+    max_velocity = np.max(np.linalg.norm(velocities))
     time_step = timesteps[1]-timesteps[0]
     max_distance_traveled = max_velocity * time_step
 
@@ -87,7 +97,7 @@ def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_
     phi = np.linspace(-np.pi, np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined on [-pi, pi])
 
     # Create a spherical meshgrid
-    r_matrix, theta_matrix, phi_matrix = np.meshgrid(r, theta, phi)
+    #r_matrix, theta_matrix, phi_matrix = np.meshgrid(r, theta, phi)
 
     # Convert the positions along the trajectory to spherical coordinates
     r_points, theta_points, phi_points = cart2sp(positions[0,:], positions[1,:], positions[2,:])
@@ -116,12 +126,14 @@ def compute_space_coverage(positions, velocities, timesteps, radius_min, radius_
         k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
 
         # Create a boolean tensor with the same shape as the spherical meshgrid
-        bool_array = np.zeros_like(r_matrix, dtype=bool) # initialize with False
+        #bool_array = np.zeros_like(r_matrix, dtype=bool) # initialize with False
+        bool_tensor = np.full((len(r), len(theta), len(phi)), False)
 
         # Set the values to True where the points are located using advanced indexing
-        bool_array[j, i, k] = True
+        #bool_array[j, i, k] = True
+        bool_tensor[i, j, k] = True
 
         # Compute the ratio of True values to the total number of values in the boolean array
-        ratio = bool_array.sum() / bool_array.size
+        ratio = bool_tensor.sum() / bool_tensor.size
 
         return ratio
