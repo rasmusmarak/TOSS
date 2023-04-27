@@ -61,6 +61,15 @@ def test_perfect_ratio():
     theta = np.linspace(-np.pi/2, np.pi/2, int(theta_steps)) # Number of evenly spaced points along the polar angle/elevation (defined on [-pi/2, pi/2])
     phi = np.linspace(-np.pi, np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined on [-pi, pi])
 
+    # Addition of noise to avoid approximation errors for max-min points
+    noise = 1e-4
+    r[0] += noise
+    r[-1] -= noise
+    theta[0] += noise
+    theta[-1] -= noise
+    phi[0] += noise
+    phi[-1] -= noise
+
     # Generate spherical coordinates for every point on the grid
     array_of_spherical_coordinates = np.empty((3, int(1e8)), dtype=np.float64)
     idx = 0
