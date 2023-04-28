@@ -24,7 +24,7 @@ def test_large_random_sample():
     velocities = 2*np.random.random_sample((3,number_of_samples)) - 1
 
     # Compute ration of visited points on the spherical meshgrid
-    max_velocity_scaling_factor = 40
+    max_velocity_scaling_factor = 1
     ratio = compute_space_coverage(positions, velocities, timesteps, radius_min, radius_max, max_velocity_scaling_factor)
 
     assert (ratio >= 0) and (ratio <= 1)
@@ -84,7 +84,7 @@ def test_perfect_ratio():
     x_pos, y_pos, z_pos = sphere2cart(array_of_spherical_coordinates[0,:], array_of_spherical_coordinates[1,:], array_of_spherical_coordinates[2,:])
     positions = np.vstack((x_pos,y_pos,z_pos))
 
-    max_velocity_scaling_factor = 40
+    max_velocity_scaling_factor = 1
     ratio = compute_space_coverage(positions, fixed_velocity, timesteps, radius_min, radius_max, max_velocity_scaling_factor)
 
     assert np.isclose(ratio, 1, rtol=1e-5, atol=1e-5)
