@@ -123,11 +123,11 @@ class udp_initial_condition:
             return [fitness]
         
         # Get positions on trajectory for a fixed time-step
-        positions, _, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
+        positions, velocities, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
 
         # Compute fitness:
         chosen_fitness_function = FitnessFunctions.CoveredVolumeFarDistancePenalty
-        fitness = get_fitness(chosen_fitness_function, self.args, positions, timesteps)
+        fitness = get_fitness(chosen_fitness_function, self.args, positions, velocities, timesteps)
         return [fitness]
 
 
