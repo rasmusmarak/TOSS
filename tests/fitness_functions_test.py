@@ -49,6 +49,7 @@ def get_parameters():
     args.problem.number_of_maneuvers = 0 
     args.problem.target_squared_altitude = 8000**2  # Target altitude squared [m]
     args.problem.activate_rotation = True
+    args.problem.penalty_scaling_factor = 1         # Scales the magnitude of the fixed-valued maximal velocity, and therefore also the grid spacing.
 
     # Arguments concerning bounding spheres
     args.problem.measurement_period = 100                # Period for when a measurement sphere is recognized and managed. Unit: [seconds]

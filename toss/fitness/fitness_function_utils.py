@@ -48,7 +48,7 @@ def _compute_squared_distance(positions: np.ndarray, constant: float) -> np.ndar
     return np.sum(np.power(positions,2), axis=0) - constant**2
 
 
-def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float) -> float:
+def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> float:
     """
     In this function, we create a spherical meshgrid by defining a number of points
     inside the outer bounding sphere. We then generate a multidimensional array
@@ -66,6 +66,7 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
         timesteps (np.ndarray): (N) Array of time values for each position.
         radius_min (float): Inner radius of spherical grid, typically radius_inner_bounding_sphere.
         radius_max (float): Outer radius of spherical grid, typically radius_outer_bounding_sphere.
+        max_velocity_scaling_factor (float): Scales the magnitude of the fixed-valued maximal velocity and therefore also the grid spacing.
 
     Returns:
         ratio (float): Number of True values to the total number of values in the boolean array
@@ -77,8 +78,7 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
     # NOTE: The fitness value for covered volume will not be feasible if
     #        its maximal velocity exceeds the provided value below as the grid
     #        spacing will be too small. Please use the scaling factor to adapt for this.
-    scaling_factor = 1
-    fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126]) * scaling_factor
+    fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126]) * max_velocity_scaling_factor
 
     # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
     max_velocity = np.max(np.linalg.norm(fixed_velocity))

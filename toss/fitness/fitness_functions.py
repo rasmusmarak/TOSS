@@ -16,14 +16,17 @@ def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.n
     Returns:
         (float): The evaluated fitness value correspondning to chosen_function.
     """
+    # Following factors should be added to cfg after merge
+    args.problem.max_velocity_scaling_factor = 40
+    
     if chosen_fitness_function == FitnessFunctions.TargetAltitudeDistance:
         return target_altitude_distance(args.problem.target_squared_altitude, positions)
     
     elif chosen_fitness_function == FitnessFunctions.CloseDistancePenalty:
-        return close_distance_penalty(args.problem.radius_inner_bounding_sphere, positions)
+        return close_distance_penalty(args.problem.radius_inner_bounding_sphere, positions, args.problem.penalty_scaling_factor)
     
     elif chosen_fitness_function == FitnessFunctions.FarDistancePenalty:
-        return far_distance_penalty(args.problem.radius_outer_bounding_sphere, positions)
+        return far_distance_penalty(args.problem.radius_outer_bounding_sphere, positions, args.problem.penalty_scaling_factor)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredVolume:
         return covered_volume(args.problem.maximal_measurement_sphere_volume, positions)
@@ -32,16 +35,16 @@ def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.n
         return total_covered_volume(args.problem.total_measurable_volume, positions)
 
     elif chosen_fitness_function == FitnessFunctions.CoveredVolumeFarDistancePenalty:
-        return covered_volume_far_distance_penalty(args.problem.maximal_measurement_sphere_volume, args.problem.radius_outer_bounding_sphere, positions)
+        return covered_volume_far_distance_penalty(args.problem.maximal_measurement_sphere_volume, args.problem.radius_outer_bounding_sphere, positions, args.problem.penalty_scaling_factor)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredVolumeCloseDistancePenaltyFarDistancePenalty:
-        return covered_volume_close_distance_penalty_far_distance_penalty(args.problem.maximal_measurement_sphere_volume, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions)
+        return covered_volume_close_distance_penalty_far_distance_penalty(args.problem.maximal_measurement_sphere_volume, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, args.problem.penalty_scaling_factor)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredSpace:
-        return covered_space(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps)
+        return covered_space(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps, args.problem.max_velocity_scaling_factor)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty:
-        return covered_space_close_distance_penalty_far_distance_penalty(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps)
+        return covered_space_close_distance_penalty_far_distance_penalty(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps, args.problem.penalty_scaling_factor, args.problem.max_velocity_scaling_factor)
 
 
 def target_altitude_distance(target_squared_altitude: float, positions: np.ndarray) -> float:
@@ -58,11 +61,12 @@ def target_altitude_distance(target_squared_altitude: float, positions: np.ndarr
     return fitness
 
 
-def close_distance_penalty(radius_inner_bounding_sphere: float, positions: np.ndarray) -> float:
+def close_distance_penalty(radius_inner_bounding_sphere: float, positions: np.ndarray, penalty_scaling_factor: float) -> float:
     """ Computes penalty depending on the position closest to the body and inside risk-zone.
     Args:
         radius_inner_bounding_sphere (float): Radius of inner bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
+        penalty_scaling_factor (float): A factor to rescale the penalty.
 
     Returns:
         Penalty (float): Penalty defined between [0,1].
@@ -78,20 +82,20 @@ def close_distance_penalty(radius_inner_bounding_sphere: float, positions: np.nd
         # For positions inside sphere, identify the one farthest away from radius (i.e with greatest risk)
         maximum_distance = np.abs(np.min(distance_squared))
         
-        # Determine penalty P=[0,1] depending on distance. 
-        penalty = (maximum_distance/(radius_inner_bounding_sphere**2))**(1/4)
-
+        # Determine penalty P=[0,1]*penalty_scaling_factor depending on distance. 
+        penalty = ((maximum_distance/(radius_inner_bounding_sphere**2))**(1/4)) * penalty_scaling_factor
         return penalty
 
 
-def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndarray) -> float:
+def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndarray, penalty_scaling_factor: float) -> float:
     """ Computes penalty depending on the mean distance to the measurement-zone.
     Args:
         radius_outer_bounding_sphere (float): Radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
+        penalty_scaling_factor (float): A factor to rescale the penalty.
 
     Returns:
-        Penalty (float): Penalty defined between [0,1].
+        Penalty (float): Penalty defined between [0,1]*penalty_scaling_factor.
     """
     # For each point along the trajectory, compute squared distance to inner sphere radius
     distance_squared = _compute_squared_distance(positions, radius_outer_bounding_sphere)
@@ -105,7 +109,7 @@ def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndar
         mean_distance = np.mean(distance_squared)
         
         # Determine penalty depending on mean distance. 
-        penalty = (mean_distance/(radius_outer_bounding_sphere**2))**(1/4)
+        penalty = ((mean_distance/(radius_outer_bounding_sphere**2))**(1/4)) * penalty_scaling_factor
         return penalty
 
 
@@ -140,33 +144,35 @@ def total_covered_volume(total_measurable_volume: float, positions: np.ndarray) 
     fitness = -(estimated_volume/total_measurable_volume)
     return fitness
 
-def covered_volume_far_distance_penalty(maximal_measurement_sphere_volume: float, radius_outer_bounding_sphere: float, positions: np.ndarray) -> float:
+def covered_volume_far_distance_penalty(maximal_measurement_sphere_volume: float, radius_outer_bounding_sphere: float, positions: np.ndarray, penalty_scaling_factor:float) -> float:
     """ Returns combined fitness value of CoveredVolume and FarDistancePenalty
     Args:
         maximal_measurement_sphere_volume (float): Total measurable volume for a measurement sphere at the inner bounding sphere radius positioned at estimated greatest gravitational influence from the body.
         radius_outer_bounding_sphere (float): Radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
+        penalty_scaling_factor (float): A factor to rescale the penalty.
 
     Returns:
         (float): Aggregate fitness value.
     """
-    return (covered_volume(maximal_measurement_sphere_volume,positions) + far_distance_penalty(radius_outer_bounding_sphere,positions))
+    return (covered_volume(maximal_measurement_sphere_volume,positions) + far_distance_penalty(radius_outer_bounding_sphere,positions,penalty_scaling_factor))
 
 
-def covered_volume_close_distance_penalty_far_distance_penalty(maximal_measurement_sphere_volume: float, radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray):
+def covered_volume_close_distance_penalty_far_distance_penalty(maximal_measurement_sphere_volume: float, radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, penalty_scaling_factor):
     """ Returns aggregate fitness of covered_volume, close_distance_penalty and far_distance_penalty.
     Args:
         maximal_measurement_sphere_volume (float): Total measurable volume for a measurement sphere at the inner bounding sphere radius positioned at estimated greatest gravitational influence from the body.
         radius_inner_bounding_sphere (float): Radius of inner bounding sphere.
         radius_outer_bounding_sphere (float): Radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
+        penalty_scaling_factor (float): A factor to rescale the penalty.
 
     Returns:
         (float): Aggregate fitness value.
     """
-    return (covered_volume(maximal_measurement_sphere_volume,positions) + close_distance_penalty(radius_inner_bounding_sphere, positions) + far_distance_penalty(radius_outer_bounding_sphere,positions))
+    return (covered_volume(maximal_measurement_sphere_volume,positions) + close_distance_penalty(radius_inner_bounding_sphere, positions, penalty_scaling_factor) + far_distance_penalty(radius_outer_bounding_sphere,positions, penalty_scaling_factor))
 
-def covered_space(radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray):
+def covered_space(radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, max_velocity_scaling_factor: float):
     """ Returns the ratio of visited points to a number of points definied inside the outer bounding sphere.
 
     Args:
@@ -175,14 +181,15 @@ def covered_space(radius_inner_bounding_sphere: float, radius_outer_bounding_sph
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
         velocities (np.ndarray): (3,N) Array of velocities along the trajectory.
         timesteps (np.ndarray): (N) Array of time values for each position.
+        max_velocity_scaling_factor (float): Scales the magnitude of the fixed-valued maximal velocity and therefore also the grid spacing.
 
     Returns:
         visited_space_ratio (float): ratio of visited points to a number of points definied inside the outer bounding sphere.
     """
-    visited_space_ratio = compute_space_coverage(positions, velocities, timesteps, radius_inner_bounding_sphere, radius_outer_bounding_sphere)
+    visited_space_ratio = compute_space_coverage(positions, velocities, timesteps, radius_inner_bounding_sphere, radius_outer_bounding_sphere, max_velocity_scaling_factor)
     return visited_space_ratio
 
-def covered_space_close_distance_penalty_far_distance_penalty(radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray):
+def covered_space_close_distance_penalty_far_distance_penalty(radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, penalty_scaling_factor: float, max_velocity_scaling_factor: float):
     """ Returns aggregate fitness of covered_space, close_distance_penalty and far_distance_penalty.
 
     Args:
@@ -191,9 +198,11 @@ def covered_space_close_distance_penalty_far_distance_penalty(radius_inner_bound
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
         velocities (np.ndarray): (3,N) Array of velocities along the trajectory.
         timesteps (np.ndarray): (N) Array of time values for each position.
+        penalty_scaling_factor (float): A factor to rescale the penalty.
+        max_velocity_scaling_factor (float): Scales the magnitude of the fixed-valued maximal velocity and therefore also the grid spacing.
 
     Returns:
         (float): Aggregate fitness value.
     """
-    fitness = (compute_space_coverage(positions, velocities, timesteps, radius_inner_bounding_sphere, radius_outer_bounding_sphere) + close_distance_penalty(radius_inner_bounding_sphere, positions) + far_distance_penalty(radius_outer_bounding_sphere,positions))
+    fitness = (compute_space_coverage(positions, velocities, timesteps, radius_inner_bounding_sphere, radius_outer_bounding_sphere, max_velocity_scaling_factor) + close_distance_penalty(radius_inner_bounding_sphere, positions, penalty_scaling_factor) + far_distance_penalty(radius_outer_bounding_sphere,positions,penalty_scaling_factor))
     return fitness
