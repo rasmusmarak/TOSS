@@ -19,6 +19,8 @@ radius_bounding_sphere = 4000           # Radius of spherical risk-zone for coll
 target_squared_altitude = 64000000      # (8000**2) Target altitude squared [meter].
 activate_event = true                   # Event configuration (False = no events, True = collision with body detection).
 number_of_maneuvers = 0                 # Maximum number of possible manuevers during mission.
+max_velocity_scaling_factor = 40        # Scales the magnitude of the fixed-valued maximal velocity, and therefore also the grid spacing.
+penalty_scaling_factor = 1              # Appropriately chosen scaling for the penalty values (P=[0,1]) to be comparable with the magnitude of covered volume. 
 
 [optimization]          
 population_size = 80                    # Number of chromosomes for the pygmo-based optimization.
