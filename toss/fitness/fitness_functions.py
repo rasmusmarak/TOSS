@@ -16,8 +16,6 @@ def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.n
     Returns:
         (float): The evaluated fitness value correspondning to chosen_function.
     """
-    # Following factors should be added to cfg after merge
-    args.problem.max_velocity_scaling_factor = 40
     
     if chosen_fitness_function == FitnessFunctions.TargetAltitudeDistance:
         return target_altitude_distance(args.problem.target_squared_altitude, positions)
