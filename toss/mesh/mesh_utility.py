@@ -4,8 +4,6 @@ import numpy as np
 from typing import Union
 import os
 
-import os
-
 # meshing
 import tetgen
 

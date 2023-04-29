@@ -1,8 +1,8 @@
 # Core packages
 import numpy as np
 import typing
-from .fitness_function_enums import FitnessFunctions
-from .fitness_function_utils import _compute_squared_distance, estimate_covered_volume, compute_space_coverage
+from toss import FitnessFunctions
+from toss import _compute_squared_distance, estimate_covered_volume, compute_space_coverage
 
 def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.ndarray, velocities:np.ndarray, timesteps: np.ndarray) -> float:
     """ Returns user specified fitness function.

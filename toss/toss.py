@@ -4,10 +4,8 @@ import cProfile
 import pstats
 
 # Load required modules
-from toss.udp_initial_condition import udp_initial_condition
-from toss.setup_parameters import setup_parameters
-
-
+from toss import udp_initial_condition
+from toss import setup_parameters
 
 def load_udp(args, lower_bounds, upper_bounds):
     """

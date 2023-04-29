@@ -3,11 +3,11 @@ import numpy as np
 from typing import Union
 
 # Import required modules
-from toss.trajectory.compute_trajectory import compute_trajectory
-from toss.trajectory.equations_of_motion import compute_motion 
-from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
-from toss.fitness.fitness_function_enums import FitnessFunctions
-from toss.fitness.fitness_functions import get_fitness
+from toss import compute_trajectory
+from toss import compute_motion 
+from toss import get_trajectory_fixed_step
+from toss import FitnessFunctions
+from toss import get_fitness
 
 # Class representing UDP 
 class udp_initial_condition:
