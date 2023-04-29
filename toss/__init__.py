@@ -12,7 +12,7 @@ from .utilities.load_default_cfg import load_default_cfg
 from .optimization.udp_initial_condition import udp_initial_condition
 from .setup_parameters import setup_parameters
 
-__all__ = [
+_all__ = [
     "FitnessFunctions",
     "estimate_covered_volume",
     "_compute_squared_distance",
