@@ -3,10 +3,9 @@ from math import pi
 import numpy as np
 
 # Load required modules
-from .utilities.load_default_cfg import load_default_cfg
-from .mesh.mesh_utility import create_mesh
-from .trajectory.equations_of_motion import setup_spin_axis
-
+from toss.utilities.load_default_cfg import load_default_cfg
+from toss.mesh.mesh_utility import create_mesh
+from toss.trajectory.equations_of_motion import setup_spin_axis
 
 def setup_parameters():
     """Set up of required hyperparameters for the optimization scheme. 
@@ -57,7 +56,7 @@ def setup_parameters():
     args.problem.maximal_measurement_sphere_volume = (4/3) * pi * (args.problem.maximal_measurement_sphere_radius**3)
 
     # Create mesh of body:
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
 
     # Defining the state variable and its boundaries (parameter space):
     #   state: [a, e, o, w, i, ea, tm, dvx, dvy, dvz]
@@ -94,6 +93,5 @@ def setup_parameters():
     # Generate boundary state vectors:
     lower_bounds = np.concatenate(([a[0], e[0], i[0], o[0], w[0], ea[0]], [tm[0], dvx[0], dvy[0], dvz[0]]*args.problem.number_of_maneuvers)*args.problem.number_of_spacecrafts, axis=None)
     upper_bounds = np.concatenate(([a[1], e[1], i[1], o[1], w[1], ea[1]], [tm[1], dvx[1], dvy[1], dvz[1]]*args.problem.number_of_maneuvers)*args.problem.number_of_spacecrafts, axis=None)
-
 
     return args, lower_bounds, upper_bounds
