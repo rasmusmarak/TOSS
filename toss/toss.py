@@ -2,6 +2,8 @@
 import pygmo as pg
 import cProfile
 import pstats
+import time
+import numpy as np
 
 # Load required modules
 from toss.optimization.udp_initial_condition import udp_initial_condition
@@ -21,6 +23,9 @@ def load_udp(args, lower_bounds, upper_bounds):
     # Setup optimization algorithm
     print("Setting up the optimization algorithm...")
     assert args.optimization.population_size >= 7
+
+    # Setup timer
+    run_time_start = time.time()
 
     # Setup User-Defined Algorithm (UDA)
     print("Setting up UDA")
@@ -52,30 +57,42 @@ def load_udp(args, lower_bounds, upper_bounds):
     pop = algo.evolve(pop)
 
     # Logs for output
+    run_time_end = time.time()
+    run_time = run_time_end - run_time_start
     champion_f = pop.champion_f
     champion_x = pop.champion_x
+    print("Optimization run time: ", run_time)
     print("Champion fitness value: ", champion_f) 
     print("Champion chromosome: ", champion_x) 
 
     # Shutdown pool to avoid mp_bfe bug for python==3.8
     multi_process_bfe.shutdown_pool()
 
-    return champion_f, champion_x
+    return run_time, champion_f, champion_x
 
 
 def main():
     args, lower_bounds, upper_bounds = setup_parameters()
-    champion_f, champion_x = load_udp(args, lower_bounds, upper_bounds)
+    run_time, champion_f, champion_x = load_udp(args, lower_bounds, upper_bounds)
+
+    # Saving results
+    run_time = np.asarray(run_time)
+    champion_f = np.asarray(champion_f)
+    champion_x = np.asarray(champion_x)
+
+    np.savetxt("run_time.csv", run_time, delimiter=",")
+    np.savetxt("champion_f.csv", champion_f, delimiter=",")
+    np.savetxt("champion_x.csv", champion_x, delimiter=",")
 
 
 if __name__ == "__main__":
     cProfile.run("main()", "output.dat")
 
-    with open("output_time.txt", "w") as f:
+    with open("results/output_time.txt", "w") as f:
         p = pstats.Stats("output.dat", stream=f)
         p.sort_stats("time").print_stats()
     
-    with open("output_calls.txt", "w") as f:
+    with open("results/output_calls.txt", "w") as f:
         p = pstats.Stats("output.dat", stream=f)
         p.sort_stats("calls").print_stats()
         
