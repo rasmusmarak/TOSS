@@ -18,8 +18,6 @@ def test_large_random_sample():
     # Generate random sample of points defined on [radius_min, radius_max]
     positions = (radius_max)*np.random.random_sample((3,number_of_samples)) + (radius_min/2)
 
-    print(positions)
-
     # Generate random sample of velocities defined on [-1, 1]
     velocities = 2*np.random.random_sample((3,number_of_samples)) - 1
 
