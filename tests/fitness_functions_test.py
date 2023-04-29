@@ -49,6 +49,7 @@ def get_parameters():
     args.problem.number_of_maneuvers = 0 
     args.problem.target_squared_altitude = 8000**2  # Target altitude squared [m]
     args.problem.activate_rotation = True
+    args.problem.penalty_scaling_factor = 1         # Scales the magnitude of the fixed-valued maximal velocity, and therefore also the grid spacing.
 
     # Arguments concerning bounding spheres
     args.problem.measurement_period = 100                # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
@@ -59,8 +60,9 @@ def get_parameters():
     args.problem.total_measurable_volume = args.problem.squared_volume_outer_bounding_sphere - args.problem.squared_volume_inner_bounding_sphere
     args.problem.maximal_measurement_sphere_volume = (4/3) * pi * (35.95398913**3) #35.95398913 gathered from tests.
 
-    # Create mesh of body.
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh()
+    # Arguments for mesh:
+    args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_lp.pk"
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
 
     return args
 
@@ -138,7 +140,7 @@ def test_close_distance_penalty():
     positions[0,:] = list_of_positions
 
     # Compute close distance penalty
-    penalty = close_distance_penalty(args.problem.radius_inner_bounding_sphere, positions)
+    penalty = close_distance_penalty(args.problem.radius_inner_bounding_sphere, positions, args.problem.penalty_scaling_factor)
 
     # Previous penalty
     previous_penalty = 0.8132882808488928
@@ -158,7 +160,7 @@ def test_far_distance_penalty():
     positions[0,:] = list_of_positions
 
     # Compute far distance penalty
-    penalty = far_distance_penalty(args.problem.radius_outer_bounding_sphere, positions)
+    penalty = far_distance_penalty(args.problem.radius_outer_bounding_sphere, positions, args.problem.penalty_scaling_factor)
     
     # Previous penalty
     previous_penalty = 0.5667412838561734

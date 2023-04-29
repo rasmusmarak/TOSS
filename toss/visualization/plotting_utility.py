@@ -7,7 +7,6 @@ import pyvista as pv
 
 def fitness_over_generations(fitness_list, number_of_generations):
     """ Plots the champion fitness vlue of each generation
-
     Args:
         fitness_list (np.ndarray): Array containing champion fitness vlue of each generation.
         number_of_generations (int): Number of generations for the optimization.
@@ -30,7 +29,6 @@ def fitness_over_generations(fitness_list, number_of_generations):
 
 def two_axis_trajectory(trajectory_info, axis_1, axis_2):
     """ Plots trajectory provided two axes of the trajectory.
-
     Args:
         trajectory_info (np.ndarray): Array containing values on position at each time step for the trajectory (columnwise).
         axis_1 (int): User provided axis
@@ -52,7 +50,6 @@ def two_axis_trajectory(trajectory_info, axis_1, axis_2):
 
 def plot_trajectory(positions: np.ndarray, mesh):
     """plot_trajectory plots the body mesh and satellite trajectory.
-
     Args:
         positions (np.ndarray): (3,N) Array containing position along computed trajectory (expressed in cartesian frame).
         mesh (tetgen.pytetgen.TetGen): Tetgen mesh object of celestial body.
@@ -81,10 +78,8 @@ def plot_trajectory(positions: np.ndarray, mesh):
 
 def drawSphere(r):
     """ Generates (x,y,z) values for plotting a sphere of given radius r.
-
     Args:
         r (float): Radius of sphere.
-
     Returns:
         (x,y,z) (tuple): Arrays of values in cartesian frame, representing a sphere of radius r centered at origin.
     """
@@ -108,7 +103,6 @@ def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, plot_m
         plot_measurement_sphere (bool): Activation of plotting measurement spheres.
         view_angle (list): List containing the view angle of the plot.
         measurement_radius (np.ndarray): (N) array containing radius of each measurement sphere at the sampled positions along the trajectory.
-
     """
     # Define figure
     #ax = plt.figure().add_subplot(projection='3d')
