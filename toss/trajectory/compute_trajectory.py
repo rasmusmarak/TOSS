@@ -1,6 +1,6 @@
 # Import required modules
-from toss import is_outside
-from toss import IntegrationScheme
+from toss.mesh.mesh_utility import is_outside
+from toss.trajectory.Integrator import IntegrationScheme
 
 # Core packages
 import numpy as np
