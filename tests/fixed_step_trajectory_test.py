@@ -4,7 +4,7 @@
 from toss import compute_motion, setup_spin_axis
 from toss import create_mesh
 from toss import compute_trajectory
-from toss import get_trajectory_adaptive_step
+from toss import get_trajectory_fixed_step
 
 # Core packages
 from dotmap import DotMap
@@ -14,7 +14,6 @@ import pykep as pk
 
 
 def test_integration():
-
     args = DotMap(
         body = DotMap(_dynamic=False),
         integrator = DotMap(_dynamic=False),
@@ -42,7 +41,7 @@ def test_integration():
     args.problem.final_time = 20*3600.0             # Final time [s]
     args.problem.initial_time_step = 600            # Initial time step size for integration [s]
     args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
-    args.problem.number_of_maneuvers = 0 
+    args.problem.number_of_maneuvers = 0
     args.problem.activate_rotation = True
 
     # Arguments concerning bounding spheres
@@ -54,19 +53,28 @@ def test_integration():
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
 
     # Initial position for integration (in cartesian coordinates):
-    x = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01, 0, 0, 0, 0]
+    x = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01]
     x_osculating_elements = pk.ic2par(r=x[0:3], v=x[3:6], mu=args.body.mu) #translate to osculating orbital element
 
     # Compute trajectory via numerical integration as in UDP.
-    _, list_of_trajectory_objects, _ = compute_trajectory(x_osculating_elements, args, compute_motion)
+    _, list_of_ode_objects, _ = compute_trajectory(x_osculating_elements, args, compute_motion)
 
     # Get states along computed trajectory:
-    states_new, _ = get_trajectory_adaptive_step(list_of_trajectory_objects)
+    positions, _, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
 
-    # Final state from previous working results (in cartesian coordinates):
-    final_state_historical = [3.07216681e+03, -2.45740917e+02, -9.03288997e+03, 2.48147088e-01, -2.18190890e-02, -2.68369809e-01]
+    # Position and timesteps from previous working results (in cartesian coordinates):
+    previous_positions = np.array([[-1369.86549, -1662.82224042, -1893.8561803, -2021.71832499, -2017.25938447, -1870.22440711, -1591.62823709, -1210.46048601, -766.70404768, -304.28302656, 133.43805324],
+                          [-4531.13817, -4904.20028018, -5223.65538797, -5492.7850583, -5719.52297594, -5913.54217869, -6082.63727623, -6230.10562652, -6354.41963142, -6451.01289025, -6514.56664014],
+                          [-8418.16487, -7815.6605588, -7126.20143363, -6378.67721074, -5617.45877143, -4896.55819511, -4270.49836708, -3785.17218501, -3471.87383633, -3345.51777456, -3405.6781468 ]])
+    previous_timesteps = np.array([0, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 22500, 25000])
+    
+    assert all(np.isclose(previous_positions[0,:],positions[0,0:11],rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_positions[1,:],positions[1,0:11],rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_positions[2,:],positions[2,0:11],rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_timesteps,timesteps[0:11],rtol=1e-5, atol=1e-5))
 
-    # New final state:
-    final_state_new = states_new[0:6,-1]
-
-    assert all(np.isclose(final_state_historical,final_state_new,rtol=1e-5, atol=1e-5))
+    # Assert steps in timesteps remain fixed.
+    timesteps_diff = []
+    for i in range(0,len(timesteps)-1):
+        timesteps_diff.append(timesteps[i+1]-timesteps[i])
+    assert all(x==timesteps_diff[0] for x in timesteps_diff)

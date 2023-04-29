@@ -1,9 +1,10 @@
 """ This test checks whether or not the integration is performed correctly """
 
 # Import required modules
-from toss import setup_spin_axis, compute_motion
+from toss import compute_motion, setup_spin_axis
 from toss import create_mesh
 from toss import compute_trajectory
+from toss import get_trajectory_adaptive_step
 
 # Core packages
 from dotmap import DotMap
@@ -40,9 +41,13 @@ def test_multiple_impulsive_maneuvers():
     args.problem.start_time = 0                     # Starting time [s]
     args.problem.final_time = 20*3600.0             # Final time [s]
     args.problem.initial_time_step = 600            # Initial time step size for integration [s]
-    args.problem.radius_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
     args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
+    args.problem.activate_rotation = True
 
+    # Arguments concerning bounding spheres
+    args.problem.radius_inner_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
+    args.problem.measurement_period = 2500 # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
+    
     # Arguments for mesh
     args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_lp.pk"
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
@@ -77,7 +82,10 @@ def test_multiple_impulsive_maneuvers():
                 chromosome = np.concatenate((chromosome, [time_of_maneuver, dv_x, dv_y, dv_z]), axis=None)
             
         # Compute trajectory via numerical integration as in UDP.
-        trajectory_info, _, _  = compute_trajectory(chromosome, args, compute_motion)
+        _, list_of_trajectory_objects, _ = compute_trajectory(chromosome, args, compute_motion)
+
+        # Get integration info:
+        positions, _ = get_trajectory_adaptive_step(list_of_trajectory_objects)
 
         # Check if compute_trajectory still produces the same trajectories.
-        assert all(np.isclose(final_positions_array[:, number_of_maneuvers],trajectory_info[0:3, -1],rtol=1e-5, atol=1e-5))
+        assert all(np.isclose(final_positions_array[:, number_of_maneuvers],positions[0:3, -1],rtol=1e-5, atol=1e-5))
