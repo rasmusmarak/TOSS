@@ -114,9 +114,12 @@ class udp_initial_condition:
         # Separate each chromosome representing an induvidual spacecraft:
         list_of_spacecrafts = np.array_split(x, self.args.problem.number_of_spacecrafts)
 
-        # Compute fitness of each spacecraft individually:
-        fitness = 0
-        for spacecraft in list_of_spacecrafts:
+        # Resample and store trajectory for each spacecraft with a fixed time-step delta t
+        positions = None
+        velocities = None
+        timesteps = None
+
+        for counter, spacecraft in enumerate(list_of_spacecrafts):
         
             # Compute trajectory
             collision_detected, list_of_ode_objects, _ = compute_trajectory(spacecraft, self.args, compute_motion)
@@ -126,12 +129,22 @@ class udp_initial_condition:
                 fitness = 1e30
                 return [fitness]
             
-            # Get positions on trajectory for a fixed time-step
-            positions, velocities, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
+            # Resample trajectory for a fixed time-step delta t
+            spacecraft_positions, spacecraft_velocities, spacecraft_timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
 
-            # Compute fitness:
-            chosen_fitness_function = FitnessFunctions.CoveredVolumeFarDistancePenalty
-            fitness += get_fitness(chosen_fitness_function, self.args, positions, velocities, timesteps)
+            # Store information
+            if counter == 0:
+                positions = spacecraft_positions
+                velocities = spacecraft_velocities
+                timesteps = spacecraft_timesteps
+
+            else:
+                positions = np.vstack((positions, spacecraft_positions))
+                velocities = np.vstack((velocities, spacecraft_velocities))
+
+        # Compute aggregate fitness:
+        chosen_fitness_function = FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty
+        fitness = get_fitness(chosen_fitness_function, self.args, positions, velocities, timesteps)
 
         return [fitness]
 
