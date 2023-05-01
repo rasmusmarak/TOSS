@@ -78,10 +78,10 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
     # NOTE: The fitness value for covered volume will not be feasible if
     #        its maximal velocity exceeds the provided value below as the grid
     #        spacing will be too small. Please use the scaling factor to adapt for this.
-    fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126]) * max_velocity_scaling_factor
+    fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126])
 
     # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
-    max_velocity = np.max(np.linalg.norm(fixed_velocity))
+    max_velocity = np.max(np.linalg.norm(fixed_velocity)) * max_velocity_scaling_factor
     time_step = timesteps[1]-timesteps[0]
     max_distance_traveled = max_velocity * time_step
 
