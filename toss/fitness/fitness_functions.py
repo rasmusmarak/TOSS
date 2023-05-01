@@ -204,5 +204,5 @@ def covered_space_close_distance_penalty_far_distance_penalty(radius_inner_bound
     Returns:
         (float): Aggregate fitness value.
     """
-    fitness = (compute_space_coverage(positions, velocities, timesteps, radius_inner_bounding_sphere, radius_outer_bounding_sphere, max_velocity_scaling_factor) + close_distance_penalty(radius_inner_bounding_sphere, positions, penalty_scaling_factor) + far_distance_penalty(radius_outer_bounding_sphere,positions,penalty_scaling_factor))
+    fitness = (-covered_space(radius_inner_bounding_sphere, radius_outer_bounding_sphere, positions, velocities, timesteps, max_velocity_scaling_factor)) + close_distance_penalty(radius_inner_bounding_sphere, positions, penalty_scaling_factor) + far_distance_penalty(radius_outer_bounding_sphere,positions,penalty_scaling_factor)
     return fitness
