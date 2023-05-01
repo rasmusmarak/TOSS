@@ -139,8 +139,8 @@ class udp_initial_condition:
                 timesteps = spacecraft_timesteps
 
             else:
-                positions = np.vstack((positions, spacecraft_positions))
-                velocities = np.vstack((velocities, spacecraft_velocities))
+                positions = np.hstack((positions, spacecraft_positions))
+                velocities = np.hstack((velocities, spacecraft_velocities))
 
         # Compute aggregate fitness:
         chosen_fitness_function = FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty
