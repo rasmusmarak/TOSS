@@ -18,7 +18,7 @@ class udp_initial_condition:
     optimization problem as well as the domain of the intial state vector. 
     """
 
-    def __init__(self, args, lower_bounds, upper_bounds):
+    def __init__(self, args, initial_conditions, lower_bounds, upper_bounds):
         """ Setup udp attributes.
 
         Args:
@@ -97,6 +97,7 @@ class udp_initial_condition:
 
         # Additional hyperparameters
         self.args = args
+        self.initial_conditions = np.array_split(initial_conditions, args.problem.number_of_spacecrafts)
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
 
@@ -111,10 +112,15 @@ class udp_initial_condition:
             fitness (_float_): Evaluated fitness for user-specified fitness-function.
         """
 
-        # Separate each chromosome representing an induvidual spacecraft:
+        # Seperate state vector into sublists corresponding to each spacecraft:
         list_of_spacecrafts = np.array_split(x, self.args.problem.number_of_spacecrafts)
 
-        # Resample and store trajectory for each spacecraft with a fixed time-step delta t
+        # If we have a predefined initial state, concatenate the initial state info with corresponding maneuvers
+        if len(self.initial_conditions) > 0:
+            for counter, spacecraft_info in enumerate(list_of_spacecrafts):
+                list_of_spacecrafts[counter] = np.hstack((self.initial_conditions[counter], spacecraft_info))
+                
+        # Compute Trajectory and resample for a given fixed time-step delta t
         positions = None
         velocities = None
         timesteps = None

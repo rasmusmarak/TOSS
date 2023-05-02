@@ -10,7 +10,8 @@ from .trajectory.Integrator import IntegrationScheme
 from .visualization.plotting_utility import plot_UDP
 from .utilities.load_default_cfg import load_default_cfg
 from .optimization.udp_initial_condition import udp_initial_condition
-from .setup_parameters import setup_parameters
+from .optimization.setup_parameters import setup_parameters
+from .optimization.setup_state import setup_initial_state_domain
 
 __all__ = [
     "FitnessFunctions",
@@ -38,5 +39,6 @@ __all__ = [
     "plot_UDP",
     "load_default_cfg",
     "udp_initial_condition",
-    "setup_parameters"
+    "setup_parameters",
+    "setup_initial_state_domain"
 ]
