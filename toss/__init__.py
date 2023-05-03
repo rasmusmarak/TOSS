@@ -7,7 +7,7 @@ from .trajectory.trajectory_tools import get_trajectory_fixed_step, get_trajecto
 from .fitness.fitness_functions import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, total_covered_volume, covered_space
 from .mesh.mesh_utility import create_mesh, is_outside
 from .trajectory.Integrator import IntegrationScheme
-from .visualization.plotting_utility import plot_UDP
+from .visualization.plotting_utility import plot_UDP, fitness_over_generations
 from .utilities.load_default_cfg import load_default_cfg
 from .optimization.udp_initial_condition import udp_initial_condition
 from .optimization.setup_parameters import setup_parameters
@@ -37,6 +37,7 @@ __all__ = [
     "is_outside",
     "IntegrationScheme",
     "plot_UDP",
+    "fitness_over_generations",
     "load_default_cfg",
     "udp_initial_condition",
     "setup_parameters",
