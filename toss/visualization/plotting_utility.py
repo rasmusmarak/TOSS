@@ -13,7 +13,7 @@ def fitness_over_generations(fitness_list, number_of_generations):
     """
     # Plot fitness over generations
     figure, ax = plt.subplots(figsize=(9, 5))
-    ax.plot(np.arange(0, number_of_generations), fitness_list, label='Function value')
+    ax.plot(np.arange(0, number_of_generations), fitness_list, label='Fitness function')
     champion_n = np.argmin(np.array(fitness_list))
     ax.scatter(champion_n, np.min(fitness_list), marker='x', color='r', label='All-time champion')
     ax.set_xlim((0, number_of_generations))
@@ -25,7 +25,7 @@ def fitness_over_generations(fitness_list, number_of_generations):
     ax.set_yscale('log')
     plt.tight_layout()
     #plt.show()
-    plt.savefig('figures/67P/fitness_over_generations.png')
+    plt.savefig('toss/figures/fitness_over_generations.png')
 
 def two_axis_trajectory(trajectory_info, axis_1, axis_2):
     """ Plots trajectory provided two axes of the trajectory.
