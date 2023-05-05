@@ -35,11 +35,9 @@ def setup_parameters():
             radius_bounding_sphere (float): Radius of the bounding sphere representing risk zone for collisions with celestial body.
             event (int): Event configuration (0 = no event, 1 = collision with body detection)
         
-        lower_bounds (np.ndarray): Lower boundary values for the initial state vector.
-        upper_bounds (np.ndarray): Lower boundary values for the initial state vector.
-                
-        population_size (int): Number of chromosomes to compare at each generation.
-        number_of_generations (int): Number of generations for the genetic opimization.
+        optimization_args:
+            population_size (int): Number of chromosomes to compare at each generation.
+            number_of_generations (int): Number of generations for the genetic opimization.
     """
 
     # Load default constants value
@@ -58,40 +56,4 @@ def setup_parameters():
     # Create mesh of body:
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
 
-    # Defining the state variable and its boundaries (parameter space):
-    #   state: [a, e, o, w, i, ea, tm, dvx, dvy, dvz]
-    #
-    # Declerations:
-    #   a   : Semi-major axis
-    #   e   : Eccentricity (e=[0,1]).
-    #   o   : Right ascension of ascending node (o=[0,2*pi])
-    #   w   : Argument of periapsis (w=[0,2*pi])
-    #   i   : Inclination (i=[0,pi])
-    #   ea  : Eccentric anomaly (ea=[0,2*pi])
-    #   tm  : Time of impulsive maneuver ([seconds])
-    #   dvx : Impulsive maneuver in x-axis
-    #   dvy : Impulsive maneuver in y-axis
-    #   dvz : Impulsive maneuver in z-axis
-    #
-    # NOTE: (Initial position and velocity are defined with osculating 
-    #        orbital elements, i.e the first six parameters of the state vector)
-
-    # Orbital elements
-    #a = [4000, 5000] #[5000, 15000] 
-    #e = [0, 1]        
-    #o = [0, 2*pi]
-    #w = [0, 2*pi]     
-    #i = [0, pi]       
-    #ea = [0, 2*pi]
-
-    # Impulsive Maneuver    
-    #tm = [(args.problem.start_time + 100), (args.problem.final_time - 100)]
-    #dvx = [-1, 1]
-    #dvy = [-1, 1]
-    #dvz = [-1, 1]
-    
-    # Generate boundary state vectors:
-    #lower_bounds = np.concatenate(([a[0], e[0], i[0], o[0], w[0], ea[0]], [tm[0], dvx[0], dvy[0], dvz[0]]*args.problem.number_of_maneuvers)*args.problem.number_of_spacecrafts, axis=None)
-    #upper_bounds = np.concatenate(([a[1], e[1], i[1], o[1], w[1], ea[1]], [tm[1], dvx[1], dvy[1], dvz[1]]*args.problem.number_of_maneuvers)*args.problem.number_of_spacecrafts, axis=None)
-
-    return args #, lower_bounds, upper_bounds
+    return args
