@@ -7,9 +7,10 @@ import numpy as np
 
 # Load required modules
 from toss.optimization.udp_initial_condition import udp_initial_condition
-from toss.setup_parameters import setup_parameters
+from toss.optimization.setup_parameters import setup_parameters
+from toss.optimization.setup_state import setup_initial_state_domain
 
-def load_udp(args, lower_bounds, upper_bounds):
+def load_udp(args, initial_condition, lower_bounds, upper_bounds):
     """
     Main function for optimizing the initial state for deterministic trajectories around a 
     small celestial body using a mesh.
@@ -17,7 +18,7 @@ def load_udp(args, lower_bounds, upper_bounds):
 
     # Setup User-Defined Problem (UDP)
     print("Setting up the UDP...")
-    udp = udp_initial_condition(args, lower_bounds, upper_bounds)
+    udp = udp_initial_condition(args, initial_condition, lower_bounds, upper_bounds)
     prob = pg.problem(udp)
 
     # Setup optimization algorithm
@@ -30,7 +31,7 @@ def load_udp(args, lower_bounds, upper_bounds):
     # Setup User-Defined Algorithm (UDA)
     print("Setting up UDA")
     uda = pg.gaco(
-        args.optimization.number_of_generations, 
+        1, 
         args.algorithm.kernel_size, 
         args.algorithm.convergence_speed_parameter, 
         args.algorithm.oracle_parameter, 
@@ -43,9 +44,15 @@ def load_udp(args, lower_bounds, upper_bounds):
         args.algorithm.memory_parameter)
 
     # Setup BFE machinery
-    multi_process_bfe = pg.mp_bfe()
-    multi_process_bfe.resize_pool(args.optimization.number_of_threads)
+    multi_process_bfe = pg.ipyparallel_bfe() #n=args.optimization.number_of_threads
+    multi_process_bfe.init_view()
+    #multi_process_bfe.
+    #print(multi_process_bfe)
+
+    #multi_process_bfe.resize_pool(args.optimization.number_of_threads)
     bfe = pg.bfe(multi_process_bfe) 
+    print(bfe.get_extra_info())
+
     uda.set_bfe(bfe)
     algo = pg.algorithm(uda)
     
@@ -53,8 +60,15 @@ def load_udp(args, lower_bounds, upper_bounds):
     pop = pg.population(prob, size=args.optimization.population_size)
 
     # Evolve archipelago (Optimization process)
-    algo.set_verbosity(1)
-    pop = algo.evolve(pop)
+    #algo.set_verbosity(1)
+    #pop = algo.evolve(pop)
+
+    # Evolve (Optimization process)
+    fitness_list = []
+    for i in range(args.optimization.number_of_generations):
+        pop = algo.evolve(pop)
+        fitness_list.append(pop.get_f()[pop.best_idx()])
+        print("Generations: ", i+1, " "*10, "Best: ", fitness_list[len(fitness_list)-1])
 
     # Logs for output
     run_time_end = time.time()
@@ -66,33 +80,51 @@ def load_udp(args, lower_bounds, upper_bounds):
     print("Champion chromosome: ", champion_x) 
 
     # Shutdown pool to avoid mp_bfe bug for python==3.8
-    multi_process_bfe.shutdown_pool()
+    #multi_process_bfe.shutdown_pool()
+    multi_process_bfe.shutdown_view()
 
-    return run_time, champion_f, champion_x
+    return run_time, champion_f, champion_x, fitness_list
 
 
 def main():
-    args, lower_bounds, upper_bounds = setup_parameters()
-    run_time, champion_f, champion_x = load_udp(args, lower_bounds, upper_bounds)
 
-    # Saving results
-    run_time = np.asarray(run_time)
+    # Setup problem parameters (as DotMaP)
+    #args, lower_bounds, upper_bounds = setup_parameters()
+    args = setup_parameters()
+    
+    # Setup initial state space
+    initial_condition = [] #[1.02346115e+04, 5.04262474e-01, 1.40521347e+00, 3.03148072e+00, 2.68878957e-01, 5.74690265e+00]*args.problem.number_of_spacecrafts
+    lower_bounds, upper_bounds = setup_initial_state_domain(initial_condition, 
+                                                            args.problem.start_time, 
+                                                            args.problem.final_time, 
+                                                            args.problem.number_of_maneuvers, 
+                                                            args.problem.number_of_spacecrafts)
+
+    # Run optimization
+    run_time, champion_f, champion_x, fitness_list = load_udp(args, initial_condition, lower_bounds, upper_bounds)
+
+    # Save results
+    run_time = np.asarray([float(run_time)])
     champion_f = np.asarray(champion_f)
     champion_x = np.asarray(champion_x)
+    fitness_list = np.asarray(fitness_list)
+
 
     np.savetxt("run_time.csv", run_time, delimiter=",")
     np.savetxt("champion_f.csv", champion_f, delimiter=",")
     np.savetxt("champion_x.csv", champion_x, delimiter=",")
+    np.savetxt("fitness_list.csv", fitness_list, delimiter=",")
 
 
 if __name__ == "__main__":
-    cProfile.run("main()", "output.dat")
+    main()
+    #cProfile.run("main()", "output.dat")
 
-    with open("results/output_time.txt", "w") as f:
-        p = pstats.Stats("output.dat", stream=f)
-        p.sort_stats("time").print_stats()
+    #with open("output_time.txt", "w") as f:
+    #    p = pstats.Stats("output.dat", stream=f)
+    #    p.sort_stats("time").print_stats()
     
-    with open("results/output_calls.txt", "w") as f:
-        p = pstats.Stats("output.dat", stream=f)
-        p.sort_stats("calls").print_stats()
+    #with open("output_calls.txt", "w") as f:
+    #    p = pstats.Stats("output.dat", stream=f)
+    #    p.sort_stats("calls").print_stats()
         
