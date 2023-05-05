@@ -111,12 +111,15 @@ def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, plot_m
 
     #Plot trajectory
     if plot_trajectory:
-        x = positions[0,:]
-        y = positions[1,:]
-        z = positions[2,:]
-        ax.plot(x, y, z, label='Trajectory')
-        ax.legend()
-
+        id = 1
+        for i in range(0,len(positions[:,0]),3):
+            x = positions[i,:]
+            y = positions[i+1,:]
+            z = positions[i+2,:]
+            ax.plot(x, y, z, label='Trajectory '+str(id))
+            ax.legend()
+            id += 1
+        
     # Plot mesh:
     if plot_mesh:
         ax.plot_trisurf(args.mesh.vertices[:, 0], args.mesh.vertices[:,1], triangles=args.mesh.faces, Z=args.mesh.vertices[:,2], alpha=1, color='grey') 
