@@ -44,24 +44,18 @@ def load_udp(args, initial_condition, lower_bounds, upper_bounds):
         args.algorithm.memory_parameter)
 
     # Setup BFE machinery
-    multi_process_bfe = pg.ipyparallel_bfe() #n=args.optimization.number_of_threads
-    multi_process_bfe.init_view()
-    #multi_process_bfe.
-    #print(multi_process_bfe)
-
-    #multi_process_bfe.resize_pool(args.optimization.number_of_threads)
-    bfe = pg.bfe(multi_process_bfe) 
-    print(bfe.get_extra_info())
-
+    multi_process_bfe = pg.mp_bfe() #pg.ipyparallel_bfe() #n=args.optimization.number_of_threads
+    multi_process_bfe.resize_pool(args.optimization.number_of_threads)
+    bfe = pg.bfe(multi_process_bfe)
     uda.set_bfe(bfe)
     algo = pg.algorithm(uda)
-    
+
     # Setup population
     pop = pg.population(prob, size=args.optimization.population_size)
 
     # Evolve archipelago (Optimization process)
-    #algo.set_verbosity(1)
-    #pop = algo.evolve(pop)
+    algo.set_verbosity(1)
+    pop = algo.evolve(pop)
 
     # Evolve (Optimization process)
     fitness_list = []
@@ -80,8 +74,8 @@ def load_udp(args, initial_condition, lower_bounds, upper_bounds):
     print("Champion chromosome: ", champion_x) 
 
     # Shutdown pool to avoid mp_bfe bug for python==3.8
-    #multi_process_bfe.shutdown_pool()
-    multi_process_bfe.shutdown_view()
+    multi_process_bfe.shutdown_pool()
+    #multi_process_bfe.shutdown_view()
 
     return run_time, champion_f, champion_x, fitness_list
 
@@ -118,6 +112,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+    #print(pg.__version__)
     #cProfile.run("main()", "output.dat")
 
     #with open("output_time.txt", "w") as f:
