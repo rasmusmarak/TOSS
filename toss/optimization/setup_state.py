@@ -36,7 +36,7 @@ def setup_initial_state_domain(initial_condition, start_time, final_time, number
     """
 
     # Define boundaries for osculating orbital elements
-    a = [3500, 10000] #[5000, 15000] 
+    a = [4000, 15000] #[5000, 15000] 
     e = [0, 1]        
     o = [0, 2*pi]
     w = [0, 2*pi]     
