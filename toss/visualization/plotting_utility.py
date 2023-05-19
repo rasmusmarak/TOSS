@@ -14,8 +14,20 @@ def fitness_over_generations(fitness_list, number_of_generations):
     # Plot fitness over generations
     figure, ax = plt.subplots(figsize=(9, 5))
     ax.plot(np.arange(0, number_of_generations), fitness_list, label='Fitness function')
-    champion_n = np.argmin(np.array(fitness_list))
-    ax.scatter(champion_n, np.min(fitness_list), marker='x', color='r', label='All-time champion')
+
+    # Find fist occurance of true champion
+    champion = np.min(fitness_list)
+    champion_idx = np.where(fitness_list==champion)[0][0]
+    ax.scatter(champion_idx, champion, marker='x', color='r', label='All-time champion \n[Gen: '+str(champion_idx)+"]")
+
+    # Find fist occurance of approximate convergence (compared to true champion with given error margin)
+    convergence_list = fitness_list - champion
+    convergence_idx = np.where(convergence_list < 1e-6)[0][0]
+    convergence_value = fitness_list[convergence_idx]
+    print(convergence_idx)
+    ax.scatter(convergence_idx, convergence_value, marker='x', color='g', label='Convergence (delta < 1e-6) \n[Gen: '+str(convergence_idx)+"]")
+
+    # Adjust plot settings
     ax.set_xlim((0, number_of_generations))
     ax.grid('major')
     ax.set_title('Best individual of each generation', fontweight='bold')
