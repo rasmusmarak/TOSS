@@ -31,7 +31,7 @@ def load_udp(args, initial_condition, lower_bounds, upper_bounds):
     # Setup User-Defined Algorithm (UDA)
     print("Setting up UDA")
     uda = pg.gaco(
-        1, 
+        args.optimization.number_of_generations, 
         args.algorithm.kernel_size, 
         args.algorithm.convergence_speed_parameter, 
         args.algorithm.oracle_parameter, 
@@ -47,22 +47,22 @@ def load_udp(args, initial_condition, lower_bounds, upper_bounds):
     multi_process_bfe = pg.mp_bfe() #pg.ipyparallel_bfe() #n=args.optimization.number_of_threads
     multi_process_bfe.resize_pool(args.optimization.number_of_threads)
     bfe = pg.bfe(multi_process_bfe)
+
+    # Setup population
+    pop = pg.population(prob=prob, size=args.optimization.population_size, b=bfe)
+
+    # Evolve archipelago (Optimization process)
     uda.set_bfe(bfe)
     algo = pg.algorithm(uda)
 
-    # Setup population
-    pop = pg.population(prob, size=args.optimization.population_size)
-
-    # Evolve archipelago (Optimization process)
     algo.set_verbosity(1)
     pop = algo.evolve(pop)
-
-    # Evolve (Optimization process)
-    fitness_list = []
-    for i in range(args.optimization.number_of_generations):
-        pop = algo.evolve(pop)
-        fitness_list.append(pop.get_f()[pop.best_idx()])
-        print("Generations: ", i+1, " "*10, "Best: ", fitness_list[len(fitness_list)-1])
+    
+    # Store champion fitness of each generation:
+    optimization_info = algo.extract(pg.gaco).get_log()
+    fitness_list = np.empty(args.optimization.number_of_generations,dtype=np.float64)
+    for generation, info in enumerate(optimization_info):
+        fitness_list[generation] = info[2]
 
     # Logs for output
     run_time_end = time.time()
@@ -75,7 +75,6 @@ def load_udp(args, initial_condition, lower_bounds, upper_bounds):
 
     # Shutdown pool to avoid mp_bfe bug for python==3.8
     multi_process_bfe.shutdown_pool()
-    #multi_process_bfe.shutdown_view()
 
     return run_time, champion_f, champion_x, fitness_list
 
@@ -83,11 +82,10 @@ def load_udp(args, initial_condition, lower_bounds, upper_bounds):
 def main():
 
     # Setup problem parameters (as DotMaP)
-    #args, lower_bounds, upper_bounds = setup_parameters()
     args = setup_parameters()
     
     # Setup initial state space
-    initial_condition = [] #[1.02346115e+04, 5.04262474e-01, 1.40521347e+00, 3.03148072e+00, 2.68878957e-01, 5.74690265e+00]*args.problem.number_of_spacecrafts
+    initial_condition = []
     lower_bounds, upper_bounds = setup_initial_state_domain(initial_condition, 
                                                             args.problem.start_time, 
                                                             args.problem.final_time, 
