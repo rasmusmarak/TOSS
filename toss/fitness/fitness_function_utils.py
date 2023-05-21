@@ -129,7 +129,14 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
         # Compute the ratio of True values to the total number of values in the boolean tensor
         ratio = bool_tensor.sum() / bool_tensor.size
 
-        return ratio
+        # Define a zero-valued tensor with the same shape as the spherical meshgrid
+        r_idx = np.where(bool_tensor == True)[0]
+        sum_of_weights = np.sum(1/r[r_idx])
+
+        # Return fitness
+        fitness = ratio + sum_of_weights
+
+        return fitness
 
 
 def cart2sphere(x, y, z) -> tuple:
