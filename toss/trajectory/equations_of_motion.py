@@ -104,7 +104,7 @@ def rotate_point(t: float, x: np.ndarray, args) -> np.ndarray:
     """
 
     # Get Quaternion object for rotation around spin axis
-    q_rot = Quaternion(axis=args.body.spin_axis, angle=(2*pi-args.body.spin_velocity*t))
+    q_rot = Quaternion(axis=args.body.spin_axis, angle=(args.body.spin_velocity*t))
     
     # Rotate satellite position using q_rot
     x_rotated = q_rot.rotate(x)
