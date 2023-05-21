@@ -36,8 +36,8 @@ def setup_initial_state_domain(initial_condition, start_time, final_time, number
     """
 
     # Define boundaries for osculating orbital elements
-    a = [4000, 15000] #[5000, 15000] 
-    e = [0, 1]        
+    a = [4000, 10000] #[5000, 15000] 
+    e = [0, 10]      # e>1 allows hyperbolic trajectories  
     o = [0, 2*pi]
     w = [0, 2*pi]     
     i = [0, pi]       
