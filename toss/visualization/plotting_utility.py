@@ -3,7 +3,74 @@ import numpy as np
 
 # For Plotting
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import pyvista as pv
+
+def distance_deviation_over_time(n_spacecraft, r_bound_min, r_bound_max, positions, timelist):
+    """ Plots the distance deviation over time
+    """
+    # Plot fitness over generations
+    figure, ax = plt.subplots(figsize=(5, 5))
+
+    if n_spacecraft > 1:
+        positions_list = np.array_split(positions, n_spacecraft, axis=1)
+        for spacecraft_idx in range(0, len(positions_list)):
+            pos = positions_list[spacecraft_idx]
+            distances = (pos[0,:]**2 + pos[1,:]**2 + pos[2,:]**2)**(1/2)
+            ax.plot(timelist, distances, label='Trajectory '+str(spacecraft_idx+1))
+    else:
+        distances = (positions[0,:]**2 + positions[1,:]**2 + positions[2,:]**2)**(1/2)
+        ax.plot(timelist, distances, label='Trajectory')
+
+    # plot inner bounding sphere radius
+    ax.axhline(y = r_bound_min, color = 'r', linestyle = 'dashed', label = "Inner bounding sphere")
+
+    # Plot outer bounding sphere radius
+    ax.axhline(y = r_bound_max, color = 'r', linestyle = ':', label = "Outer bounding sphere")
+
+    # Change ticks aspect ratio from meters to kilometers
+    m2km = lambda y, _: f'{y/1000:g}'
+    ax.yaxis.set_major_formatter(m2km)
+
+    s2days = lambda x, _: f'{int((x/3600)/24):g}'
+    ax.xaxis.set_major_formatter(s2days)
+
+    ax.set_xlabel('Time [days]')
+    ax.set_ylabel('Distance [km]')
+
+    # Adjust plot settings
+    ax.grid('major')
+    #ax.set_title('Distance deviation over time', fontweight='bold')
+    ax.legend(loc='upper left')
+    #ax.set_yscale('log')
+    plt.tight_layout()
+    #plt.show()
+    plt.savefig('distance_deviation_over_time.png')
+
+
+def fitness_over_time(coverage_list, close_dist_penalty_list, far_dist_penalty_list, time_list):
+    """ Plots the fitness value evolution over time
+    Args:
+        fitness_list (np.ndarray): Array containing champion fitness vlue of each generation.
+        timelist (list): List of time values
+    """
+    # Plot fitness over generations
+    figure, ax = plt.subplots(figsize=(5, 5))
+    ax.plot(time_list, coverage_list, label='Coverage')
+    ax.plot(time_list, close_dist_penalty_list, label='Close Distance Penalty')
+    ax.plot(time_list, far_dist_penalty_list, label='Far Distance Penalty')
+
+    # Adjust plot settings
+    #ax.set_xlim((0, timelist))
+    ax.grid('major')
+    #ax.set_title('Coverage evolution', fontweight='bold')
+    ax.set_xlabel('Time [days]')
+    ax.set_ylabel('Fitness')
+    ax.legend(loc='upper left')
+    #ax.set_yscale('log')
+    plt.tight_layout()
+    #plt.show()
+    plt.savefig('coverage_over_time.png')
 
 def fitness_over_generations(fitness_list, number_of_generations):
     """ Plots the champion fitness vlue of each generation
@@ -12,32 +79,32 @@ def fitness_over_generations(fitness_list, number_of_generations):
         number_of_generations (int): Number of generations for the optimization.
     """
     # Plot fitness over generations
-    figure, ax = plt.subplots(figsize=(9, 5))
+    figure, ax = plt.subplots(figsize=(5, 5))
     ax.plot(np.arange(0, number_of_generations), fitness_list, label='Fitness function')
 
     # Find fist occurance of true champion
-    champion = np.min(fitness_list)
-    champion_idx = np.where(fitness_list==champion)[0][0]
-    ax.scatter(champion_idx, champion, marker='x', color='r', label='All-time champion \n[Gen: '+str(champion_idx)+"]")
+    #champion = np.min(fitness_list)
+    #champion_idx = np.where(fitness_list==champion)[0][0]
+    #ax.scatter(champion_idx, champion, marker='x', color='r', label='All-time champion \n[Gen: '+str(champion_idx)+"]")
 
     # Find fist occurance of approximate convergence (compared to true champion with given error margin)
-    convergence_list = fitness_list - champion
-    convergence_idx = np.where(convergence_list < 1e-6)[0][0]
-    convergence_value = fitness_list[convergence_idx]
-    print(convergence_idx)
-    ax.scatter(convergence_idx, convergence_value, marker='x', color='g', label='Convergence (delta < 1e-6) \n[Gen: '+str(convergence_idx)+"]")
+    #convergence_list = fitness_list - champion
+    #convergence_idx = np.where(convergence_list < 1e-6)[0][0]
+    #convergence_value = fitness_list[convergence_idx]
+    #print(convergence_idx)
+    #ax.scatter(convergence_idx, convergence_value, marker='x', color='g', label='Convergence (delta < 1e-6) \n[Gen: '+str(convergence_idx)+"]")
 
     # Adjust plot settings
     ax.set_xlim((0, number_of_generations))
     ax.grid('major')
-    ax.set_title('Best individual of each generation', fontweight='bold')
+    #ax.set_title('Best individual of each generation', fontweight='bold')
     ax.set_xlabel('Number of generation')
     ax.set_ylabel('UDP fitness value')
     ax.legend(loc='upper right')
     ax.set_yscale('log')
     plt.tight_layout()
     #plt.show()
-    plt.savefig('toss/figures/fitness_over_generations.png')
+    plt.savefig('fitness_over_generations.png')
 
 def two_axis_trajectory(trajectory_info, axis_1, axis_2):
     """ Plots trajectory provided two axes of the trajectory.
@@ -104,13 +171,16 @@ def drawSphere(r):
     return (x,y,z)
 
 
-def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, plot_measurement_sphere, view_angle, measurement_radius):
+def plot_UDP(args, positions, maneuver_positions, maneuver_unit_vectors, plot_mesh, plot_trajectory, plot_control, plot_risk_zone, plot_measurement_sphere, view_angle, measurement_radius):
     """plot_trajectory plots the satellite trajectory.
     Args:
         args (dotmap.DotMap): Dotmap dictionary containing info on mesh and bounding spheres.
         positions (np.ndarray): (3xN) Array containing N positions (cartesian frame) along the computed trajectory.
+        maneuver_positions (np.ndarray): (3xN) Array containing N positions (cartesian frame) corresponding to control vectors.
+        maneuver_unit_vectors (np.ndarray): (3xN) Array containing N control vectors (cartesian frame) along the computed trajectory.
         plot_mesh (bool): Activation of plotting the mesh
         plot_trajectory (bool): Activation of plotting the trajectory
+        plot_control (bool): Activation of plotting the control vectors (direction of thrust)
         plot_risk_zone (bool): Activation of plotting the inner bounding sphere (i.e risk-zone)
         plot_measurement_sphere (bool): Activation of plotting measurement spheres.
         view_angle (list): List containing the view angle of the plot.
@@ -118,19 +188,39 @@ def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, plot_m
     """
     # Define figure
     #ax = plt.figure().add_subplot(projection='3d')
-    fig = plt.figure(figsize = (13,7))
+    fig = plt.figure(figsize = (6,6))
     ax = fig.add_subplot(projection='3d')
 
     #Plot trajectory
     if plot_trajectory:
         id = 1
-        for i in range(0,len(positions[:,0]),3):
-            x = positions[i,:]
-            y = positions[i+1,:]
-            z = positions[i+2,:]
+        n_pos = int((args.problem.final_time/args.problem.measurement_period))
+        for i in range(0,len(positions[0,:]), n_pos):
+            x = positions[0, i:(i+n_pos)]
+            y = positions[1, i:(i+n_pos)]
+            z = positions[2, i:(i+n_pos)]
+
+            # Plot square marker at starting position
+            ax.scatter(x[0], y[0], z[0], marker='s', c='black')
+
+            # Plot pointer at final position
+            ax.scatter(x[-1], y[-1], z[-1], marker='o', c='black')
+
+            # Plot trajectory
             ax.plot(x, y, z, label='Trajectory '+str(id))
             ax.legend()
             id += 1
+
+    # Plotting control 
+    if plot_control:
+        for maneuver_idx in range(0, len(maneuver_unit_vectors[0,:])):
+            x = maneuver_positions[0,maneuver_idx]
+            y = maneuver_positions[1,maneuver_idx]
+            z = maneuver_positions[2,maneuver_idx]
+            ux = maneuver_unit_vectors[0,maneuver_idx]
+            uy = maneuver_unit_vectors[1,maneuver_idx]
+            uz = maneuver_unit_vectors[2,maneuver_idx]
+            ax.quiver(x, y, z, -ux, -uy, -uz, color='k', length=50000) #arrow_length_ratio
         
     # Plot mesh:
     if plot_mesh:
@@ -168,7 +258,7 @@ def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, plot_m
     ax.view_init(view_angle[0],view_angle[1])
 
     # Set title of figure:
-    ax.set_title("Solution to UDP.    View angle: ("+str(view_angle[0])+", "+str(view_angle[1])+")")
+    #ax.set_title("Solution to UDP.    View angle: ("+str(view_angle[0])+", "+str(view_angle[1])+")")
 
     # Adjust axes limits and figure aspect
     xyzlim = np.array([ax.get_xlim3d(),ax.get_ylim3d(),ax.get_zlim3d()]).T
@@ -176,15 +266,22 @@ def plot_UDP(args, positions, plot_mesh, plot_trajectory, plot_risk_zone, plot_m
     ax.set_xlim3d(XYZlim)
     ax.set_ylim3d(XYZlim)
     ax.set_zlim3d(XYZlim)
+
     ax.set_aspect("equal")
 
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.set_zlabel("z")
+    # Change ticks aspect ratio from meters to kilometers
+    m2km = lambda x, _: f'{x/1000:g}'
+    ax.xaxis.set_major_formatter(m2km)
+    ax.yaxis.set_major_formatter(m2km)
+    ax.zaxis.set_major_formatter(m2km)
+
+    ax.set_xlabel("x [km]")
+    ax.set_ylabel("y [km]")
+    ax.set_zlabel("z [km]")
 
     # Either display figure in jupyter or save to png.
     #plt.show()
-    plt.savefig('toss/figures/trajectory_plot.png')
+    plt.savefig('trajectory_plot.png') # fixed_body_frame_trajectory_plot # trajectory_plot
 
 def plot_performance_scaling(core_counts, run_times):
 
