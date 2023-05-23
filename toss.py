@@ -85,7 +85,7 @@ def main():
     args = setup_parameters()
     
     # Setup initial state space
-    initial_condition = []
+    initial_condition = [-135.13402075, -4089.53592604, 6050.17636635]
     lower_bounds, upper_bounds = setup_initial_state_domain(initial_condition, 
                                                             args.problem.start_time, 
                                                             args.problem.final_time, 
