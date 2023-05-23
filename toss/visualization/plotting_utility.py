@@ -220,7 +220,7 @@ def plot_UDP(args, positions, maneuver_positions, maneuver_unit_vectors, plot_me
             ux = maneuver_unit_vectors[0,maneuver_idx]
             uy = maneuver_unit_vectors[1,maneuver_idx]
             uz = maneuver_unit_vectors[2,maneuver_idx]
-            ax.quiver(x, y, z, -ux, -uy, -uz, color='k', length=50000) #arrow_length_ratio
+            ax.quiver(x, y, z, -ux, -uy, -uz, color='r', length=2500) #arrow_length_ratio
         
     # Plot mesh:
     if plot_mesh:
