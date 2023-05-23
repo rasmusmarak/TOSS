@@ -13,7 +13,7 @@ atol = 1e-12                            # Absolute tolerance for chosen integrat
 
 [problem]
 start_time = 0                          # Starting time [seconds].
-final_time = 2419200                    # (20h*3600) Final time [seconds].
+final_time = 604800                    # (20h*3600) Final time [seconds].
 initial_time_step = 1                   # Initial time step size for integration [seconds].
 activate_event = true                   # Event configuration (False = no events, True = collision with body detection).
 number_of_maneuvers = 4                 # Maximum number of possible manuevers during mission.
@@ -23,7 +23,7 @@ measurement_period = 100                # Period for when a measurement sphere i
 radius_inner_bounding_sphere = 4000     # Radius of spherical risk-zone for collision with celestial body [m]
 radius_outer_bounding_sphere = 10000    # Radius of spherical outer boundary sphere with celestial body [m]
 maximal_measurement_sphere_radius = 35.95398913 # Radius found at point of greatest gravitational influence by the body for a spacecraft on the boundary of the inner bounding sphere with measurement period of 100 [s].
-number_of_spacecrafts = 4
+number_of_spacecrafts = 1
 max_velocity_scaling_factor = 40        # Scales the magnitude of the fixed-valued maximal velocity, and therefore also the grid spacing.
 penalty_scaling_factor = 0.1            # Appropriately chosen scaling for the penalty values (P=[0,1]) to be comparable with the magnitude of covered space ratio. 
 
