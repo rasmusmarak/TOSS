@@ -97,7 +97,7 @@ def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndar
     """
     # For each point along the trajectory, compare the squared distance of the position with to the outer sphere radius
     delta_distance_squared = _compute_squared_distance(positions, radius_outer_bounding_sphere)
-    
+
     # We only want to penalize positions that are outside outer-sphere (i.e measurement-zone).
     # That is whenever the distance from origin to the position is greater than the radius of the
     # outer bounding sphere.
@@ -109,7 +109,7 @@ def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndar
         mean_distance = np.mean(delta_distance_squared)
         
         # Determine penalty depending on mean distance. 
-        penalty = ((mean_distance/(radius_outer_bounding_sphere**2))**(1/4)) * penalty_scaling_factor
+        penalty = ((mean_distance/(radius_outer_bounding_sphere**2))**(1/4)) * 0.5#* 0.5 #penalty_scaling_factor
         return penalty
 
 
