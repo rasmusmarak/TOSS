@@ -45,18 +45,18 @@ def setup_initial_state_domain(initial_condition, start_time, final_time, number
 
     # Define boundaries for an impulsive Maneuver    
     tm = [(start_time + 1), (final_time - 1)]
-    dv_magnitude = [-2.5, 2.5]
+    dv_magnitude = [0, 2.5]
     dvx = [-1, 1]
     dvy = [-1, 1]
     dvz = [-1, 1]
 
-
     # Initial velocity:
-    v_magnitude = [-0.5, 0.5]
+    v_magnitude = [0, 0.5]
     vx = [-1, 1]
     vy = [-1, 1]
     vz = [-1, 1]
 
+    # Fixed initial state
     lower_bounds = np.concatenate(([v_magnitude[0], vx[0], vy[0], vz[0]], [tm[0], dv_magnitude[0], dvx[0], dvy[0], dvz[0]]*number_of_maneuvers)*number_of_spacecrafts, axis=None)
     upper_bounds = np.concatenate(([v_magnitude[1], vx[1], vy[1], vz[1]], [tm[1], dv_magnitude[1], dvx[1], dvy[1], dvz[1]]*number_of_maneuvers)*number_of_spacecrafts, axis=None)
 
