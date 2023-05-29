@@ -4,7 +4,7 @@ import typing
 from toss.fitness.fitness_function_enums import FitnessFunctions
 from toss.fitness.fitness_function_utils import _compute_squared_distance, estimate_covered_volume, compute_space_coverage
 
-def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.ndarray, velocities:np.ndarray, timesteps: np.ndarray) -> float:
+def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.ndarray, velocities:np.ndarray, timesteps: np.ndarray) -> float: #, list_of_spacecrafts: list
     """ Returns user specified fitness function.
     Args:
         chosen_function (FitnessFunctions): Chosen fitness function as defined in enum class FitnessFunctions.
@@ -39,10 +39,10 @@ def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.n
         return covered_volume_close_distance_penalty_far_distance_penalty(args.problem.maximal_measurement_sphere_volume, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, args.problem.penalty_scaling_factor)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredSpace:
-        return covered_space(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps, args.problem.max_velocity_scaling_factor)
+        return covered_space(args.body.spin_axis, args.body.spin_velocity, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps, args.problem.max_velocity_scaling_factor)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty:
-        return covered_space_close_distance_penalty_far_distance_penalty(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps, args.problem.penalty_scaling_factor, args.problem.max_velocity_scaling_factor)
+        return covered_space_close_distance_penalty_far_distance_penalty(args.body.spin_axis, args.body.spin_velocity, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps, args.problem.penalty_scaling_factor, args.problem.max_velocity_scaling_factor) #, list_of_spacecrafts
 
 
 def target_altitude_distance(target_squared_altitude: float, positions: np.ndarray) -> float:
@@ -109,7 +109,7 @@ def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndar
         mean_distance = np.mean(delta_distance_squared)
         
         # Determine penalty depending on mean distance. 
-        penalty = ((mean_distance/(radius_outer_bounding_sphere**2))**(1/4)) * penalty_scaling_factor #* 0.5 #penalty_scaling_factor
+        penalty = ((mean_distance/(radius_outer_bounding_sphere**2))**(1/4)) * penalty_scaling_factor
         return penalty
 
 
@@ -172,10 +172,12 @@ def covered_volume_close_distance_penalty_far_distance_penalty(maximal_measureme
     """
     return (covered_volume(maximal_measurement_sphere_volume,positions) + close_distance_penalty(radius_inner_bounding_sphere, positions, penalty_scaling_factor) + far_distance_penalty(radius_outer_bounding_sphere,positions, penalty_scaling_factor))
 
-def covered_space(radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, max_velocity_scaling_factor: float):
+def covered_space(spin_axis: np.ndarray, spin_velocity: float, radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, max_velocity_scaling_factor: float):
     """ Returns the ratio of visited points to a number of points definied inside the outer bounding sphere.
 
     Args:
+        spin_axis (np.ndarray): The axis around which the body rotates.
+        spin_velocity (float): Angular velocity of the body's rotation.
         radius_inner_bounding_sphere (float):  Radius of inner bounding sphere.
         radius_outer_bounding_sphere (float):  Radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
@@ -186,13 +188,15 @@ def covered_space(radius_inner_bounding_sphere: float, radius_outer_bounding_sph
     Returns:
         visited_space_ratio (float): ratio of visited points to a number of points definied inside the outer bounding sphere.
     """
-    visited_space_ratio = compute_space_coverage(positions, velocities, timesteps, radius_inner_bounding_sphere, radius_outer_bounding_sphere, max_velocity_scaling_factor)
+    visited_space_ratio = compute_space_coverage(spin_axis, spin_velocity, positions, velocities, timesteps, radius_inner_bounding_sphere, radius_outer_bounding_sphere, max_velocity_scaling_factor)
     return visited_space_ratio
 
-def covered_space_close_distance_penalty_far_distance_penalty(radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, penalty_scaling_factor: float, max_velocity_scaling_factor: float):
+def covered_space_close_distance_penalty_far_distance_penalty(spin_axis: np.ndarray, spin_velocity: float, radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, penalty_scaling_factor: float, max_velocity_scaling_factor: float): #, list_of_spacecrafts: list
     """ Returns aggregate fitness of covered_space, close_distance_penalty and far_distance_penalty.
 
     Args:
+        spin_axis (np.ndarray): The axis around which the body rotates.
+        spin_velocity (float): Angular velocity of the body's rotation.
         radius_inner_bounding_sphere (float): Radius of inner bounding sphere.
         radius_outer_bounding_sphere (float): Radius of outer bounding sphere.
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
@@ -204,11 +208,12 @@ def covered_space_close_distance_penalty_far_distance_penalty(radius_inner_bound
     Returns:
         (float): Aggregate fitness value.
     """
+
     # Compute coverage jointly
-    coverage = covered_space(radius_inner_bounding_sphere, radius_outer_bounding_sphere, positions, velocities, timesteps, max_velocity_scaling_factor)
+    coverage = covered_space(spin_axis, spin_velocity, radius_inner_bounding_sphere, radius_outer_bounding_sphere, positions, velocities, timesteps, max_velocity_scaling_factor)
     closedistancepenalty = close_distance_penalty(radius_inner_bounding_sphere, positions, penalty_scaling_factor)
     fardistancepenalty = far_distance_penalty(radius_outer_bounding_sphere,positions,penalty_scaling_factor)
 
     # Compute fitness    
-    fitness = closedistancepenalty + fardistancepenalty - coverage
+    fitness = closedistancepenalty + fardistancepenalty - coverage #+ (total_dv*penalty_scaling_factor)
     return fitness

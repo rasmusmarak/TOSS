@@ -78,7 +78,7 @@ def compute_motion(t: float, x: np.ndarray, args) -> np.ndarray:
     position = x[0:3]
 
     if args.problem.activate_rotation:
-        rotated_position = rotate_point(t, x[0:3], args)
+        rotated_position = rotate_point(t, x[0:3], args.body.spin_axis, args.body.spin_velocity)
         position = rotated_position
 
     a = compute_acceleration(position, args)
@@ -89,22 +89,21 @@ def compute_motion(t: float, x: np.ndarray, args) -> np.ndarray:
     return np.concatenate((kx, kv))
 
 
-def rotate_point(t: float, x: np.ndarray, args) -> np.ndarray:
+def rotate_point(t: float, x: np.ndarray, spin_axis: np.ndarray, spin_velocity: float) -> np.ndarray:
     """ Rotates position x according to the analyzed body's real rotation.
         The rotation is made in the 3D cartesian inertial body frame.
     Args:
         t (float): Time value in seconds when position x occurs.
         x (np.ndarray): Position of satellite expressed in the 3D cartesian coordinates.
-        args (dotmap.DotMap):
-            body:
-                spin_velocity (float): Angular velocity of the body's rotation.
-                spin_axis (np.ndarray): The axis around which the body rotates.
+        spin_axis (np.ndarray): The axis around which the body rotates.
+        spin_velocity (float): Angular velocity of the body's rotation.
+        
     Returns:
         x_rotated (np.ndarray): Rotated position of satellite expressed in the 3D cartesian coordinates.
     """
 
     # Get Quaternion object for rotation around spin axis
-    q_rot = Quaternion(axis=args.body.spin_axis, angle=(args.body.spin_velocity*t))
+    q_rot = Quaternion(axis=spin_axis, angle=(spin_velocity*t))
     
     # Rotate satellite position using q_rot
     x_rotated = q_rot.rotate(x)
