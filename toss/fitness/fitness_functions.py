@@ -109,7 +109,7 @@ def far_distance_penalty(radius_outer_bounding_sphere: float, positions: np.ndar
         mean_distance = np.mean(delta_distance_squared)
         
         # Determine penalty depending on mean distance. 
-        penalty = ((mean_distance/(radius_outer_bounding_sphere**2))**(1/4)) * 0.5#* 0.5 #penalty_scaling_factor
+        penalty = ((mean_distance/(radius_outer_bounding_sphere**2))**(1/4)) * penalty_scaling_factor #* 0.5 #penalty_scaling_factor
         return penalty
 
 
@@ -204,5 +204,11 @@ def covered_space_close_distance_penalty_far_distance_penalty(radius_inner_bound
     Returns:
         (float): Aggregate fitness value.
     """
-    fitness = (-covered_space(radius_inner_bounding_sphere, radius_outer_bounding_sphere, positions, velocities, timesteps, max_velocity_scaling_factor)) + close_distance_penalty(radius_inner_bounding_sphere, positions, penalty_scaling_factor) + far_distance_penalty(radius_outer_bounding_sphere,positions,penalty_scaling_factor)
+    # Compute coverage jointly
+    coverage = covered_space(radius_inner_bounding_sphere, radius_outer_bounding_sphere, positions, velocities, timesteps, max_velocity_scaling_factor)
+    closedistancepenalty = close_distance_penalty(radius_inner_bounding_sphere, positions, penalty_scaling_factor)
+    fardistancepenalty = far_distance_penalty(radius_outer_bounding_sphere,positions,penalty_scaling_factor)
+
+    # Compute fitness    
+    fitness = closedistancepenalty + fardistancepenalty - coverage
     return fitness
