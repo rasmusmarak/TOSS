@@ -50,9 +50,22 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
         integration_intervals (np.ndarray): (1,N) Array containing the discretized and integrated time intervals. 
 
     """    
+    initial_position = x[0:3]
+    initial_velocity = x[3]*x[4:7]
+    initial_state = np.concatenate((initial_position, initial_velocity), axis=None)
+
+    ##### New code #####
+    list_of_maneuvers = np.array_split(x[7:], args.problem.number_of_maneuvers)
+    adjusted_state = initial_state
+    for maneuver in list_of_maneuvers:
+        adjusted_maneuver_info = np.concatenate((maneuver[0], maneuver[1]*maneuver[2:]), axis=None)
+        adjusted_state = np.concatenate((adjusted_state, adjusted_maneuver_info), axis=None)
+    x = adjusted_state
+    ####################
+
     # Separate initial state from chromosome and translate from osculating elements to cartesian frame.
-    r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
-    initial_state = np.array(r+v)
+    #r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
+    #initial_state = np.array(r+v)
 
     # In the case of maneuvers:
     if args.problem.number_of_maneuvers > 0:

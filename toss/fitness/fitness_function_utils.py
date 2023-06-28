@@ -2,6 +2,10 @@
 import numpy as np
 import typing
 
+
+from toss.trajectory.equations_of_motion import rotate_point
+
+
 def estimate_covered_volume(positions: np.ndarray) -> float:
     """Estimates the volume covered by the trajectory through spheres around sampling points.
 
@@ -48,7 +52,7 @@ def _compute_squared_distance(positions: np.ndarray, constant: float) -> np.ndar
     return np.sum(np.power(positions,2), axis=0) - constant**2
 
 
-def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> float:
+def compute_space_coverage(spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> float:
     """
     In this function, we create a spherical meshgrid by defining a number of points
     inside the outer bounding sphere. We then generate a multidimensional array
@@ -61,6 +65,8 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
     is then given by the number of True values to the total number of values in the boolean array.
 
     Args:
+        spin_axis (np.ndarray): The axis around which the body rotates.
+        spin_velocity (float): Angular velocity of the body's rotation.
         positions (np.ndarray): (3,N) Array of positions (in cartesian coordinates).
         velocities (np.ndarray): (3,N) Array of positions (in cartesian frame).
         timesteps (np.ndarray): (N) Array of time values for each position.
@@ -71,6 +77,22 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
     Returns:
         ratio (float): Number of True values to the total number of values in the boolean array
     """
+    # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accrdingly
+    rotated_positions = None
+    
+    pos = np.array_split(positions, 4, axis=1)
+    for counter, pos_arr in enumerate(pos):
+
+        rot_pos_arr = np.empty((pos_arr.shape))
+
+        for col in range(0,len(pos_arr[0,:])):
+            rot_pos_arr[:,col] = rotate_point(timesteps[col], pos_arr[:,col], spin_axis, spin_velocity)
+
+        if counter == 0:
+            rotated_positions = rot_pos_arr
+        else:
+            rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
+
 
     # Fixed maximal velocity from previously defined trajectory. 
     # We use a fixed value to avoid prioritizing higher velocities. 
@@ -95,7 +117,7 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
     phi = np.linspace(-np.pi, np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined on [-pi, pi])
 
     # Convert the positions along the trajectory to spherical coordinates
-    r_points, theta_points, phi_points = cart2sphere(positions[0,:], positions[1,:], positions[2,:])
+    r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
 
     # Remove points outside measurement zone (i.e outside outer-bounding sphere)
     index_feasible_positions = np.where(r_points <= radius_max) # Addition of noise to cover approximation error
@@ -129,7 +151,14 @@ def compute_space_coverage(positions: np.ndarray, velocities: np.ndarray, timest
         # Compute the ratio of True values to the total number of values in the boolean tensor
         ratio = bool_tensor.sum() / bool_tensor.size
 
-        return ratio
+        # Define a zero-valued tensor with the same shape as the spherical meshgrid
+        r_idx = np.where(bool_tensor == True)[0]
+        sum_of_weights = np.sum(1/r[r_idx])
+
+        # Return fitness
+        fitness = ratio + sum_of_weights
+
+        return fitness
 
 
 def cart2sphere(x, y, z) -> tuple:

@@ -85,7 +85,7 @@ def main():
     args = setup_parameters()
     
     # Setup initial state space
-    initial_condition = []
+    initial_condition = [-135.13402075, -4089.53592604, 6050.17636635]*args.problem.number_of_spacecrafts # [-3645.61233166, -5634.25158292, 2883.0399209] # [-135.13402075, -4089.53592604, 6050.17636635], [-135.13402075, -4089.53592604, 6050.17636635]
     lower_bounds, upper_bounds = setup_initial_state_domain(initial_condition, 
                                                             args.problem.start_time, 
                                                             args.problem.final_time, 
@@ -101,11 +101,12 @@ def main():
     champion_x = np.asarray(champion_x)
     fitness_list = np.asarray(fitness_list)
 
+    #if test == test_cases[0]:
+    np.savetxt("T23_run_time.csv", run_time, delimiter=",")
+    np.savetxt("T23_champion_f.csv", champion_f, delimiter=",")
+    np.savetxt("T23_champion_x.csv", champion_x, delimiter=",")
+    np.savetxt("T23_fitness_list.csv", fitness_list, delimiter=",")
 
-    np.savetxt("run_time.csv", run_time, delimiter=",")
-    np.savetxt("champion_f.csv", champion_f, delimiter=",")
-    np.savetxt("champion_x.csv", champion_x, delimiter=",")
-    np.savetxt("fitness_list.csv", fitness_list, delimiter=",")
 
 
 if __name__ == "__main__":
