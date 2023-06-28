@@ -1,6 +1,5 @@
 # Core packages
 from math import pi
-#import numpy as np
 
 # Load required modules
 from toss.utilities.load_default_cfg import load_default_cfg
