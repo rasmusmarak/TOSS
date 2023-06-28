@@ -78,18 +78,20 @@ def compute_space_coverage(spin_axis: np.ndarray, spin_velocity: float, position
         ratio (float): Number of True values to the total number of values in the boolean array
     """
     # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accrdingly
-    rotated_positions = np.zeros(positions.shape)
+    rotated_positions = None
     
-    # Stack time vectors (since position array is stacked, ie consist of all positions for each spacecraft on axis=1)
-    for m in range(0, 4):
-        if m == 0:
-            times_list = timesteps
-        else:
-            times_list = np.hstack((times_list, timesteps))
+    pos = np.array_split(positions, 4, axis=1)
+    for counter, pos_arr in enumerate(pos):
 
-    
-    for col in range(0,len(positions[0,:])):
-        rotated_positions[:,col] = rotate_point(times_list[col], positions[:,col], spin_axis, spin_velocity)
+        rot_pos_arr = np.empty((pos_arr.shape))
+
+        for col in range(0,len(pos_arr[0,:])):
+            rot_pos_arr[:,col] = rotate_point(timesteps[col], pos_arr[:,col], spin_axis, spin_velocity)
+
+        if counter == 0:
+            rotated_positions = rot_pos_arr
+        else:
+            rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
 
 
     # Fixed maximal velocity from previously defined trajectory. 
