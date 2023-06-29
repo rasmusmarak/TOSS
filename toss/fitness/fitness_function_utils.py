@@ -52,7 +52,7 @@ def _compute_squared_distance(positions: np.ndarray, constant: float) -> np.ndar
     return np.sum(np.power(positions,2), axis=0) - constant**2
 
 
-def compute_space_coverage(spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> float:
+def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> float:
     """
     In this function, we create a spherical meshgrid by defining a number of points
     inside the outer bounding sphere. We then generate a multidimensional array
@@ -65,6 +65,7 @@ def compute_space_coverage(spin_axis: np.ndarray, spin_velocity: float, position
     is then given by the number of True values to the total number of values in the boolean array.
 
     Args:
+        number_of_spacecrafts (int): Number of spacecraft
         spin_axis (np.ndarray): The axis around which the body rotates.
         spin_velocity (float): Angular velocity of the body's rotation.
         positions (np.ndarray): (3,N) Array of positions (in cartesian coordinates).
@@ -80,7 +81,7 @@ def compute_space_coverage(spin_axis: np.ndarray, spin_velocity: float, position
     # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accrdingly
     rotated_positions = None
     
-    pos = np.array_split(positions, 4, axis=1)
+    pos = np.array_split(positions, number_of_spacecrafts, axis=1)
     for counter, pos_arr in enumerate(pos):
 
         rot_pos_arr = np.empty((pos_arr.shape))
