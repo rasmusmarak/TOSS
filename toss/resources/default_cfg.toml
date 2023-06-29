@@ -32,12 +32,12 @@ number_of_generations = 30              # Number of generations for evolutionary
 number_of_threads = 6                   # Number of threads for parallelliztion of the optimization process (Reasonably a multiple of population size).
 
 [chromosome]
-x_min = none
-y_min = none
-z_min = none
-x_max = none
-y_max = none
-z_max = none
+x_min = 0
+y_min = 0
+z_min = 0
+x_max = 0
+y_max = 0
+z_max = 0
 dv_min = 0
 dv_max = 2.5
 dvx_min = -1
