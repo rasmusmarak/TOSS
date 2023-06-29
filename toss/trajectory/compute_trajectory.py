@@ -55,12 +55,13 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
     initial_state = np.concatenate((initial_position, initial_velocity), axis=None)
 
     ##### New code #####
-    list_of_maneuvers = np.array_split(x[7:], args.problem.number_of_maneuvers)
-    adjusted_state = initial_state
-    for maneuver in list_of_maneuvers:
-        adjusted_maneuver_info = np.concatenate((maneuver[0], maneuver[1]*maneuver[2:]), axis=None)
-        adjusted_state = np.concatenate((adjusted_state, adjusted_maneuver_info), axis=None)
-    x = adjusted_state
+    #if args.problem.number_of_maneuvers > 0:
+     #   list_of_maneuvers = np.array_split(x[7:], args.problem.number_of_maneuvers)
+     #   adjusted_state = initial_state
+     #   for maneuver in list_of_maneuvers:
+     #       adjusted_maneuver_info = np.concatenate((maneuver[0], maneuver[1]*maneuver[2:]), axis=None)
+     #       adjusted_state = np.concatenate((adjusted_state, adjusted_maneuver_info), axis=None)
+     #   x = adjusted_state
     ####################
 
     # Separate initial state from chromosome and translate from osculating elements to cartesian frame.
@@ -69,6 +70,15 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
 
     # In the case of maneuvers:
     if args.problem.number_of_maneuvers > 0:
+
+        # Multiply maneuver direction and corresponding time of executation. 
+        list_of_maneuvers = np.array_split(x[7:], args.problem.number_of_maneuvers)
+        adjusted_state = initial_state
+        for maneuver in list_of_maneuvers:
+            adjusted_maneuver_info = np.concatenate((maneuver[0], maneuver[1]*maneuver[2:]), axis=None)
+            adjusted_state = np.concatenate((adjusted_state, adjusted_maneuver_info), axis=None)
+        x = adjusted_state
+
         integration_intervals, dv_of_maneuvers = setup_maneuvers(x, args)
 
         #   NOTE: We adjust each time value present in integration_intervals to
