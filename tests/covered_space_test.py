@@ -1,4 +1,4 @@
-from toss import compute_space_coverage, sphere2cart
+from toss import compute_space_coverage, sphere2cart, setup_parameters, rotate_point
 import numpy as np
 
 def test_large_random_sample():
@@ -6,14 +6,19 @@ def test_large_random_sample():
     In this test we sample 1 million positions to evaluate if the code can manage such quantity of positions.
     """
 
-    number_of_samples = 10000000
+    # Setup parameters according to default cfg. 
+    args = setup_parameters()
+    number_of_spacecrafts = 1
 
-    # Defining dt=1
-    timesteps = [0, 1]
+    # Number of positions to be considered for evaluation
+    number_of_samples = 10000000
 
     # Set radius boundaries:
     radius_min = 4
     radius_max = 10
+
+    # Define a list of times corresponding to each position
+    timesteps = np.arange(0, number_of_samples+1, 1)
 
     # Generate random sample of points defined on [radius_min, radius_max]
     positions = (radius_max)*np.random.random_sample((3,number_of_samples)) + (radius_min/2)
@@ -21,31 +26,36 @@ def test_large_random_sample():
     # Generate random sample of velocities defined on [-1, 1]
     velocities = 2*np.random.random_sample((3,number_of_samples)) - 1
 
-    # Compute ration of visited points on the spherical meshgrid
+    # Compute ratio of visited points on the spherical meshgrid
     max_velocity_scaling_factor = 1
-    ratio = compute_space_coverage(positions, velocities, timesteps, radius_min, radius_max, max_velocity_scaling_factor)
+    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, radius_min, radius_max, max_velocity_scaling_factor)
 
-    assert (ratio >= 0) and (ratio <= 1)
+    assert (coverage >= 0)
 
 
 def test_perfect_ratio():
     """
-    In this test we systematically test every point and see of we get a ration of 1.0.
+    In this test we systematically test every point and see of we get a coverage of >1 (Recall: Coverage = ra†io + weights).
     """
+
+    # Setup parameters according to default cfg. 
+    args = setup_parameters()
+    number_of_spacecrafts = 1
     
-    # Defining dt=1
-    timesteps = [0, 1]
+    # Define a list of times corresponding to each position
+    number_of_samples = 1000000 # choose large number of samples to guarantee that we cover all positions. 
+    timesteps = np.arange(0, number_of_samples+1, 1)
 
     # Set radius boundaries:
     radius_min = 2
     radius_max = 8
 
     # Fixed maximal velocity from previously defined trajectory. 
-    scaling_factor = 1
-    fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126]) * scaling_factor
+    max_velocity_scaling_factor = 1
+    fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126])
 
     # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
-    max_velocity = np.max(np.linalg.norm(fixed_velocity))
+    max_velocity = np.max(np.linalg.norm(fixed_velocity)) * max_velocity_scaling_factor
     time_step = timesteps[1]-timesteps[0]
     max_distance_traveled = max_velocity * time_step
 
@@ -78,11 +88,26 @@ def test_perfect_ratio():
                 
     array_of_spherical_coordinates = array_of_spherical_coordinates[:, 0:idx]
 
-    # Evaluate the ration of visited points, where the positions are every point on the corresponding grid.
+    # Translate positions from spherical to cartesian coordinate 
     x_pos, y_pos, z_pos = sphere2cart(array_of_spherical_coordinates[0,:], array_of_spherical_coordinates[1,:], array_of_spherical_coordinates[2,:])
     positions = np.vstack((x_pos,y_pos,z_pos))
 
-    max_velocity_scaling_factor = 1
-    ratio = compute_space_coverage(positions, fixed_velocity, timesteps, radius_min, radius_max, max_velocity_scaling_factor)
+    # Rotate each position backwards to counteract the rotation made to simulate a rotating gravity field when computing coverage. 
+    rotated_positions = None
+    pos = np.array_split(positions, number_of_spacecrafts, axis=1)
+    for counter, pos_arr in enumerate(pos):
 
-    assert np.isclose(ratio, 1, rtol=1e-5, atol=1e-5)
+        rot_pos_arr = np.empty((pos_arr.shape))
+
+        for col in range(0,len(pos_arr[0,:])):
+            rot_pos_arr[:,col] = rotate_point(-timesteps[col], pos_arr[:,col], args.body.spin_axis, args.body.spin_velocity)
+
+        if counter == 0:
+            rotated_positions = rot_pos_arr
+        else:
+            rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
+
+    # Evaluate the coverage of visited points, where the positions are every point on the corresponding grid.
+    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, fixed_velocity, timesteps, radius_min, radius_max, max_velocity_scaling_factor)
+
+    assert (coverage >= 1)

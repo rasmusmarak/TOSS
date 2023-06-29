@@ -1,77 +1,56 @@
 """ This test checks whether or not the integration is performed correctly """
 
 # Import required modules
-from toss import compute_motion, setup_spin_axis
+from toss import compute_motion
 from toss import create_mesh
 from toss import compute_trajectory
 from toss import get_trajectory_fixed_step
+from toss import setup_parameters
 
 # Core packages
-from dotmap import DotMap
-from math import pi
 import numpy as np
-import pykep as pk
 
 
 def test_integration():
-    args = DotMap(
-        body = DotMap(_dynamic=False),
-        integrator = DotMap(_dynamic=False),
-        problem = DotMap(_dynamic=False),
-        mesh = DotMap(_dynamic=False),
-        _dynamic=False)
 
-    # Setup body parameters
-    args.body.density = 533                  # https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.mu = 665.666                   # Gravitational parameter for 67P/C-G
-    args.body.declination = 64               # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.right_ascension = 69           # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.spin_period = 12.06*3600       # [seconds] https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = setup_spin_axis(args)
+    # Load parameters from default cfg.
+    args = setup_parameters()
 
-    # Setup specific integrator parameters:
-    args.integrator.algorithm = 3
-    args.integrator.dense_output = True
-    args.integrator.rtol = 1e-12
-    args.integrator.atol = 1e-12
-
-    # Setup problem parameters
-    args.problem.start_time = 0                     # Starting time [s]
-    args.problem.final_time = 20*3600.0             # Final time [s]
-    args.problem.initial_time_step = 600            # Initial time step size for integration [s]
-    args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
+    # Adjust for test-specific parameters:
+    args.problem.start_time = 0                     
+    args.problem.final_time = 20*3600.0 
+    args.problem.initial_time_step = 600    
+    args.problem.activate_event = True 
     args.problem.number_of_maneuvers = 0
     args.problem.activate_rotation = True
-
-    # Arguments concerning bounding spheres
-    args.problem.radius_inner_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
-    args.problem.measurement_period = 2500 # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
-
-    # Arguments for mesh
-    args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_lp.pk"
+    args.problem.radius_inner_bounding_sphere = 4000  
+    args.problem.measurement_period = 2500 
+    args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_llp.pk"
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
 
     # Initial position for integration (in cartesian coordinates):
-    x = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01]
-    x_osculating_elements = pk.ic2par(r=x[0:3], v=x[3:6], mu=args.body.mu) #translate to osculating orbital element
+    #   NOTE: The initial state vector is structured as x = [rx, ry, rz, v_magnitude, vx, vy, vz]
+    #         And represents the optimal initial position found for the single spacecraft case 
+    #         presented in: https://doi.org/10.48550/arXiv.2306.01602. 
+    x = np.array([-135.13402075, -4089.53592604, 6050.17636635, 2.346971623591584122e-01, 6.959989121956766667e-01, -9.249848356174805719e-01, 7.262727928440093628e-01])
 
     # Compute trajectory via numerical integration as in UDP.
-    _, list_of_ode_objects, _ = compute_trajectory(x_osculating_elements, args, compute_motion)
+    _, list_of_ode_objects, _ = compute_trajectory(x, args, compute_motion)
 
     # Get states along computed trajectory:
     positions, _, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
 
     # Position and timesteps from previous working results (in cartesian coordinates):
-    previous_positions = np.array([[-1369.86549, -1662.82224042, -1893.8561803, -2021.71832499, -2017.25938447, -1870.22440711, -1591.62823709, -1210.46048601, -766.70404768, -304.28302656, 133.43805324],
-                          [-4531.13817, -4904.20028018, -5223.65538797, -5492.7850583, -5719.52297594, -5913.54217869, -6082.63727623, -6230.10562652, -6354.41963142, -6451.01289025, -6514.56664014],
-                          [-8418.16487, -7815.6605588, -7126.20143363, -6378.67721074, -5617.45877143, -4896.55819511, -4270.49836708, -3785.17218501, -3471.87383633, -3345.51777456, -3405.6781468 ]])
-    previous_timesteps = np.array([0, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 22500, 25000])
+    previous_positions = np.array([
+        [-135.13402075, 278.25186467, 713.90842453, 1185.91569478, 1704.379756, 2277.13445551, 2911.01746536, 3612.55429757, 4387.57252959, 5239.18486301, 6164.10258861, 7148.9059736, 8169.51784163, 9195.66312775, 10197.91204589, 11153.57923919, 12049.78936608, 12883.80222618, 13661.46107406, 14394.65936702, 15098.68426644, 15789.68558432, 16482.46633303, 17188.84949224, 17916.72182947, 18669.80615553, 19448.02594818, 20248.24598722, 21065.22666557],
+        [-4089.53592604, -4582.87500723, -4981.34761159, -5287.71233958, -5501.8823638, -5622.04908503, -5645.32203174, -5568.06503901, -5386.19059618, -5095.81271711, -4694.68940867, -4184.39742931, -3572.17995868, -2871.09210085, -2098.40293603, -1273.35071283, -415.03797937, 459.26857293, 1335.31001252, 2202.38940261, 3053.48768832, 3885.05394287, 4696.55977473, 5489.79625194, 6268.08376158, 7035.46345184, 7795.99959288, 8553.24764699, 9309.90452067],
+        [6050.17636635, 6396.86611796, 6601.81120629, 6686.18379911, 6666.93701688, 6558.37640111, 6373.57312606, 6126.09146152, 5832.06103843, 5512.04735559, 5191.28625259, 4896.52663523, 4649.65435439, 4461.68786725, 4330.89102597, 4245.09742664, 4186.08867632, 4134.10036372, 4071.40078178, 3984.5349734, 3865.41893011, 3711.5076439, 3525.24663912, 3312.87678088, 3082.97864716, 2844.95547407, 2607.72921137, 2378.76549785, 2163.4641028]])
+    previous_timesteps = np.array([0, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 22500, 25000, 27500, 30000, 32500, 35000, 37500, 40000, 42500, 45000, 47500, 50000, 52500, 55000, 57500, 60000, 62500, 65000, 67500, 70000,])
     
-    assert all(np.isclose(previous_positions[0,:],positions[0,0:11],rtol=1e-5, atol=1e-5))
-    assert all(np.isclose(previous_positions[1,:],positions[1,0:11],rtol=1e-5, atol=1e-5))
-    assert all(np.isclose(previous_positions[2,:],positions[2,0:11],rtol=1e-5, atol=1e-5))
-    assert all(np.isclose(previous_timesteps,timesteps[0:11],rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_positions[0,:],positions[0,0:],rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_positions[1,:],positions[1,0:],rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_positions[2,:],positions[2,0:],rtol=1e-5, atol=1e-5))
+    assert all(np.isclose(previous_timesteps,timesteps,rtol=1e-5, atol=1e-5))
 
     # Assert steps in timesteps remain fixed.
     timesteps_diff = []

@@ -51,15 +51,26 @@ def get_trajectory_fixed_step(args, list_of_ode_objects: list) -> Union[np.ndarr
     start_idx = 0
     for ode_object in list_of_ode_objects:
 
-        # Find nearest idx in time_step corresponding to end_time defined in ode_object
+        # Find nearest idx in time_step (end_time_idx) corresponding to ode_end_time defined in ode_object
         ode_end_time = ode_object.t[-1]
         end_time_idx = (np.abs(timesteps - ode_end_time)).argmin()
         if ode_end_time < timesteps[end_time_idx]:
             end_time_idx -= 1
 
-        # Get positions and velocities using dense-output
-        positions[:, start_idx:end_time_idx+2] = np.transpose(ode_object._OdeSystem__sol(timesteps[start_idx:end_time_idx+1]))[0:3,:]
-        velocities[:, start_idx:end_time_idx+2] = np.transpose(ode_object._OdeSystem__sol(timesteps[start_idx:end_time_idx+1]))[3:6,:]
-        start_idx = end_time_idx + 2
+        if start_idx == end_time_idx + 1:
+            end_idx = end_time_idx + 2
+        else: 
+            end_idx = end_time_idx + 1
+
+        #if ode_end_time != 0 and len(list_of_ode_objects) > 1:
+        # Get positions and velocities using dense_output of ode_object
+        ode_dense_output = np.transpose(ode_object._OdeSystem__sol(timesteps[start_idx:end_idx]))
+        positions[:, start_idx:end_time_idx+1] = ode_dense_output[0:3,:]
+        velocities[:, start_idx:end_time_idx+1] = ode_dense_output[3:6,:]
+        start_idx = end_time_idx + 1
+
+        # Stop criteria if desired points have been computed before iterating through all ode objects
+        if len(timesteps)-1 < start_idx:
+            break
 
     return positions, velocities, timesteps

@@ -3,11 +3,11 @@ import numpy as np
 from typing import Union
 
 # Import required modules
-from toss import compute_trajectory
-from toss import compute_motion 
-from toss import get_trajectory_fixed_step
-from toss import FitnessFunctions
-from toss import get_fitness
+from toss.trajectory.compute_trajectory import compute_trajectory
+from toss.trajectory.equations_of_motion import compute_motion 
+from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
+from toss.fitness.fitness_function_enums import FitnessFunctions
+from toss.fitness.fitness_functions import get_fitness
 
 # Class representing UDP 
 class udp_initial_condition:
@@ -18,7 +18,7 @@ class udp_initial_condition:
     optimization problem as well as the domain of the intial state vector. 
     """
 
-    def __init__(self, args, lower_bounds, upper_bounds):
+    def __init__(self, args, initial_conditions, lower_bounds, upper_bounds):
         """ Setup udp attributes.
 
         Args:
@@ -47,7 +47,7 @@ class udp_initial_condition:
                     radius_outer_bounding_sphere (float): Radius of the outer bounding sphere.
                     squared_volume_inner_bounding_sphere (float): squared volume of the inner bounding sphere.
                     squared_volume_outer_bounding_sphere (float): squared volume of the outer bounding sphere.
-                    measurable_squared_volume (float): Total measurable volume, i.e:    V_outer_sphere - V_inner_sphere.
+                    total_measurable_volume (float): Total measurable volume, i.e:    V_outer_sphere - V_inner_sphere.
                     measurement_period (int): Period for which a measurment sphere is recognized and managed.
                 mesh:
                     vertices (np.ndarray): Array containing all points on mesh.
@@ -66,7 +66,7 @@ class udp_initial_condition:
         r_outer_sphere = args.problem.radius_outer_bounding_sphere
         v_inner_sphere =  args.problem.squared_volume_inner_bounding_sphere
         v_outer_sphere =  args.problem.squared_volume_outer_bounding_sphere
-        v_measurable = args.problem.measurable_squared_volume
+        v_measurable = args.problem.total_measurable_volume
         largest_protuberant = args.mesh.largest_body_protuberant
         density = args.body.density
         dec = args.body.declination
@@ -75,7 +75,6 @@ class udp_initial_condition:
         n_maneuvers = args.problem.number_of_maneuvers
         activate_events = args.problem.activate_event
         meaurement_period = args.problem.measurement_period
-        fitness_list = args.problem.selected_fitness_functions
 
         # Assertions:
         assert self.target_sq_alt > 0
@@ -95,11 +94,10 @@ class udp_initial_condition:
         assert (v_outer_sphere > v_inner_sphere)
         assert (v_measurable > 0)
         assert (meaurement_period > 0)
-        assert (len(fitness_list) > 0)
-
 
         # Additional hyperparameters
         self.args = args
+        self.initial_conditions = np.array_split(initial_conditions, args.problem.number_of_spacecrafts)
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
 
@@ -114,20 +112,46 @@ class udp_initial_condition:
             fitness (_float_): Evaluated fitness for user-specified fitness-function.
         """
 
-        # Compute trajectory
-        collision_detected, list_of_ode_objects, _ = compute_trajectory(x, self.args, compute_motion)
+        # Seperate state vector into sublists corresponding to each spacecraft:
+        list_of_spacecrafts = np.array_split(x, self.args.problem.number_of_spacecrafts)
 
-        # If collision detected => unfeasible trajectory
-        if collision_detected:
-            fitness = 1e30
-            return [fitness]
+        # If we have a predefined initial state, concatenate the initial state info with corresponding maneuvers
+        if len(self.initial_conditions) > 0:
+            for counter, spacecraft_info in enumerate(list_of_spacecrafts):
+                list_of_spacecrafts[counter] = np.hstack((self.initial_conditions[counter], spacecraft_info))
+                
+        # Compute Trajectory and resample for a given fixed time-step delta t
+        positions = None
+        velocities = None
+        timesteps = None
+
+        for counter, spacecraft in enumerate(list_of_spacecrafts):
         
-        # Get positions on trajectory for a fixed time-step
-        positions, velocities, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
+            # Compute trajectory
+            collision_detected, list_of_ode_objects, _ = compute_trajectory(spacecraft, self.args, compute_motion)
 
-        # Compute fitness:
-        chosen_fitness_function = FitnessFunctions.CoveredVolumeFarDistancePenalty
+            # If collision detected => unfeasible trajectory
+            if collision_detected:
+                fitness = 1e30
+                return [fitness]
+            
+            # Resample trajectory for a fixed time-step delta t
+            spacecraft_positions, spacecraft_velocities, spacecraft_timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
+
+            # Store information
+            if counter == 0:
+                positions = spacecraft_positions
+                velocities = spacecraft_velocities
+                timesteps = spacecraft_timesteps
+
+            else:
+                positions = np.hstack((positions, spacecraft_positions))
+                velocities = np.hstack((velocities, spacecraft_velocities))
+
+        # Compute aggregate fitness:
+        chosen_fitness_function = FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty
         fitness = get_fitness(chosen_fitness_function, self.args, positions, velocities, timesteps)
+
         return [fitness]
 
 

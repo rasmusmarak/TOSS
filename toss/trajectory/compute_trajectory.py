@@ -1,6 +1,6 @@
 # Import required modules
-from toss import is_outside
-from toss import IntegrationScheme
+from toss.mesh.mesh_utility import is_outside
+from toss.trajectory.Integrator import IntegrationScheme
 
 # Core packages
 import numpy as np
@@ -50,12 +50,35 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
         integration_intervals (np.ndarray): (1,N) Array containing the discretized and integrated time intervals. 
 
     """    
+    initial_position = x[0:3]
+    initial_velocity = x[3]*x[4:7]
+    initial_state = np.concatenate((initial_position, initial_velocity), axis=None)
+
+    ##### New code #####
+    #if args.problem.number_of_maneuvers > 0:
+     #   list_of_maneuvers = np.array_split(x[7:], args.problem.number_of_maneuvers)
+     #   adjusted_state = initial_state
+     #   for maneuver in list_of_maneuvers:
+     #       adjusted_maneuver_info = np.concatenate((maneuver[0], maneuver[1]*maneuver[2:]), axis=None)
+     #       adjusted_state = np.concatenate((adjusted_state, adjusted_maneuver_info), axis=None)
+     #   x = adjusted_state
+    ####################
+
     # Separate initial state from chromosome and translate from osculating elements to cartesian frame.
-    r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
-    initial_state = np.array(r+v)
+    #r, v = pk.par2ic(E=x[0:6], mu=args.body.mu)
+    #initial_state = np.array(r+v)
 
     # In the case of maneuvers:
     if args.problem.number_of_maneuvers > 0:
+
+        # Multiply maneuver direction and corresponding time of executation. 
+        list_of_maneuvers = np.array_split(x[7:], args.problem.number_of_maneuvers)
+        adjusted_state = initial_state
+        for maneuver in list_of_maneuvers:
+            adjusted_maneuver_info = np.concatenate((maneuver[0], maneuver[1]*maneuver[2:]), axis=None)
+            adjusted_state = np.concatenate((adjusted_state, adjusted_maneuver_info), axis=None)
+        x = adjusted_state
+
         integration_intervals, dv_of_maneuvers = setup_maneuvers(x, args)
 
         #   NOTE: We adjust each time value present in integration_intervals to
@@ -63,12 +86,40 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
         #         as boundaries for the integrated time interval very well.
         integration_intervals = integration_intervals.astype(np.int32)
 
-        # Rearrange maneuvers into increasing order of time of execution
+        # Identify time of maneuvers
         maneuver_times = integration_intervals[1:-1]
+
+        # Rearrange maneuvers into increasing order of time of execution
         correct_order_of_maneuvers = np.argsort(maneuver_times)
-        integration_intervals[1:-1] = maneuver_times[correct_order_of_maneuvers]
+        maneuver_times = maneuver_times[correct_order_of_maneuvers]
         dv_of_maneuvers = dv_of_maneuvers[:,correct_order_of_maneuvers]
         
+        # Update integration intervals with correct order of maneuvers
+        integration_intervals[1:-1] = maneuver_times
+
+        # Adjust for simultaneous manuevers
+        for idx in range(0,len(maneuver_times)-1):    
+            if idx+1 == len(maneuver_times) or idx == len(maneuver_times):
+                break
+            duplicate_idx = idx
+            while maneuver_times[duplicate_idx] == maneuver_times[duplicate_idx+1]:
+                dv_of_maneuvers[:,idx] += dv_of_maneuvers[:,duplicate_idx+1]
+                duplicate_idx +=1
+
+                if duplicate_idx+1 == len(maneuver_times):
+                    break
+            
+            # Remove duplicate manuver time (and corresponding maneuver)
+            maneuver_times = np.delete(maneuver_times, np.arange(idx+1,duplicate_idx+1,1))
+            dv_of_maneuvers = np.delete(dv_of_maneuvers, np.arange(idx+1,duplicate_idx+1,1), axis=1)
+        
+        # Rescale intergration_intervals after treating possible simultaneous maneuvers 
+        time_intervals = np.empty((len(maneuver_times)+2))
+        time_intervals[0] = integration_intervals[0]
+        time_intervals[-1] = integration_intervals[-1]
+        time_intervals[1:-1] = maneuver_times
+        integration_intervals = time_intervals
+
     else:
         integration_intervals = np.array([args.problem.start_time, args.problem.final_time])
         integration_intervals = integration_intervals.astype(np.int32)
@@ -128,7 +179,6 @@ def setup_maneuvers(x:np.ndarray, args) -> Union[np.ndarray, np.ndarray]:
         integration_intervals (np.ndarray): Array of discretized time steps for the integration.
         dv_of_maneuvers (np.ndarray): Array of the delta v corresponding to each maneuver.
     """
-
     # Separate maneuvers from chromosome
     list_of_maneuvers = np.array_split(np.array(x[6:]), len(x[6:])/4)
 
