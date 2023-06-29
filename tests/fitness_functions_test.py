@@ -31,7 +31,9 @@ def get_parameters():
     args.problem.measurement_period = 100                # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
     args.problem.radius_inner_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
     args.problem.radius_outer_bounding_sphere = 10000
-    
+    args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_llp.pk"
+    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
+
     return args
 
 
