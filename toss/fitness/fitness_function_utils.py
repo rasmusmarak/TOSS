@@ -51,7 +51,7 @@ def _compute_squared_distance(positions: np.ndarray, constant: float) -> np.ndar
     return np.sum(np.power(positions,2), axis=0) - constant**2
 
 
-def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> float:
+def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray) -> Union[float, np.ndarray]:
     """
     In this function, we create a spherical meshgrid by defining a number of points
     inside the outer bounding sphere. We then generate a multidimensional array
@@ -72,10 +72,14 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         timesteps (np.ndarray): (N) Array of time values for each position.
         radius_min (float): Inner radius of spherical grid, typically radius_inner_bounding_sphere.
         radius_max (float): Outer radius of spherical grid, typically radius_outer_bounding_sphere.
-        max_velocity_scaling_factor (float): Scales the magnitude of the fixed-valued maximal velocity and therefore also the grid spacing.
+        r (np.ndarray): Array of r coordinates for each point defined on the spherical tensor.
+        theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
+        phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
+        bool_tensor (np.ndarray): Boolean tensor corresponding to each point defined on the spherical grid.
 
     Returns:
-        ratio (float): Number of True values to the total number of values in the boolean array
+        Fitness (float): Aggregate coverage of the spherical tensor grid for a set of active trajectories (where coverage = ratio of visited points + weights). 
+        bool_tensor (np.ndarray): Updated boolean tensor corresponding to each point defined on the spherical grid.
     """
     # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accrdingly
     rotated_positions = None
@@ -92,29 +96,6 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
             rotated_positions = rot_pos_arr
         else:
             rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
-
-
-    # Fixed maximal velocity from previously defined trajectory. 
-    # We use a fixed value to avoid prioritizing higher velocities. 
-    #
-    # NOTE: The fitness value for covered volume will not be feasible if
-    #        its maximal velocity exceeds the provided value below as the grid
-    #        spacing will be too small. Please use the scaling factor to adapt for this.
-    fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126])
-
-    # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
-    max_velocity = np.max(np.linalg.norm(fixed_velocity)) * max_velocity_scaling_factor
-    time_step = timesteps[1]-timesteps[0]
-    max_distance_traveled = max_velocity * time_step
-
-    # Calculate and adjust grid spacing based on maximal velocity and time step
-    r_steps = np.floor((radius_max-radius_min)/max_distance_traveled)
-    theta_steps = np.floor(np.pi*radius_min / max_distance_traveled)
-    phi_steps = np.floor(2*np.pi*radius_min / max_distance_traveled)
-
-    r = np.linspace(radius_min, radius_max, int(r_steps)) # Number of evenly spaced points along the radial axis
-    theta = np.linspace(-np.pi/2, np.pi/2, int(theta_steps)) # Number of evenly spaced points along the polar angle/elevation (defined on [-pi/2, pi/2])
-    phi = np.linspace(-np.pi, np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined on [-pi, pi])
 
     # Convert the positions along the trajectory to spherical coordinates
     r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
@@ -142,23 +123,26 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
         k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
 
-        # Create a boolean tensor with the same shape as the spherical meshgrid
-        bool_tensor = np.full((len(r), len(theta), len(phi)), False)
+        # Updated boolean tensor
+        new_tensor = np.full((len(r), len(theta), len(phi)), False)
+        new_tensor[i, j, k] = True
 
-        # Set the values to True where the points are located using advanced indexing
-        bool_tensor[i, j, k] = True
+        # Find indices for previously unvisited region that are now visited by the new trajectory
+        unique_visits = np.where(bool_tensor != new_tensor)
 
-        # Compute the ratio of True values to the total number of values in the boolean tensor
-        ratio = bool_tensor.sum() / bool_tensor.size
+        # Compute ratio of uniquely visited regions (i.e there is no gain in visiting an already measured region)
+        ratio_unique_visits = unique_visits[0].shape[0] / bool_tensor.size
 
-        # Define a zero-valued tensor with the same shape as the spherical meshgrid
-        r_idx = np.where(bool_tensor == True)[0]
+        # Get weights corresponding to the uniquely visited regions. 
+        r_idx = unique_visits[0]
         sum_of_weights = np.sum(1/r[r_idx])
 
-        # Return fitness
-        fitness = ratio + sum_of_weights
+        # Update tensor with information on new trajectory using advanced indexing
+        bool_tensor[i, j, k] = True
 
-        return fitness
+        # Return fitness
+        fitness = ratio_unique_visits + sum_of_weights
+        return fitness, bool_tensor
 
 
 def get_spherical_tensor_grid(timesteps: np.ndarray, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
