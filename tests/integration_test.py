@@ -1,70 +1,45 @@
 """ This test checks whether or not the integration is performed correctly """
 
 # Import required modules
-from toss import compute_motion, setup_spin_axis
+from toss import compute_motion
 from toss import create_mesh
 from toss import compute_trajectory
 from toss import get_trajectory_adaptive_step
+from toss import setup_parameters
 
 # Core packages
-from dotmap import DotMap
-from math import pi
 import numpy as np
-import pykep as pk
-
 
 def test_integration():
+    # Load parameters from default cfg.
+    args = setup_parameters()
 
-    args = DotMap(
-        body = DotMap(_dynamic=False),
-        integrator = DotMap(_dynamic=False),
-        problem = DotMap(_dynamic=False),
-        mesh = DotMap(_dynamic=False),
-        _dynamic=False)
-
-    # Setup body parameters
-    args.body.density = 533                  # https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.mu = 665.666                   # Gravitational parameter for 67P/C-G
-    args.body.declination = 64               # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.right_ascension = 69           # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.spin_period = 12.06*3600       # [seconds] https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = setup_spin_axis(args)
-
-    # Setup specific integrator parameters:
-    args.integrator.algorithm = 3
-    args.integrator.dense_output = True
-    args.integrator.rtol = 1e-12
-    args.integrator.atol = 1e-12
-
-    # Setup problem parameters
-    args.problem.start_time = 0                     # Starting time [s]
-    args.problem.final_time = 20*3600.0             # Final time [s]
-    args.problem.initial_time_step = 600            # Initial time step size for integration [s]
-    args.problem.activate_event = True              # Event configuration (0 = no event, 1 = collision with body detection)
+    # Adjust for test-specific parameters:
+    args.problem.start_time = 0          
+    args.problem.final_time = 20*3600.0   
+    args.problem.initial_time_step = 600  
+    args.problem.activate_event = True   
     args.problem.number_of_maneuvers = 0 
     args.problem.activate_rotation = True
-
-    # Arguments concerning bounding spheres
-    args.problem.radius_inner_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
-    args.problem.measurement_period = 2500 # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
-
-    # Arguments for mesh
-    args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_lp.pk"
+    args.problem.radius_inner_bounding_sphere = 4000 
+    args.problem.measurement_period = 2500 
+    args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_llp.pk"
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
 
     # Initial position for integration (in cartesian coordinates):
-    x = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01, 0, 0, 0, 0]
-    x_osculating_elements = pk.ic2par(r=x[0:3], v=x[3:6], mu=args.body.mu) #translate to osculating orbital element
+    #   NOTE: The initial state vector is structured as x = [rx, ry, rz, v_magnitude, vx, vy, vz]
+    #         And represents the optimal initial position found for the single spacecraft case 
+    #         presented in: https://doi.org/10.48550/arXiv.2306.01602. 
+    x = np.array([-135.13402075, -4089.53592604, 6050.17636635, 2.346971623591584122e-01, 6.959989121956766667e-01, -9.249848356174805719e-01, 7.262727928440093628e-01])
 
     # Compute trajectory via numerical integration as in UDP.
-    _, list_of_trajectory_objects, _ = compute_trajectory(x_osculating_elements, args, compute_motion)
+    _, list_of_ode_objects, _ = compute_trajectory(x, args, compute_motion)
 
     # Get states along computed trajectory:
-    states_new, _ = get_trajectory_adaptive_step(list_of_trajectory_objects)
+    states_new, _ = get_trajectory_adaptive_step(list_of_ode_objects)
 
     # Final state from previous working results (in cartesian coordinates):
-    final_state_historical = [3.07216681e+03, -2.45740917e+02, -9.03288997e+03, 2.48147088e-01, -2.18190890e-02, -2.68369809e-01]
+    final_state_historical = [2.17266344e+04, 9.91596177e+03, 2.00320977e+03, 3.31809228e-01, 3.03285571e-01, -7.73119015e-02]
 
     # New final state:
     final_state_new = states_new[0:6,-1]
