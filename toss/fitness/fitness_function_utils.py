@@ -1,7 +1,6 @@
 # Core packages
 import numpy as np
-import typing
-
+from typing import Union
 
 from toss.trajectory.equations_of_motion import rotate_point
 
@@ -160,6 +159,54 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         fitness = ratio + sum_of_weights
 
         return fitness
+
+
+def get_spherical_tensor_grid(timesteps: np.ndarray, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Generates a number of points in each spherical axis, which together defines
+    a spherical tensor grid that satisfies the Courant–Friedrichs–Lewy condition.
+    The function also generates a corresponding boolean tensor initialized by False-values
+    indicating none of the defined points have been visited by a spacecraft.
+
+    Args:
+        timesteps (np.ndarray): (N) Array of time values for each position.
+        radius_min (float): Inner radius of spherical grid, typically radius_inner_bounding_sphere.
+        radius_max (float): Outer radius of spherical grid, typically radius_outer_bounding_sphere.
+        max_velocity_scaling_factor (float): Scales the magnitude of the fixed-valued maximal velocity and therefore also the grid spacing.
+
+    Returns:
+        r (np.ndarray): Array of r coordinates for each point defined on the spherical tensor.
+        theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
+        phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
+        bool_tensor (np.ndarray): Boolean array corresponding to each point defined on the spherical tensor.
+    """
+
+    # Fixed maximal velocity from previously defined trajectory. 
+    # We use a fixed value to avoid prioritizing higher velocities. 
+    #
+    # NOTE: The fitness value for covered volume will not be feasible if
+    #        its maximal velocity exceeds the provided value below as the grid
+    #        spacing will be too small. Please use the scaling factor to adapt for this.
+    fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126])
+
+    # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
+    max_velocity = np.max(np.linalg.norm(fixed_velocity)) * max_velocity_scaling_factor
+    time_step = timesteps[1]-timesteps[0]
+    max_distance_traveled = max_velocity * time_step
+
+    # Calculate and adjust grid spacing based on maximal velocity and time step
+    r_steps = np.floor((radius_max-radius_min)/max_distance_traveled)
+    theta_steps = np.floor(np.pi*radius_min / max_distance_traveled)
+    phi_steps = np.floor(2*np.pi*radius_min / max_distance_traveled)
+
+    r = np.linspace(radius_min, radius_max, int(r_steps)) # Number of evenly spaced points along the radial axis
+    theta = np.linspace(-np.pi/2, np.pi/2, int(theta_steps)) # Number of evenly spaced points along the polar angle/elevation (defined on [-pi/2, pi/2])
+    phi = np.linspace(-np.pi, np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined on [-pi, pi])
+
+    # Create a boolean tensor with the same shape as the spherical meshgrid
+    bool_tensor = np.full((len(r), len(theta), len(phi)), False)
+
+    return r, theta, phi, bool_tensor
 
 
 def cart2sphere(x, y, z) -> tuple:
