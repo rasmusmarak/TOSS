@@ -30,7 +30,6 @@ def test_large_random_sample():
     max_velocity_scaling_factor = 1
     coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, radius_min, radius_max, max_velocity_scaling_factor)
 
-    print("Coverage: ", coverage)
     assert (coverage >= 0)
 
 
@@ -111,5 +110,4 @@ def test_perfect_ratio():
     # Evaluate the coverage of visited points, where the positions are every point on the corresponding grid.
     coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, fixed_velocity, timesteps, radius_min, radius_max, max_velocity_scaling_factor)
 
-    print("Coverage: ", coverage)
     assert (coverage >= 1)
