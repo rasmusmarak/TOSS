@@ -91,7 +91,7 @@ def main():
                                                             args.problem.final_time, 
                                                             args.problem.number_of_maneuvers, 
                                                             args.problem.number_of_spacecrafts,
-                                                            args.state)
+                                                            args.chromosome)
 
     # Run optimization
     run_time, champion_f, champion_x, fitness_list = load_udp(args, initial_condition, lower_bounds, upper_bounds)
