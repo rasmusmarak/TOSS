@@ -145,7 +145,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         return fitness, bool_tensor
 
 
-def get_spherical_tensor_grid(timesteps: np.ndarray, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def get_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Generates a number of points in each spherical axis, which together defines
     a spherical tensor grid that satisfies the Courant–Friedrichs–Lewy condition.
@@ -153,7 +153,7 @@ def get_spherical_tensor_grid(timesteps: np.ndarray, radius_min: float, radius_m
     indicating none of the defined points have been visited by a spacecraft.
 
     Args:
-        timesteps (np.ndarray): (N) Array of time values for each position.
+        timesteps (int): Fixed measurement period (i.e time step along trajectory).
         radius_min (float): Inner radius of spherical grid, typically radius_inner_bounding_sphere.
         radius_max (float): Outer radius of spherical grid, typically radius_outer_bounding_sphere.
         max_velocity_scaling_factor (float): Scales the magnitude of the fixed-valued maximal velocity and therefore also the grid spacing.
@@ -175,7 +175,6 @@ def get_spherical_tensor_grid(timesteps: np.ndarray, radius_min: float, radius_m
 
     # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
     max_velocity = np.max(np.linalg.norm(fixed_velocity)) * max_velocity_scaling_factor
-    time_step = timesteps[1]-timesteps[0]
     max_distance_traveled = max_velocity * time_step
 
     # Calculate and adjust grid spacing based on maximal velocity and time step
