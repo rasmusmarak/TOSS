@@ -1,17 +1,14 @@
 """ This test checks whether or not the integration is performed correctly """
 # Import required modules
-from toss import compute_motion, setup_spin_axis
+from toss import compute_motion
 from toss import create_mesh
 from toss import compute_trajectory
 from toss import get_trajectory_fixed_step
 from toss import target_altitude_distance, close_distance_penalty, far_distance_penalty, covered_volume, total_covered_volume
+from toss import setup_parameters
 
 # Core packages
-from dotmap import DotMap
-from math import pi
 import numpy as np
-import pykep as pk
-
 
 def get_parameters():
     """Returns parameters used by compute trajectory and fitness functions.
@@ -19,29 +16,10 @@ def get_parameters():
     Returns:
         args (dotmap.Dotmap): Dotmap with parameters used for the tests.
     """
-    args = DotMap(
-        body = DotMap(_dynamic=False),
-        integrator = DotMap(_dynamic=False),
-        problem = DotMap(_dynamic=False),
-        mesh = DotMap(_dynamic=False),
-        _dynamic=False)
+    # Load parameters from default cfg.
+    args = setup_parameters()
 
-    # Setup body parameters
-    args.body.density = 533                  # https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.mu = 665.666                   # Gravitational parameter for 67P/C-G
-    args.body.declination = 64               # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.right_ascension = 69           # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.spin_period = 12.06*3600       # [seconds] https://sci.esa.int/web/rosetta/-/14615-comet-67p
-    args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = setup_spin_axis(args)
-
-    # Setup specific integrator parameters:
-    args.integrator.algorithm = 3
-    args.integrator.dense_output = True
-    args.integrator.rtol = 1e-12
-    args.integrator.atol = 1e-12
-
-    # Setup problem parameters
+    # Adjust for test-specific parameters:
     args.problem.start_time = 0                     # Starting time [s]
     args.problem.final_time = 20*3600.0             # Final time [s]
     args.problem.initial_time_step = 600            # Initial time step size for integration [s]
@@ -50,20 +28,10 @@ def get_parameters():
     args.problem.target_squared_altitude = 8000**2  # Target altitude squared [m]
     args.problem.activate_rotation = True
     args.problem.penalty_scaling_factor = 1         # Scales the magnitude of the fixed-valued maximal velocity, and therefore also the grid spacing.
-
-    # Arguments concerning bounding spheres
     args.problem.measurement_period = 100                # Period for when a measurement sphere is recognized and managed. Unit: [seconds]
     args.problem.radius_inner_bounding_sphere = 4000      # Radius of spherical risk-zone for collision with celestial body [m]
     args.problem.radius_outer_bounding_sphere = 10000
-    args.problem.squared_volume_inner_bounding_sphere = (4/3) * pi * (args.problem.radius_inner_bounding_sphere**3)
-    args.problem.squared_volume_outer_bounding_sphere = (4/3) * pi * (args.problem.radius_outer_bounding_sphere**3)
-    args.problem.total_measurable_volume = args.problem.squared_volume_outer_bounding_sphere - args.problem.squared_volume_inner_bounding_sphere
-    args.problem.maximal_measurement_sphere_volume = (4/3) * pi * (35.95398913**3) #35.95398913 gathered from tests.
-
-    # Arguments for mesh:
-    args.mesh.mesh_path = "3dmeshes/churyumov-gerasimenko_lp.pk"
-    args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
-
+    
     return args
 
 
@@ -79,11 +47,13 @@ def get_trajectory(args):
     """
 
     # Initial position for integration (in cartesian coordinates):
-    x = [-1.36986549e+03, -4.53113817e+03, -8.41816487e+03, -1.23505256e-01, -1.59791505e-01, 2.21471017e-01]
-    x_osculating_elements = pk.ic2par(r=x[0:3], v=x[3:6], mu=args.body.mu) #translate to osculating orbital element
+    #   NOTE: The initial state vector is structured as x = [rx, ry, rz, v_magnitude, vx, vy, vz]
+    #         And represents the optimal initial position found for the single spacecraft case 
+    #         presented in: https://doi.org/10.48550/arXiv.2306.01602. 
+    x = np.array([-135.13402075, -4089.53592604, 6050.17636635, 2.346971623591584122e-01, 6.959989121956766667e-01, -9.249848356174805719e-01, 7.262727928440093628e-01])
 
     # Compute trajectory via numerical integration as in UDP.
-    _, list_of_ode_objects, _ = compute_trajectory(x_osculating_elements, args, compute_motion)
+    _, list_of_ode_objects, _ = compute_trajectory(x, args, compute_motion)
 
     # Get states along computed trajectory:
     positions, _, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
@@ -105,7 +75,7 @@ def test_covered_volume():
     volume_ratio = covered_volume(args.problem.maximal_measurement_sphere_volume, positions)
 
     # Position and timesteps from previous working results (in cartesian coordinates):
-    previous_results = -0.0582962456868542
+    previous_results = -0.2033947636445857
     assert np.isclose(volume_ratio,previous_results,rtol=1e-5, atol=1e-5)
 
 
@@ -123,7 +93,7 @@ def test_target_altitude_distance():
     fitness = target_altitude_distance(args.problem.target_squared_altitude, positions)
 
     # Previous results:
-    previous_fitness = 0.6066007269357625
+    previous_fitness = 1.2070647513671693
     assert np.isclose(fitness,previous_fitness,rtol=1e-5, atol=1e-5)
 
 
@@ -181,5 +151,5 @@ def test_total_covered_volume():
     volume_ratio = total_covered_volume(args.problem.total_measurable_volume, positions)
 
     # Previous ratio
-    previous_ratio = -2.0841956392398177e-06
+    previous_ratio = -3.6029050529269822e-06
     assert np.isclose(volume_ratio,previous_ratio,rtol=1e-5, atol=1e-5)
