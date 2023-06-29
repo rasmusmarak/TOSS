@@ -76,12 +76,16 @@ def compute_trajectory(x: np.ndarray, args, func: Callable) -> Union[bool, list,
         #         as boundaries for the integrated time interval very well.
         integration_intervals = integration_intervals.astype(np.int32)
 
-        # Rearrange maneuvers into increasing order of time of execution
+        # Identify time of maneuvers
         maneuver_times = integration_intervals[1:-1]
+
+        # Rearrange maneuvers into increasing order of time of execution
         correct_order_of_maneuvers = np.argsort(maneuver_times)
         maneuver_times = maneuver_times[correct_order_of_maneuvers]
-        integration_intervals[1:-1] = maneuver_times
         dv_of_maneuvers = dv_of_maneuvers[:,correct_order_of_maneuvers]
+        
+        # Update integration intervals with correct order of maneuvers
+        integration_intervals[1:-1] = maneuver_times
 
         # Adjust for simultaneous manuevers
         for idx in range(0,len(maneuver_times)-1):    
