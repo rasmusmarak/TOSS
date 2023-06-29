@@ -66,7 +66,7 @@ class udp_initial_condition:
         r_outer_sphere = args.problem.radius_outer_bounding_sphere
         v_inner_sphere =  args.problem.squared_volume_inner_bounding_sphere
         v_outer_sphere =  args.problem.squared_volume_outer_bounding_sphere
-        v_measurable = args.problem.total_measurable_volume
+        #v_measurable = args.problem.total_measurable_volume
         largest_protuberant = args.mesh.largest_body_protuberant
         density = args.body.density
         dec = args.body.declination
@@ -92,7 +92,7 @@ class udp_initial_condition:
         assert isinstance(activate_events, bool)
         assert (r_outer_sphere > r_inner_sphere)
         assert (v_outer_sphere > v_inner_sphere)
-        assert (v_measurable > 0)
+        #assert (v_measurable > 0)
         assert (meaurement_period > 0)
 
         # Additional hyperparameters
