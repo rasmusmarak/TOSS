@@ -1,4 +1,4 @@
-from toss import compute_space_coverage, sphere2cart, setup_parameters, rotate_point
+from toss import compute_space_coverage, sphere2cart, setup_parameters, rotate_point, get_spherical_tensor_grid
 import numpy as np
 
 def test_large_random_sample():
@@ -27,7 +27,6 @@ def test_large_random_sample():
     velocities = 2*np.random.random_sample((3,number_of_samples)) - 1
 
     # Compute ratio of visited points on the spherical meshgrid
-    max_velocity_scaling_factor = 1
     coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, radius_min, radius_max, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
 
     assert (coverage >= 0)
@@ -41,30 +40,33 @@ def test_perfect_ratio():
     # Setup parameters according to default cfg. 
     args = setup_parameters()
     number_of_spacecrafts = 1
+    args.problem.max_velocity_scaling_factor = 1
     
     # Define a list of times corresponding to each position
     number_of_samples = 1000000 # choose large number of samples to guarantee that we cover all positions. 
     timesteps = np.arange(0, number_of_samples+1, 1)
 
     # Set radius boundaries:
-    radius_min = 2
-    radius_max = 8
+    args.problem.radius_inner_bounding_sphere = 2
+    args.problem.radius_outer_bounding_sphere = 8
+
+    # Setup initial boolean tensor representing the spherical grid approximation of the body's gravity field
+    args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor = get_spherical_tensor_grid(args.problem.measurement_period, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.max_velocity_scaling_factor)
 
     # Fixed maximal velocity from previously defined trajectory. 
-    max_velocity_scaling_factor = 1
     fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126])
 
     # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
-    max_velocity = np.max(np.linalg.norm(fixed_velocity)) * max_velocity_scaling_factor
+    max_velocity = np.max(np.linalg.norm(fixed_velocity)) * args.problem.max_velocity_scaling_factor
     time_step = timesteps[1]-timesteps[0]
     max_distance_traveled = max_velocity * time_step
 
     # Calculate and adjust grid spacing based on maximal velocity and time step
-    r_steps = np.floor((radius_max-radius_min)/max_distance_traveled)
-    theta_steps = np.floor(np.pi*radius_min / max_distance_traveled)
-    phi_steps = np.floor(2*np.pi*radius_min / max_distance_traveled)
+    r_steps = np.floor((args.problem.radius_outer_bounding_sphere-args.problem.radius_inner_bounding_sphere)/max_distance_traveled)
+    theta_steps = np.floor(np.pi*args.problem.radius_inner_bounding_sphere / max_distance_traveled)
+    phi_steps = np.floor(2*np.pi*args.problem.radius_inner_bounding_sphere / max_distance_traveled)
 
-    r = np.linspace(radius_min, radius_max, int(r_steps)) # Number of evenly spaced points along the radial axis
+    r = np.linspace(args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, int(r_steps)) # Number of evenly spaced points along the radial axis
     theta = np.linspace(-np.pi/2, np.pi/2, int(theta_steps)) # Number of evenly spaced points along the polar angle/elevation (defined on [-pi/2, pi/2])
     phi = np.linspace(-np.pi, np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined on [-pi, pi])
 
@@ -108,6 +110,6 @@ def test_perfect_ratio():
             rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
 
     # Evaluate the coverage of visited points, where the positions are every point on the corresponding grid.
-    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, fixed_velocity, timesteps, radius_min, radius_max, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
+    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, fixed_velocity, timesteps, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
 
     assert (coverage >= 1)
