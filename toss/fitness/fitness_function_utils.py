@@ -51,17 +51,12 @@ def _compute_squared_distance(positions: np.ndarray, constant: float) -> np.ndar
     return np.sum(np.power(positions,2), axis=0) - constant**2
 
 
-def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray) -> Union[float, np.ndarray]:
+def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray) -> float:
     """
-    In this function, we create a spherical meshgrid by defining a number of points
-    inside the outer bounding sphere. We then generate a multidimensional array
-    of boolean values corresponding to each point in the meshgrid. These values 
-    are initialy set to false since they have not been visited by any spacecraft.
-
     Given a set of posiions on the trajectory that are defined inside the 
     outer bounding sphere, we identify the points that are the closest the given positions, 
-    and subsequently reassign the visited boolean value to true. The ratio of visited points 
-    is then given by the number of True values to the total number of values in the boolean array.
+    and subsequently compute the ratio of visited points by the number of True values to the 
+    total number of values in the boolean array.
 
     Args:
         number_of_spacecrafts (int): Number of spacecraft
@@ -79,7 +74,6 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
 
     Returns:
         Fitness (float): Aggregate coverage of the spherical tensor grid for a set of active trajectories (where coverage = ratio of visited points + weights). 
-        bool_tensor (np.ndarray): Updated boolean tensor corresponding to each point defined on the spherical grid.
     """
     # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accrdingly
     rotated_positions = None
@@ -137,12 +131,77 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         r_idx = unique_visits[0]
         sum_of_weights = np.sum(1/r[r_idx])
 
-        # Update tensor with information on new trajectory using advanced indexing
-        bool_tensor[i, j, k] = True
-
         # Return fitness
         fitness = ratio_unique_visits + sum_of_weights
-        return fitness, bool_tensor
+        return fitness
+
+
+def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray) -> np.ndarray:
+    """
+    The function adjusts the trajectory for the body's sidereal rotation, identifies the 
+    positions within the region of interest, matches these positions to the closest points on the
+    spherical meshgrid and update the boolean tensor accordingly.
+
+    Args:
+        number_of_spacecrafts (int): Number of spacecraft
+        spin_axis (np.ndarray): The axis around which the body rotates.
+        spin_velocity (float): Angular velocity of the body's rotation.
+        positions (np.ndarray): (3,N) Array of positions (in cartesian coordinates).
+        velocities (np.ndarray): (3,N) Array of positions (in cartesian frame).
+        timesteps (np.ndarray): (N) Array of time values for each position.
+        radius_min (float): Inner radius of spherical grid, typically radius_inner_bounding_sphere.
+        radius_max (float): Outer radius of spherical grid, typically radius_outer_bounding_sphere.
+        r (np.ndarray): Array of r coordinates for each point defined on the spherical tensor.
+        theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
+        phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
+        bool_tensor (np.ndarray): Boolean tensor corresponding to each point defined on the spherical grid.
+
+    Returns:
+        bool_tensor (np.ndarray): Updated boolean tensor corresponding to each point defined on the spherical grid.
+    """
+    # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accrdingly
+    rotated_positions = None
+    
+    pos = np.array_split(positions, number_of_spacecrafts, axis=1)
+    for counter, pos_arr in enumerate(pos):
+
+        rot_pos_arr = np.empty((pos_arr.shape))
+
+        for col in range(0,len(pos_arr[0,:])):
+            rot_pos_arr[:,col] = rotate_point(timesteps[col], pos_arr[:,col], spin_axis, spin_velocity)
+
+        if counter == 0:
+            rotated_positions = rot_pos_arr
+        else:
+            rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
+
+    # Convert the positions along the trajectory to spherical coordinates
+    r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
+
+    # Remove points outside measurement zone (i.e outside outer-bounding sphere)
+    index_feasible_positions = np.where(r_points <= radius_max) # Addition of noise to cover approximation error
+    r_points = r_points[index_feasible_positions]
+    theta_points = theta_points[index_feasible_positions]
+    phi_points = phi_points[index_feasible_positions]
+
+    # Remove points inside safety-radius (i.e inside inner-bounding sphere)
+    index_feasible_positions = np.where(r_points >= radius_min) # Addition of noise to cover approximation error
+    r_points = r_points[index_feasible_positions]
+    theta_points = theta_points[index_feasible_positions]
+    phi_points = phi_points[index_feasible_positions]
+
+    # Update and return boolean tensory given information on the new trajectory
+    if len(r_points)==0 or len(theta_points)==0 or len(phi_points)==0:
+        return bool_tensor
+    else: 
+        # Find the indices of the closest values in the meshgrid for each point using broadcasting
+        i = np.argmin(np.abs(r[:, np.newaxis] - r_points), axis=0) # indices along r axis
+        j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
+        k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
+
+        # Update tensor with information on new trajectory using advanced indexing
+        bool_tensor[i, j, k] = True
+        return bool_tensor
 
 
 def get_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
