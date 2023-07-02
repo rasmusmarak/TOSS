@@ -28,7 +28,7 @@ def test_large_random_sample():
 
     # Compute ratio of visited points on the spherical meshgrid
     max_velocity_scaling_factor = 1
-    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, radius_min, radius_max, max_velocity_scaling_factor)
+    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, radius_min, radius_max, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
 
     assert (coverage >= 0)
 
@@ -108,6 +108,6 @@ def test_perfect_ratio():
             rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
 
     # Evaluate the coverage of visited points, where the positions are every point on the corresponding grid.
-    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, fixed_velocity, timesteps, radius_min, radius_max, max_velocity_scaling_factor)
+    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, fixed_velocity, timesteps, radius_min, radius_max, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
 
     assert (coverage >= 1)
