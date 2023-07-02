@@ -19,7 +19,7 @@ class udp_initial_condition:
     optimization problem as well as the domain of the intial state vector. 
     """
 
-    def __init__(self, args, initial_conditions, lower_bounds, upper_bounds):
+    def __init__(self, args, initial_condition, lower_bounds, upper_bounds):
         """ Setup udp attributes.
 
         Args:
@@ -98,14 +98,10 @@ class udp_initial_condition:
 
         # Additional hyperparameters
         self.args = args
-        self.initial_conditions = initial_conditions
+        self.initial_condition = initial_condition
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
         self.args.problem.number_of_spacecraft = 1 # Used internally for the UDP (Each optimization run of UDP corresponds to a single spacecraft)
-
-        # Setup boolean tensor for the spherical grid
-        self.r, self.theta, self.phi, self.bool_tensor = get_spherical_tensor_grid(args.problem.measurement_period, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.max_velocity_scaling_factor)
-
 
 
     def fitness(self, chromosome: np.ndarray) -> float:
@@ -119,8 +115,8 @@ class udp_initial_condition:
         """
 
         # If we have a predefined initial state, concatenate the initial state info with corresponding maneuvers
-        if len(self.initial_conditions) > 0:
-            spacecraft_info = np.hstack((self.initial_conditions, chromosome))
+        if len(self.initial_condition) > 0:
+            spacecraft_info = np.hstack((self.initial_condition, chromosome))
         else:
             spacecraft_info = chromosome
                 
@@ -137,7 +133,7 @@ class udp_initial_condition:
 
         # Compute aggregate fitness:
         chosen_fitness_function = FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty
-        fitness = get_fitness(chosen_fitness_function, self.args, positions, velocities, timesteps, self.r, self.theta, self.phi, self.bool_tensor)
+        fitness = get_fitness(chosen_fitness_function, self.args, positions, velocities, timesteps)
 
         return [fitness]
 
