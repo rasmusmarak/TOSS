@@ -33,17 +33,17 @@ def setup_initial_state_domain(initial_condition, start_time, final_time, number
 
     # Optimizing initial position, initial velocity and maneuvers
     if len(initial_condition) == 0:
-        lower_bounds = np.concatenate(([state.x_min, state.y_min, state.z_min, state.v_min, state.vx_min, state.vy_min, state.vz_min], [tm[0], state.dv_min, state.dvx_min, state.dvy_min, state.dvz_min]*number_of_maneuvers)*number_of_spacecrafts, axis=None)
-        upper_bounds = np.concatenate(([state.x_max, state.y_max, state.z_max, state.v_max, state.vx_max, state.vy_max, state.vz_max], [tm[1], state.dv_max, state.dvx_max, state.dvy_max, state.dvz_max]*number_of_maneuvers)*number_of_spacecrafts, axis=None)
+        lower_bounds = np.concatenate(([state.x_min, state.y_min, state.z_min, state.v_min, state.vx_min, state.vy_min, state.vz_min], [tm[0], state.dv_min, state.dvx_min, state.dvy_min, state.dvz_min]*number_of_maneuvers), axis=None)
+        upper_bounds = np.concatenate(([state.x_max, state.y_max, state.z_max, state.v_max, state.vx_max, state.vy_max, state.vz_max], [tm[1], state.dv_max, state.dvx_max, state.dvy_max, state.dvz_max]*number_of_maneuvers), axis=None)
 
     # Optimizing initial velocity and maneuvers
-    elif len(initial_condition) == (number_of_spacecrafts*3):
-        lower_bounds = np.concatenate(([state.v_min, state.vx_min, state.vy_min, state.vz_min], [tm[0], state.dv_min, state.dvx_min, state.dvy_min, state.dvz_min]*number_of_maneuvers)*number_of_spacecrafts, axis=None)
-        upper_bounds = np.concatenate(([state.v_max, state.vx_max, state.vy_max, state.vz_max], [tm[1], state.dv_max, state.dvx_max, state.dvy_max, state.dvz_max]*number_of_maneuvers)*number_of_spacecrafts, axis=None)
+    elif len(initial_condition) == (3):
+        lower_bounds = np.concatenate(([state.v_min, state.vx_min, state.vy_min, state.vz_min], [tm[0], state.dv_min, state.dvx_min, state.dvy_min, state.dvz_min]*number_of_maneuvers), axis=None)
+        upper_bounds = np.concatenate(([state.v_max, state.vx_max, state.vy_max, state.vz_max], [tm[1], state.dv_max, state.dvx_max, state.dvy_max, state.dvz_max]*number_of_maneuvers), axis=None)
 
     # Optimizing only maneuvers
     else:
-        lower_bounds = [tm[0], state.dv_min, state.dvx_min, state.dvy_min, state.dvz_min]*number_of_maneuvers*number_of_spacecrafts
-        upper_bounds = [tm[1], state.dv_max, state.dvx_max, state.dvy_max, state.dvz_max]*number_of_maneuvers*number_of_spacecrafts
+        lower_bounds = [tm[0], state.dv_min, state.dvx_min, state.dvy_min, state.dvz_min]*number_of_maneuvers
+        upper_bounds = [tm[1], state.dv_max, state.dvx_max, state.dvy_max, state.dvz_max]*number_of_maneuvers
 
     return lower_bounds, upper_bounds
