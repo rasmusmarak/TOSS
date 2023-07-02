@@ -4,7 +4,7 @@ from typing import Union
 from toss.fitness.fitness_function_enums import FitnessFunctions
 from toss.fitness.fitness_function_utils import _compute_squared_distance, estimate_covered_volume, compute_space_coverage
 
-def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.ndarray, velocities:np.ndarray, timesteps: np.ndarray, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray):
+def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.ndarray, velocities:np.ndarray, timesteps: np.ndarray):
     """ Returns user specified fitness function.
     Args:
         chosen_function (FitnessFunctions): Chosen fitness function as defined in enum class FitnessFunctions.
@@ -12,10 +12,6 @@ def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.n
         positions (np.ndarray): (3,N) Array of positions along the trajectory.
         velocities (np.ndarray): (3,N) Array of velocities along the trajectory.
         timesteps (np.ndarray): (N) Array of time values for each position.
-        r (np.ndarray): Array of r coordinates for each point defined on the spherical tensor.
-        theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
-        phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
-        bool_tensor (np.ndarray): Boolean tensor corresponding to each point defined on the spherical grid.
 
     Returns:
         (float): The evaluated fitness value correspondning to chosen_function.
@@ -43,10 +39,10 @@ def get_fitness(chosen_fitness_function: FitnessFunctions, args, positions: np.n
         return covered_volume_close_distance_penalty_far_distance_penalty(args.problem.maximal_measurement_sphere_volume, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, args.problem.penalty_scaling_factor)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredSpace:
-        return covered_space(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps, r, theta, phi, bool_tensor)
+        return covered_space(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
     
     elif chosen_fitness_function == FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty:
-        return covered_space_close_distance_penalty_far_distance_penalty(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps, args.problem.penalty_scaling_factor, r, theta, phi, bool_tensor)
+        return covered_space_close_distance_penalty_far_distance_penalty(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, positions, velocities, timesteps, args.problem.penalty_scaling_factor, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
 
 
 def target_altitude_distance(target_squared_altitude: float, positions: np.ndarray) -> float:
@@ -196,7 +192,7 @@ def covered_space(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_veloci
     Returns:
         visited_space_ratio (float): ratio of visited points to a number of points definied inside the outer bounding sphere.
     """
-    visited_space_ratio, bool_tensor = compute_space_coverage(number_of_spacecrafts, spin_axis, spin_velocity, positions, velocities, timesteps, radius_inner_bounding_sphere, radius_outer_bounding_sphere, r, theta, phi, bool_tensor)
+    visited_space_ratio = compute_space_coverage(number_of_spacecrafts, spin_axis, spin_velocity, positions, velocities, timesteps, radius_inner_bounding_sphere, radius_outer_bounding_sphere, r, theta, phi, bool_tensor)
     return visited_space_ratio
 
 def covered_space_close_distance_penalty_far_distance_penalty(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, radius_inner_bounding_sphere: float, radius_outer_bounding_sphere: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, penalty_scaling_factor: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray) -> float:
@@ -222,7 +218,7 @@ def covered_space_close_distance_penalty_far_distance_penalty(number_of_spacecra
     """
 
     # Compute coverage jointly
-    coverage, _ = covered_space(number_of_spacecrafts, spin_axis, spin_velocity, radius_inner_bounding_sphere, radius_outer_bounding_sphere, positions, velocities, timesteps, r, theta, phi, bool_tensor)
+    coverage = covered_space(number_of_spacecrafts, spin_axis, spin_velocity, radius_inner_bounding_sphere, radius_outer_bounding_sphere, positions, velocities, timesteps, r, theta, phi, bool_tensor)
     closedistancepenalty = close_distance_penalty(radius_inner_bounding_sphere, positions, penalty_scaling_factor)
     fardistancepenalty = far_distance_penalty(radius_outer_bounding_sphere,positions,penalty_scaling_factor)
 
