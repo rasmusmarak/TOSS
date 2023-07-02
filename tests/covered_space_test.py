@@ -110,6 +110,6 @@ def test_perfect_ratio():
             rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
 
     # Evaluate the coverage of visited points, where the positions are every point on the corresponding grid.
-    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, fixed_velocity, timesteps, radius_min, radius_max, tensor_grid_r, tensor_grid_theta, tensor_grid_phi, bool_tensor)
+    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, rotated_positions, fixed_velocity, timesteps, radius_min, radius_max, tensor_grid_r, tensor_grid_theta, tensor_grid_phi, bool_tensor)
 
     assert (coverage >= 1)
