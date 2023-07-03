@@ -50,9 +50,6 @@ def test_perfect_ratio():
     radius_min = 2
     radius_max = 8
 
-    # Setup initial boolean tensor representing the spherical grid approximation of the body's gravity field
-    tensor_grid_r, tensor_grid_theta, tensor_grid_phi, bool_tensor = get_spherical_tensor_grid(args.problem.measurement_period, radius_min, radius_max, max_velocity_scaling_factor)
-
     # Fixed maximal velocity from previously defined trajectory. 
     fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126])
 
@@ -108,6 +105,9 @@ def test_perfect_ratio():
             rotated_positions = rot_pos_arr
         else:
             rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
+
+    # Setup initial boolean tensor representing the spherical grid approximation of the body's gravity field
+    tensor_grid_r, tensor_grid_theta, tensor_grid_phi, bool_tensor = get_spherical_tensor_grid(time_step, radius_min, radius_max, max_velocity_scaling_factor)
 
     # Evaluate the coverage of visited points, where the positions are every point on the corresponding grid.
     coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, rotated_positions, fixed_velocity, timesteps, radius_min, radius_max, tensor_grid_r, tensor_grid_theta, tensor_grid_phi, bool_tensor)
