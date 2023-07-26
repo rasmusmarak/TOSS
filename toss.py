@@ -16,9 +16,16 @@ from toss.trajectory.equations_of_motion import compute_motion
 
 
 def load_udp(args, initial_condition, lower_bounds, upper_bounds):
-    """
-    Main function for optimizing the initial state for deterministic trajectories around a 
-    small celestial body using a mesh.
+    """Loads the provided user-defined problem (UDP).
+
+    Args:
+        args (dotmap.DotMap): A dotmap consisting of parameters related to the UDP.
+        initial_condition (np.ndarray): Initial condition for the spacecraft (Non-empty array when given initial position or initial velocity).
+        lower_bounds (np.ndarray): Lower bound for the chromosome (independent variables).
+        upper_bounds (np.ndarray): Lower bound for the chromosome (independent variables).
+
+    Returns:
+        prob (object): A UDP-class suitable for PyGMO.
     """
 
     # Setup User-Defined Problem (UDP)
@@ -30,6 +37,15 @@ def load_udp(args, initial_condition, lower_bounds, upper_bounds):
 
 
 def load_uda(args, bfe):
+    """Cretes the user-defined algorithm (UDA) with assigned parameters.
+
+    Args:
+        args (dotmap.DotMap): A dotmap consisting of parameters related to the UDA.
+        bfe (object): Batch Fitness Evaluator 
+
+    Returns:
+        algo (object): A UDA-class suitable for PyGMO.
+    """
     # Setup User-Defined Algorithm (UDA)
     print("Setting up UDA")
     uda = pg.gaco(
@@ -53,6 +69,23 @@ def load_uda(args, bfe):
 
 
 def run_optimization(args, initial_conditions, lower_bounds, upper_bounds):
+    """
+    Main optimization script. Runs the module to optimize the chromosome for each 
+    spacecraft at the time, where the spherical tensor used for computing coverage
+    is updated amd passed in a feedback loop for trajectory optimization of the following spacecraft.
+
+    Args:
+        args (dotmap.DotMap): A dotmap consisting of parameters related to the optimization (eg mesh, body etc).
+        initial_condition (np.ndarray): Initial condition for the spacecraft (Non-empty array when given initial position or initial velocity).
+        lower_bounds (np.ndarray): Lower bound for the chromosome (independent variables).
+        upper_bounds (np.ndarray): Lower bound for the chromosome (independent variables).
+
+    Returns:
+        run_time (float): Runtime for the complete optimization process.
+        champion_f_array (np.ndarray): Champion fitness value for each spacecraft trajectory. 
+        champion_x_array (np.ndarray): Champion chromosome related to each spacecraft.
+        fitness_arr (np.ndarray): (N_Spacecraft x N_GenFitness) Array of fitness values for each generation corresonding to the optimization of each chromosome.
+    """
 
     # Setup BFE machinery for paralellization (activates engines)
     multi_process_bfe = pg.mp_bfe() #pg.ipyparallel_bfe() #n=args.optimization.number_of_threads
@@ -62,7 +95,7 @@ def run_optimization(args, initial_conditions, lower_bounds, upper_bounds):
     # Setup arrays for storing results:
     champion_f_array = np.empty(args.problem.number_of_spacecrafts, dtype=np.float64)
     champion_x_array = np.empty(args.problem.number_of_spacecrafts*len(lower_bounds), dtype=np.float64)
-    fitness_arr = np.empty((args.problem.number_of_spacecrafts, args.optimization.number_of_generations), dtype=np.float64)
+    fitness_array = np.empty((args.problem.number_of_spacecrafts, args.optimization.number_of_generations), dtype=np.float64)
 
     # Initiate timer of the optimization process
     timer_start = time.time()
@@ -106,7 +139,7 @@ def run_optimization(args, initial_conditions, lower_bounds, upper_bounds):
         # Store champion information
         champion_f_array[spacecraft_i] = champion_f
         champion_x_array[len(champion_x)*spacecraft_i:len(champion_x)*(spacecraft_i + 1)] = champion_x
-        fitness_arr[spacecraft_i, :] = fitness_list
+        fitness_array[spacecraft_i, :] = fitness_list
 
     # Compute complete optimization run time.
     timer_end = time.time()
@@ -115,11 +148,14 @@ def run_optimization(args, initial_conditions, lower_bounds, upper_bounds):
     # Shutdown pool to avoid mp_bfe bug for python==3.8
     multi_process_bfe.shutdown_pool()
 
-    return run_time, champion_f_array, champion_x_array, fitness_arr
+    return run_time, champion_f_array, champion_x_array, fitness_array
 
 
 def main():
-
+    """ 
+    Main function. Defines parameters, domain and initial condition and then calls the main optimization script.
+    The results are stored in corresponding csv-files. 
+    """
     # Setup problem parameters (as DotMaP)
     args = setup_parameters()
     
@@ -142,8 +178,6 @@ def main():
     champion_f = np.asarray(champion_f)
     champion_x = np.asarray(champion_x)
     fitness_list = np.asarray(fitness_list)
-
-    #if test == test_cases[0]:
     np.savetxt("test_run_time.csv", run_time, delimiter=",")
     np.savetxt("test_champion_f.csv", champion_f, delimiter=",")
     np.savetxt("test_champion_x.csv", champion_x, delimiter=",")
