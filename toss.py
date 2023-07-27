@@ -68,7 +68,7 @@ def load_uda(args, bfe):
     return algo
 
 
-def run_optimization(args, initial_conditions, lower_bounds, upper_bounds):
+def run_optimization(args, initial_state, lower_bounds, upper_bounds):
     """
     Main optimization script. Runs the module to optimize the chromosome for each 
     spacecraft at the time, where the spherical tensor used for computing coverage
@@ -76,7 +76,7 @@ def run_optimization(args, initial_conditions, lower_bounds, upper_bounds):
 
     Args:
         args (dotmap.DotMap): A dotmap consisting of parameters related to the optimization (eg mesh, body etc).
-        initial_condition (np.ndarray): Initial condition for the spacecraft (Non-empty array when given initial position or initial velocity).
+        initial_state (np.ndarray): Initial state vector for each spacecraft (Non-empty arrays when given initial position or initial velocity).
         lower_bounds (np.ndarray): Lower bound for the chromosome (independent variables).
         upper_bounds (np.ndarray): Lower bound for the chromosome (independent variables).
 
@@ -104,7 +104,7 @@ def run_optimization(args, initial_conditions, lower_bounds, upper_bounds):
     for spacecraft_i in range(0, args.problem.number_of_spacecrafts):
 
         # Setup udp
-        prob = load_udp(args, initial_conditions[spacecraft_i], lower_bounds, upper_bounds)
+        prob = load_udp(args, initial_state[spacecraft_i], lower_bounds, upper_bounds)
 
         # Setup population
         pop = pg.population(prob=prob, size=args.optimization.population_size, b=bfe)
@@ -127,12 +127,12 @@ def run_optimization(args, initial_conditions, lower_bounds, upper_bounds):
         champion_x = pop.champion_x
 
         # Update boolean tensor (using trajectory resulting from champion chromosome)
-        if len(initial_conditions[spacecraft_i]) > 0:
-            spacecraft_info = np.hstack((initial_conditions[spacecraft_i], champion_x))
+        if len(initial_state[spacecraft_i]) > 0:
+            state_vector = np.hstack((initial_state[spacecraft_i], champion_x))
         else:
-            spacecraft_info = champion_x
+            state_vector = champion_x
 
-        _, list_of_ode_objects, _ = compute_trajectory(spacecraft_info, args, compute_motion)
+        _, list_of_ode_objects, _ = compute_trajectory(state_vector, args, compute_motion)
         positions, velocities, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
         args.problem.bool_tensor = update_spherical_tensor_grid(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
 
@@ -160,10 +160,10 @@ def main():
     args = setup_parameters()
     
     # Setup initial state (eg position)
-    initial_conditions = np.array_split([-135.13402075, -4089.53592604, 6050.17636635]*args.problem.number_of_spacecrafts, args.problem.number_of_spacecrafts) # [-3645.61233166, -5634.25158292, 2883.0399209] # [-135.13402075, -4089.53592604, 6050.17636635], [-135.13402075, -4089.53592604, 6050.17636635]
+    initial_state = np.array_split([-135.13402075, -4089.53592604, 6050.17636635]*args.problem.number_of_spacecrafts, args.problem.number_of_spacecrafts) # [-3645.61233166, -5634.25158292, 2883.0399209] # [-135.13402075, -4089.53592604, 6050.17636635], [-135.13402075, -4089.53592604, 6050.17636635]
 
     # Setup boundary constraints for the chromosome
-    lower_bounds, upper_bounds = setup_initial_state_domain(initial_conditions[0], 
+    lower_bounds, upper_bounds = setup_initial_state_domain(initial_state[0], 
                                                             args.problem.start_time, 
                                                             args.problem.final_time, 
                                                             args.problem.number_of_maneuvers, 
@@ -171,7 +171,7 @@ def main():
                                                             args.chromosome)
 
     # Run optimization
-    run_time, champion_f, champion_x, fitness_list = run_optimization(args, initial_conditions, lower_bounds, upper_bounds)
+    run_time, champion_f, champion_x, fitness_list = run_optimization(args, initial_state, lower_bounds, upper_bounds)
 
     # Save results
     run_time = np.asarray([float(run_time)])
