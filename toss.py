@@ -15,12 +15,12 @@ from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
 from toss.trajectory.equations_of_motion import compute_motion
 
 
-def load_udp(args, initial_condition, lower_bounds, upper_bounds):
+def load_udp(args, initial_state, lower_bounds, upper_bounds):
     """Loads the provided user-defined problem (UDP).
 
     Args:
         args (dotmap.DotMap): A dotmap consisting of parameters related to the UDP.
-        initial_condition (np.ndarray): Initial condition for the spacecraft (Non-empty array when given initial position or initial velocity).
+        initial_state (np.ndarray): Initial state for the spacecraft (Non-empty array when given initial position or initial velocity).
         lower_bounds (np.ndarray): Lower bound for the chromosome (independent variables).
         upper_bounds (np.ndarray): Lower bound for the chromosome (independent variables).
 
@@ -30,7 +30,7 @@ def load_udp(args, initial_condition, lower_bounds, upper_bounds):
 
     # Setup User-Defined Problem (UDP)
     print("Setting up the UDP...")
-    udp = udp_initial_condition(args, initial_condition, lower_bounds, upper_bounds)
+    udp = udp_initial_condition(args, initial_state, lower_bounds, upper_bounds)
     prob = pg.problem(udp)
 
     return prob
