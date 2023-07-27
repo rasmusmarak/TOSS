@@ -126,14 +126,17 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
         champion_f = pop.champion_f
         champion_x = pop.champion_x
 
-        # Update boolean tensor (using trajectory resulting from champion chromosome)
+        # Recompute trajectory from champion chromosome.
+        # NOTE: For a detailed description on constants required in dotmap args,
+        #       see docstring for the function: compute_trajectory()
         if len(initial_state[spacecraft_i]) > 0:
             state_vector = np.hstack((initial_state[spacecraft_i], champion_x))
         else:
             state_vector = champion_x
-
         _, list_of_ode_objects, _ = compute_trajectory(state_vector, args, compute_motion)
         positions, velocities, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
+        
+        # Update boolean tensor (using trajectory resulting from champion chromosome)
         args.problem.bool_tensor = update_spherical_tensor_grid(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
 
         # Store champion information
