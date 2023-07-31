@@ -93,8 +93,8 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
     bfe = pg.bfe(multi_process_bfe)
 
     # Setup arrays for storing results:
-    champion_f_array = np.empty(args.problem.number_of_spacecrafts, dtype=np.float64)
-    champion_x_array = np.empty(args.problem.number_of_spacecrafts*len(lower_bounds), dtype=np.float64)
+    champion_f_list = []
+    champion_x_list = []
     fitness_array = np.empty((args.problem.number_of_spacecrafts, args.optimization.number_of_generations), dtype=np.float64)
 
     # Initiate timer of the optimization process
@@ -140,8 +140,8 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
         args.problem.bool_tensor = update_spherical_tensor_grid(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
 
         # Store champion information
-        champion_f_array[spacecraft_i] = champion_f
-        champion_x_array[len(champion_x)*spacecraft_i:len(champion_x)*(spacecraft_i + 1)] = champion_x
+        champion_f_list.append(champion_f)
+        champion_x_list.append(champion_x)
         fitness_array[spacecraft_i, :] = fitness_list
 
     # Compute complete optimization run time.
@@ -151,7 +151,7 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
     # Shutdown pool to avoid mp_bfe bug for python==3.8
     multi_process_bfe.shutdown_pool()
 
-    return run_time, champion_f_array, champion_x_array, fitness_array
+    return run_time, champion_f_list, champion_x_list, fitness_array
 
 
 def main():
@@ -162,8 +162,12 @@ def main():
     # Setup problem parameters (as DotMaP)
     args = setup_parameters()
     
-    # Setup initial state (eg position)
-    initial_state = np.array_split([-135.13402075, -4089.53592604, 6050.17636635]*args.problem.number_of_spacecrafts, args.problem.number_of_spacecrafts) # [-3645.61233166, -5634.25158292, 2883.0399209] # [-135.13402075, -4089.53592604, 6050.17636635], [-135.13402075, -4089.53592604, 6050.17636635]
+    # Setup initial state
+    # NOTE Initial state can be varied dependent on what is optimized, eg:
+    #       []
+    #       [position]
+    #       [position, velocity]
+    initial_state = np.array_split([args.problem.initial_x, args.problem.initial_y, args.problem.initial_z]*args.problem.number_of_spacecrafts, args.problem.number_of_spacecrafts)
 
     # Setup boundary constraints for the chromosome
     lower_bounds, upper_bounds = setup_initial_state_domain(initial_state[0], 
