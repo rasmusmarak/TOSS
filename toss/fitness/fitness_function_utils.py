@@ -202,7 +202,7 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
     return bool_tensor
 
 
-def get_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Generates a number of points in each spherical axis, which together defines
     a spherical tensor grid that satisfies the Courant–Friedrichs–Lewy condition.
