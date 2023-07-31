@@ -191,9 +191,7 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
     phi_points = phi_points[index_feasible_positions]
 
     # Update and return boolean tensory given information on the new trajectory
-    if len(r_points)==0 or len(theta_points)==0 or len(phi_points)==0:
-        return bool_tensor
-    else: 
+    if len(r_points)>0 and len(theta_points)>0 and len(phi_points)>0:
         # Find the indices of the closest values in the meshgrid for each point using broadcasting
         i = np.argmin(np.abs(r[:, np.newaxis] - r_points), axis=0) # indices along r axis
         j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
@@ -201,7 +199,7 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
 
         # Update tensor with information on new trajectory using advanced indexing
         bool_tensor[i, j, k] = True
-        return bool_tensor
+    return bool_tensor
 
 
 def get_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
