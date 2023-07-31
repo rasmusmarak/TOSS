@@ -210,7 +210,7 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
     indicating none of the defined points have been visited by a spacecraft.
 
     Args:
-        timesteps (int): Fixed measurement period (i.e time step along trajectory).
+        time_step (int): Fixed measurement period (i.e time step along trajectory).
         radius_min (float): Inner radius of spherical grid, typically radius_inner_bounding_sphere.
         radius_max (float): Outer radius of spherical grid, typically radius_outer_bounding_sphere.
         max_velocity_scaling_factor (float): Scales the magnitude of the fixed-valued maximal velocity and therefore also the grid spacing.
@@ -221,6 +221,10 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
         phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
         bool_tensor (np.ndarray): Boolean array corresponding to each point defined on the spherical tensor.
     """
+    assert (time_step > 0)
+    assert (radius_min > 0)
+    assert (radius_max > radius_min)
+    assert (max_velocity_scaling_factor > 0)
 
     # Fixed maximal velocity from previously defined trajectory. 
     # We use a fixed value to avoid prioritizing higher velocities. 
