@@ -202,7 +202,7 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
     return bool_tensor
 
 
-def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: float, max_velocity_scaling_factor: float) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: float, max_velocity_scaling_factor: float, fixed_velocity: np.ndarray) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Generates a number of points in each spherical axis, which together defines
     a spherical tensor grid that satisfies the Courant–Friedrichs–Lewy condition.
@@ -214,7 +214,8 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
         radius_min (float): Inner radius of spherical grid, typically radius_inner_bounding_sphere.
         radius_max (float): Outer radius of spherical grid, typically radius_outer_bounding_sphere.
         max_velocity_scaling_factor (float): Scales the magnitude of the fixed-valued maximal velocity and therefore also the grid spacing.
-
+        fixed_velocity (np.ndarray): A sample velocity vector for a spacecraft on a feasible trajectory around the considered body.
+    
     Returns:
         r (np.ndarray): Array of r coordinates for each point defined on the spherical tensor.
         theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
@@ -227,12 +228,11 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
     assert (max_velocity_scaling_factor > 0)
 
     # Fixed maximal velocity from previously defined trajectory. 
-    # We use a fixed value to avoid prioritizing higher velocities. 
+    # We use the fixed_velocity to avoid prioritizing higher velocities. 
     #
     # NOTE: The fitness value for covered volume will not be feasible if
-    #        its maximal velocity exceeds the provided value below as the grid
+    #        its maximal velocity exceeds the provided fixed_velocity as the grid
     #        spacing will be too small. Please use the scaling factor to adapt for this.
-    fixed_velocity = np.array([-0.02826052, 0.1784372, -0.29885126])
 
     # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
     max_velocity = np.max(np.linalg.norm(fixed_velocity)) * max_velocity_scaling_factor
