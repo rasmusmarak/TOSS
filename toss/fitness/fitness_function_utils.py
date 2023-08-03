@@ -56,7 +56,9 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
     Given a set of posiions on the trajectory that are defined inside the 
     outer bounding sphere, we identify the points that are the closest the given positions, 
     and subsequently compute the ratio of visited points by the number of True values to the 
-    total number of values in the boolean array.
+    total number of subregions in the boolean array. The ratio is therefore based on both the historic
+    visits and the new set of candidate trajectories considered. Visiting a specific subregion of interest, 
+    as defined by the tensor, will only give gain to the objetive once.
 
     Args:
         number_of_spacecrafts (int): Number of spacecraft
@@ -73,62 +75,86 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         bool_tensor (np.ndarray): Boolean tensor corresponding to each point defined on the spherical grid.
 
     Returns:
-        Fitness (float): Aggregate coverage of the spherical tensor grid for a set of active trajectories (where coverage = ratio of visited points + weights). 
+        fitness (float): Aggregate coverage of the spherical tensor grid for a set of active trajectories (where coverage = ratio of visited points + weights). 
     """
-    # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accrdingly
+    # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accordingly.
     rotated_positions = None
-    
-    pos = np.array_split(positions, number_of_spacecrafts, axis=1)
-    for counter, pos_arr in enumerate(pos):
 
-        rot_pos_arr = np.empty((pos_arr.shape))
+    # Check if only given a single position (Special case for tests).
+    if positions.ndim == 1:
+        rotated_positions = rotate_point(timesteps[0], positions, spin_axis, spin_velocity)
+        r_points, theta_points, phi_points = cart2sphere(rotated_positions[0], rotated_positions[1], rotated_positions[2])
 
-        for col in range(0,len(pos_arr[0,:])):
-            rot_pos_arr[:,col] = rotate_point(timesteps[col], pos_arr[:,col], spin_axis, spin_velocity)
+        if (r_points > radius_max) or (r_points < radius_min):
+            r_points = []
+        else: 
+            r_points = [r_points]
+            theta_points = [theta_points]
+            phi_points = [phi_points]
 
-        if counter == 0:
-            rotated_positions = rot_pos_arr
-        else:
-            rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
+    else:
+        pos = np.array_split(positions, number_of_spacecrafts, axis=1)
+        for counter, pos_arr in enumerate(pos):
 
-    # Convert the positions along the trajectory to spherical coordinates
-    r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
+            rot_pos_arr = np.empty((pos_arr.shape))
 
-    # Remove points outside measurement zone (i.e outside outer-bounding sphere)
-    index_feasible_positions = np.where(r_points <= radius_max) # Addition of noise to cover approximation error
-    r_points = r_points[index_feasible_positions]
-    theta_points = theta_points[index_feasible_positions]
-    phi_points = phi_points[index_feasible_positions]
+            for col in range(0,len(pos_arr[0,:])):
+                rot_pos_arr[:,col] = rotate_point(timesteps[col], pos_arr[:,col], spin_axis, spin_velocity)
 
-    # Remove points inside safety-radius (i.e inside inner-bounding sphere)
-    index_feasible_positions = np.where(r_points >= radius_min) # Addition of noise to cover approximation error
-    r_points = r_points[index_feasible_positions]
-    theta_points = theta_points[index_feasible_positions]
-    phi_points = phi_points[index_feasible_positions]
+            if counter == 0:
+                rotated_positions = rot_pos_arr
+            else:
+                rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
+
+        # Convert the positions along the trajectory to spherical coordinates
+        r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
+
+        # Remove points outside measurement zone (i.e outside outer-bounding sphere)
+        index_feasible_positions = np.where(r_points <= radius_max) # Addition of noise to cover approximation error
+        r_points = r_points[index_feasible_positions]
+        theta_points = theta_points[index_feasible_positions]
+        phi_points = phi_points[index_feasible_positions]
+
+        # Remove points inside safety-radius (i.e inside inner-bounding sphere)
+        index_feasible_positions = np.where(r_points >= radius_min) # Addition of noise to cover approximation error
+        r_points = r_points[index_feasible_positions]
+        theta_points = theta_points[index_feasible_positions]
+        phi_points = phi_points[index_feasible_positions]
 
     # Compute ratio of visited points. 
     if len(r_points)==0 or len(theta_points)==0 or len(phi_points)==0:
-        ratio = 0
-        return ratio
+        # NOTE: (Special case) No valid positions along candidate trajectory. 
+        # Return fitness of previous visits instead (no new gain).
+        indices_previous_trajectory  =  np.where(bool_tensor == True)
+        n_previous_visits = indices_previous_trajectory[0].shape[0]
+        ratio_previous_visits = n_previous_visits / bool_tensor.size
+        sum_of_weights = np.sum(1/r[indices_previous_trajectory[0]])
+        fitness = ratio_previous_visits + sum_of_weights
+        return fitness
     
     else: 
-        # Find the indices of the closest values in the meshgrid for each point using broadcasting
+        # Find the indices of the closest values in the meshgrid for each point using broadcasting.
         i = np.argmin(np.abs(r[:, np.newaxis] - r_points), axis=0) # indices along r axis
         j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
         k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
 
-        # Updated boolean tensor
+        # Create a new boolean tensor corresponding to the previous visits.
         new_tensor = np.full((len(r), len(theta), len(phi)), False)
+        indices_previous_trajectory  =  np.where(bool_tensor == True)
+        new_tensor[indices_previous_trajectory[0], indices_previous_trajectory[1], indices_previous_trajectory[2]] = True 
+        
+        # Update the new tensor with the proposed candidate trajectory.
         new_tensor[i, j, k] = True
 
-        # Find indices for previously unvisited region that are now visited by the new trajectory
-        unique_visits = np.where(bool_tensor != new_tensor)
+        # Identify number of unique visits in the region of interest
+        indices_unique_visits = np.where(new_tensor == True)
+        n_unique_visits = indices_unique_visits[0].shape[0]
 
-        # Compute ratio of uniquely visited regions (i.e there is no gain in visiting an already measured region)
-        ratio_unique_visits = unique_visits[0].shape[0] / bool_tensor.size
+        # Compute ratio of uniquely visited regions to the number of regions defined by the tensor.
+        ratio_unique_visits = n_unique_visits / bool_tensor.size
 
         # Get weights corresponding to the uniquely visited regions. 
-        r_idx = unique_visits[0]
+        r_idx = indices_unique_visits[0] #np.concatenate((previous_visits[0], new_visits[0])) # unique_visits[0]
         sum_of_weights = np.sum(1/r[r_idx])
 
         # Return fitness
