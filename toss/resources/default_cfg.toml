@@ -10,6 +10,7 @@ algorithm = 3                           # Integration algorithm, see:  "toss/Int
 dense_output = true                     # Interpolates between integration steps and enable computation of arbitrary points on time-interval.
 rtol = 1e-12                            # Relative tolerance for chosen integration algorithm.
 atol = 1e-12                            # Absolute tolerance for chosen integration algorithm.
+parallel_acceleration_computation = false # Compute accelerations using polyhedral-model in parallel setting.
 
 [problem]
 start_time = 0                          # Starting time [seconds].
