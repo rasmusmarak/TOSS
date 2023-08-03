@@ -8,7 +8,7 @@ from toss.trajectory.equations_of_motion import compute_motion
 from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
 from toss.fitness.fitness_function_enums import FitnessFunctions
 from toss.fitness.fitness_functions import get_fitness
-from toss.fitness.fitness_function_utils import get_spherical_tensor_grid
+from toss.fitness.fitness_function_utils import create_spherical_tensor_grid
 
 # Class representing UDP 
 class udp_initial_condition:
