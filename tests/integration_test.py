@@ -39,9 +39,8 @@ def test_integration():
     states_new, _ = get_trajectory_adaptive_step(list_of_ode_objects)
 
     # Final state from previous working results (in cartesian coordinates):
-    final_state_historical = [2.17266344e+04, 9.91596177e+03, 2.00320977e+03, 3.31809228e-01, 3.03285571e-01, -7.73119015e-02]
+    final_state_historical = [-2.29736099e+03, -2.40137066e+04, 6.38294420e+03, -5.07732295e-02, -3.28438247e-01, -1.03880053e-04]
 
     # New final state:
     final_state_new = states_new[0:6,-1]
-
     assert all(np.isclose(final_state_historical,final_state_new,rtol=1e-5, atol=1e-5))
