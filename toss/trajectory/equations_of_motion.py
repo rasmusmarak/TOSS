@@ -23,12 +23,18 @@ def setup_spin_axis(args):
     Returns:
         spin_axis (np.ndarray): The axis around which the body rotates.
     """
-
-    # Setup spin axis of the body
-    q_dec = Quaternion(axis=[1,0,0], angle=radians(args.body.declination)) # Rotate spin axis according to declination
-    q_ra = Quaternion(axis=[0,0,1], angle=radians(args.body.right_ascension)) # Rotate spin axis accordining to right ascension
-    q_axis = q_dec * q_ra  # Composite rotation of q1 then q2 expressed as standard multiplication
-    spin_axis = q_axis.rotate([0,0,1])
+    # Convert spin axis orientation properties to rad
+    rotation_declination = radians(args.body.declination)
+    rotation_right_ascension = radians(args.body.right_ascension)
+    
+    # Define the rotation axis as a unit vector
+    spin_axis = np.array(
+        [
+            np.cos(rotation_declination) * np.cos(rotation_right_ascension),
+            np.cos(rotation_declination) * np.sin(rotation_right_ascension),
+            np.sin(rotation_declination),
+        ]
+    )
     return spin_axis
 
 
