@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Maråk
+    given-names: Rasmus
+  - family-names: Blazquez
+    given-names: Emmanuel
+    orcid: https://orcid.org/0000-0001-9697-582X
+  - family-names: Gómez
+    given-names: Pablo
+    orcid: https://orcid.org/0000-0002-5631-8240
+title: "Trajectory Optimisation of a Swarm Orbiting 67P/Churyumov-Gerasimenko Maximising Gravitational Signal"
+doi: arXiv:2306.01602
+date-released: 2023-06-02
+url: "https://doi.org/10.48550/arXiv.2306.01602"
