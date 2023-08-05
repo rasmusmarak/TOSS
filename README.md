@@ -28,9 +28,6 @@
 <!-- ABOUT THE PROJECT -->
 
 ## About The Project
-
-Trajectory Optimization for a Spacecraft Swarm (TOSS) is a thesis project presented for the degree of Master of Science in mathematics, with specialization in Optimization and Systems theory provided by KTH Royal Institute of Technology. The thesis topic was defined within the scope of $\Phi$[-lab@Sweden](https://www.ai.se/en/data-factory/f-lab-sweden) in the frame of a collaboration between [AI Sweden](https://www.ai.se/en/) and the [European Space Agency](https://www.esa.int/) to explore distributed edge learning for space applications. The project was mainly supervised by Pablo Gómez and Emmanuel Blazquez from the Advanced Concepts Team (ACT) at ESA, and examined by Xiaoming Hu from KTH.  
-
 The goal of the project is to enable an evaluation of the effects for single and multi-spacecraft architectures when applied to a prospective mission with specified science objectives. In particular, TOSS is designed to be:
 
 - **open-source**: the source code of TOSS is publicly available.
@@ -193,6 +190,7 @@ Only Pull-Requests created on the `main` branch with all tests passing will be c
 <!-- CONTACT -->
 
 ## Contact
+Trajectory Optimization for a Spacecraft Swarm (TOSS) is a thesis project presented for the degree of Master of Science in mathematics, with specialization in Optimization and Systems theory provided by KTH Royal Institute of Technology. The thesis topic was defined within the scope of $\Phi$[-lab@Sweden](https://www.ai.se/en/data-factory/f-lab-sweden) in the frame of a collaboration between [AI Sweden](https://www.ai.se/en/) and the [European Space Agency](https://www.esa.int/) to explore distributed edge learning for space applications. The project was mainly supervised by Pablo Gómez and Emmanuel Blazquez from the Advanced Concepts Team (ACT) at ESA, and examined by Xiaoming Hu from KTH.  
 
 Created by:
 
