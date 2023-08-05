@@ -179,7 +179,7 @@ Only Pull-Requests created on the `main` branch with all tests passing will be c
 
 ## License
 
-**[Coming Soon]** Distributed under the .... License. See [LICENSE]() for more information.
+**[Coming Soon]** Distributed under the GNU General Public License v3.0. See [LICENSE]() for more information.
 
 <!-- CONTACT -->
 
