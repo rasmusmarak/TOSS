@@ -110,14 +110,14 @@ pytest
 
 TOSS uses a central config file which is passed through the entire program. The default config parameters can be seen [here](https://github.com/rasmusmarak/TOSS/blob/main/toss/resources/default_cfg.toml). 
 
-**[Coming Soon]** Practical usage of the config files will soon be added here through an explanatory notebook.
+**[Coming Soon]** Practical usage of the config files will soon be added here through an explanatory notebook (Issue [#48](https://github.com/rasmusmarak/TOSS/issues/48)).
 
 ### Use Case 1: Trajectory Optimization of a Swarm Orbiting 67P/Churyumov-Gerasimenko Maximising Gravitational Signal
 In this case, the aim is to compute a set of trajectories corresponding to a spacecraft swarm of n spacecraft, each with m impulsive maneuvers. The simulation is done within the context of a prospective mission around the comet 67P/Churyumov-Gerasimenko and the scientific target of maximising the measured gravitational signal. For details on mission parameters, optimization structure and fitness functions, see the corresponding paper on [ArXiv](https://doi.org/10.48550/arXiv.2306.01602).
 
 To run this test case, install TOSS and setup the environment as presented above, then run the following:
 ```
-OMP_NUM_THREADS=1 python toss.py
+python toss.py
 ```
 TOSS will then return the four csv files
 - **run_time**: which refers to the total simulation time.
