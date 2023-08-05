@@ -71,17 +71,9 @@ This is a brief guide how to set up TOSS.
 
 ### Installation
 
-### conda
-The recommended way to install TOSS is via [conda](https://docs.conda.io/en/latest/) / [mamba](https://github.com/conda-forge/miniforge#mambaforge) using
-
-```
-conda install toss -c conda-forge
-
-```
-
 ### Building from source
 
-Alternatively, to use the latest code from this repository make sure you have all the requirements installed and then clone the [GitHub](https://github.com/rasmusmarak/TOSS.git) repository as follows ([Git](https://git-scm.com/) required):.
+To use the latest code from this repository make sure you have all the requirements installed and then clone the [GitHub](https://github.com/rasmusmarak/TOSS.git) repository as follows ([Git](https://git-scm.com/) required):.
 
 ```
 git clone https://github.com/rasmusmarak/TOSS
