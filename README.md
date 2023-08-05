@@ -34,7 +34,7 @@ The optimization is based on sampling a large population pool where each candida
 
 <p align="center">
   <a href="https://github.com/rasmusmarak/TOSS/blob/Adding-Readme-to-repo/docs/source/TOSS_Optimization_Scheme.pdf">
-    <img src="https://github.com/rasmusmarak/TOSS/blob/Adding-Readme-to-repo/docs/source/TOSS_Optimization_Scheme.pdf" alt="Scheme"  width="910" height="459">
+    <img src="/docs/source/TOSS_Optimization_Scheme.pdf" alt="Scheme"  width="910" height="459">
   </a>
   <p align="center">
     Trajectory Optimisation of a Spacecraft Swarm
