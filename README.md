@@ -28,13 +28,9 @@
 <!-- ABOUT THE PROJECT -->
 
 ## About The Project
-The goal of the project is to enable an evaluation of the effects for single and multi-spacecraft architectures when applied to a prospective mission with specified science objectives. In particular, TOSS is designed to be:
+The goal of the project is to enable an evaluation of the effects of using either single or multi-spacecraft architectures when applied to prospective missions near highly irregular bodies with challenging dynamics, such as comets and asteroids. For that reason, the algorithm focus on optimizing trajectories with impulsive maneuvers using a fast polyhedral gravity model, a Dormand-Prince 8(7)-13M adaptive numerical integration scheme and PyGMO for evolutionary optimization. 
 
-- **open-source**: the source code of TOSS is publicly available.
-- **decentralised**: each function and capability within the module can be adopted to generate trajectories for a wider variety of objectives and celestial bodies.
-- **user-expandable**: the user can expand the capabilities of the code using the decentralised structure. 
-
-The optimization is based on an evolutionary approach sampling a large population where each candidate solution results in a deterministic trajectory that is obtained by numerical integration. The trajectories are then resamples for a desired fixed time-step and then evaluating according to a defined fitness function. Then, unless the algorithm has met a certain stopping criteria, the population is mutated according to the best candidate solution and the optimisation continuous by reiterating the process again.
+The optimization is based on sampling a large population pool where each candidate solution results in a deterministic trajectory that is obtained by numerical integration. The trajectories are then resampled for a desired fixed time-step and later evaluated according to a user-defined fitness function, such as maximising the visited space around the body while avoiding collisions. Unless the algorithm meets a certain stopping criteria, such as collisions, the process continuous by mutating the population according to the best candidate solution and then reiterating through the process again. The optimisation scheme is followed through for each spacecraft at the time, while keeping previous results in memory in order to guide the optimisation of the next spacecraft trajectory. 
 
 <p align="center">
   <a href="https://github.com/rasmusmarak/TOSS">
@@ -49,6 +45,11 @@ The optimization is based on an evolutionary approach sampling a large populatio
   </p>
 </p>
 
+In particular, TOSS is designed to be:
+
+- **open-source**: the source code of TOSS is publicly available.
+- **decentralised**: each function and capability within the module can be adopted to generate trajectories for a wider variety of objectives and celestial bodies.
+- **user-expandable**: the user can expand the capabilities of the code using the decentralised structure. 
 
 
 ### Built With
@@ -57,7 +58,7 @@ This project is based on:
 
 - [polyhedral-gravity-model](https://github.com/esa/polyhedral-gravity-model) a fast, parallelised version of the polyhedral gravity model implemented in C++ along with a python interface.
 - [DESolver](https://github.com/Microno95/desolver) a python library fro solving Initial Value Problems using numerical integrators. 
-- [PyGMo](https://esa.github.io/pygmo2/index.html) a scientific python library for massively parallel optimization managed by the Advanced Concepts Team at the European Space Agency
+- [PyGMo](https://esa.github.io/pygmo2/index.html) a scientific C++ library, with a python wrapper, for massively parallel optimization managed by the Advanced Concepts Team at the European Space Agency
 
 For more details than provided by TOSS on these libraries, please refer to their docs.
 
