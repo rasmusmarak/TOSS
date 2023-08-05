@@ -126,10 +126,10 @@ TOSS will then create four csv files
 - **fitness_list**: which is a list of champion fitness values correponding to each generation.
 
 ### Use Case 2: Trajectory Optimization Around an Arbitrary Clestial Body Maximising Gravitation Signal
-**[Coming Soon]**
+**[Coming Soon]** (Issue referenced in [#55](https://github.com/rasmusmarak/TOSS/issues/55))
 
 ### Use Case 3: Trajectory Optimization with User-Defined Scientific Objective
-**[Coming Soon]**
+**[Coming Soon]** (Issue referenced in [#55](https://github.com/rasmusmarak/TOSS/issues/55))
 
 
 <!-- ROADMAP -->
