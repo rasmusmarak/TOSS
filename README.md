@@ -33,9 +33,7 @@ The goal of the project is to enable an evaluation of the effects of using eithe
 The optimization is based on sampling a large population pool where each candidate solution results in a deterministic trajectory that is obtained by numerical integration. The trajectories are then resampled for a desired fixed time-step and later evaluated according to a user-defined fitness function, such as maximising the visited space around the body while avoiding collisions. Unless the algorithm meets a certain stopping criteria, such as collisions, the process continuous by mutating the population according to the best candidate solution and then reiterating through the process again. The optimisation scheme is followed through for each spacecraft at the time, while keeping previous results in memory in order to guide the optimisation of the next spacecraft trajectory. 
 
 <p align="center">
-  <object data="/docs/source/TOSS_Optimization_Scheme.pdf" type="application/pdf" width="100%"> 
-  </object> 
-  <image src="docs/source/TOSS_Optimization_Scheme.pdf">
+  <embed src="/docs/source/TOSS_Optimization_Scheme.pdf" type="application/pdf">
   <p align="center">
     Trajectory Optimisation of a Spacecraft Swarm
     <br />
