@@ -119,7 +119,7 @@ To run this test case, install TOSS and setup the environment as presented above
 ```
 python toss.py
 ```
-TOSS will then return the four csv files
+TOSS will then create four csv files
 - **run_time**: which refers to the total simulation time.
 - **champion_f**: being the fitness value corresponding to the champion chromosome.
 - **champion_x**: being the champion chromosome corresponding to the optimal set of trajectories.
