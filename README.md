@@ -51,6 +51,7 @@ In particular, TOSS is designed to be:
 - **decentralised**: each function and capability within the module can be adopted to generate trajectories for a wider variety of objectives and celestial bodies.
 - **user-expandable**: the user can expand the capabilities of the code using the decentralised structure. 
 
+The paper corresponding to this project can be found at [ArXiv](https://doi.org/10.48550/arXiv.2306.01602). 
 
 ### Built With
 
