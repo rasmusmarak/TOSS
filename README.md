@@ -34,7 +34,7 @@ The goal of the project is to enable an evaluation of the effects for single and
 - **decentralised**: each function and capability within the module can be adopted to generate trajectories for a wider variety of objectives and celestial bodies.
 - **user-expandable**: the user can expand the capabilities of the code using the decentralised structure. 
 
-The optimization is based on an evolutionary approach sampling a large population where each candidate solution results in a deterministics trajectory that is obtained by numerical intergration. The trajectories are then resamples for a desired fixed time-step and then evaluating according to a defined fitness function. Then, unless the algorithm has met a certain stopping criteria, the population is mutated accoridng to the best candidate solution and the optimisation continuous by reiterating the process again.
+The optimization is based on an evolutionary approach sampling a large population where each candidate solution results in a deterministic trajectory that is obtained by numerical integration. The trajectories are then resamples for a desired fixed time-step and then evaluating according to a defined fitness function. Then, unless the algorithm has met a certain stopping criteria, the population is mutated according to the best candidate solution and the optimisation continuous by reiterating the process again.
 
 <p align="center">
   <a href="https://github.com/rasmusmarak/TOSS">
