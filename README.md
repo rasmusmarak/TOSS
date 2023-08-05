@@ -108,7 +108,7 @@ pytest
 
 ### Config
 
-TOSS uses a central config file which is passed through the entire program. The default config parameters can be seen [here](https://github.com/rasmusmarak/TOSS/blob/2501351468eb362fa9ec8217b2fc426db37fca9a/toss/resources/default_cfg.toml). 
+TOSS uses a central config file which is passed through the entire program. The default config parameters can be seen [here](https://github.com/rasmusmarak/TOSS/blob/main/toss/resources/default_cfg.toml). 
 
 **[Coming Soon]** Practical usage of the config files will soon be added here through an explanatory notebook.
 
