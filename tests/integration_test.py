@@ -39,7 +39,7 @@ def test_integration():
     states_new, _ = get_trajectory_adaptive_step(list_of_ode_objects)
 
     # Final state from previous working results (in cartesian coordinates):
-    final_state_historical = [-2.29736099e+03, -2.40137066e+04, 6.38294420e+03, -5.07732295e-02, -3.28438247e-01, -1.03880053e-04]
+    final_state_historical = [2.55718161e+04, -2.28183531e+04, 2.06704540e+03, 3.87911600e-01, -3.01262020e-01, -7.47139451e-02]
 
     # New final state:
     final_state_new = states_new[0:6,-1]

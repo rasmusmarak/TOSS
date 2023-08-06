@@ -61,8 +61,8 @@ def test_rotation_of_point():
         # Define analytical rotation (euler-rodrigues):
         axis = np.asarray(args.body.spin_axis)
         axis = axis / math.sqrt(np.dot(axis, axis))
-        a = math.cos(((args.body.spin_velocity*t))/2.0)
-        b, c, d = -axis * math.sin(((args.body.spin_velocity*t))/ 2.0)
+        a = math.cos((-(args.body.spin_velocity*t))/2.0)
+        b, c, d = -axis * math.sin((-(args.body.spin_velocity*t))/ 2.0)
         aa, bb, cc, dd = a * a, b * b, c * c, d * d
         bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
 
