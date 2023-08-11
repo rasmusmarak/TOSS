@@ -49,7 +49,7 @@ def compute_acceleration(x: np.ndarray, args) -> np.ndarray:
     Returns:
         (np.ndarray): The acceleration at the given point x with respect to the mesh (celestial body).
     """
-    _, a, _ = model.evaluate(args.mesh.vertices, args.mesh.faces, args.body.density, x)
+    _, a, _ = model.evaluate((args.mesh.vertices, args.mesh.faces), args.body.density, x, args.integrator.parallel_acceleration_computation)
     return -np.array(a)
 
 # Used by all RK-type algorithms

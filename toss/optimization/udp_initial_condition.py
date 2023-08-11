@@ -18,7 +18,7 @@ class udp_initial_condition:
     optimization problem as well as the domain of the intial state vector. 
     """
 
-    def __init__(self, args, initial_conditions, lower_bounds, upper_bounds):
+    def __init__(self, args, initial_condition, lower_bounds, upper_bounds):
         """ Setup udp attributes.
 
         Args:
@@ -97,56 +97,38 @@ class udp_initial_condition:
 
         # Additional hyperparameters
         self.args = args
-        self.initial_conditions = np.array_split(initial_conditions, args.problem.number_of_spacecrafts)
+        self.initial_condition = initial_condition
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
+        self.args.problem.number_of_spacecraft = 1 # Used internally for the UDP (Each optimization run of UDP corresponds to a single spacecraft)
 
 
-    def fitness(self, x: np.ndarray) -> float:
+    def fitness(self, chromosome: np.ndarray) -> float:
         """ Evaluates and returns fitness of the computed trajectory.
 
         Args:
-            x (np.ndarray): Initial state vector. 
+            chromosome (np.ndarray): Initial state vector. 
 
         Returns:
             fitness (_float_): Evaluated fitness for user-specified fitness-function.
         """
 
-        # Seperate state vector into sublists corresponding to each spacecraft:
-        list_of_spacecrafts = np.array_split(x, self.args.problem.number_of_spacecrafts)
-
         # If we have a predefined initial state, concatenate the initial state info with corresponding maneuvers
-        if len(self.initial_conditions) > 0:
-            for counter, spacecraft_info in enumerate(list_of_spacecrafts):
-                list_of_spacecrafts[counter] = np.hstack((self.initial_conditions[counter], spacecraft_info))
+        if len(self.initial_condition) > 0:
+            spacecraft_info = np.hstack((self.initial_condition, chromosome))
+        else:
+            spacecraft_info = chromosome
                 
-        # Compute Trajectory and resample for a given fixed time-step delta t
-        positions = None
-        velocities = None
-        timesteps = None
+        # Compute Trajectory and resample for a given fixed time-step delta t        
+        collision_detected, list_of_ode_objects, _ = compute_trajectory(spacecraft_info, self.args, compute_motion)
 
-        for counter, spacecraft in enumerate(list_of_spacecrafts):
+        # If collision detected => unfeasible trajectory
+        if collision_detected:
+            fitness = 1e30
+            return [fitness]
         
-            # Compute trajectory
-            collision_detected, list_of_ode_objects, _ = compute_trajectory(spacecraft, self.args, compute_motion)
-
-            # If collision detected => unfeasible trajectory
-            if collision_detected:
-                fitness = 1e30
-                return [fitness]
-            
-            # Resample trajectory for a fixed time-step delta t
-            spacecraft_positions, spacecraft_velocities, spacecraft_timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
-
-            # Store information
-            if counter == 0:
-                positions = spacecraft_positions
-                velocities = spacecraft_velocities
-                timesteps = spacecraft_timesteps
-
-            else:
-                positions = np.hstack((positions, spacecraft_positions))
-                velocities = np.hstack((velocities, spacecraft_velocities))
+        # Resample trajectory for a fixed time-step delta t
+        positions, velocities, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
 
         # Compute aggregate fitness:
         chosen_fitness_function = FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty

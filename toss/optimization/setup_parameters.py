@@ -1,10 +1,12 @@
 # Core packages
 from math import pi
+import numpy as np
 
 # Load required modules
 from toss.utilities.load_default_cfg import load_default_cfg
 from toss.mesh.mesh_utility import create_mesh
 from toss.trajectory.equations_of_motion import setup_spin_axis
+from toss.fitness.fitness_function_utils import create_spherical_tensor_grid
 
 def setup_parameters():
     """Set up of required hyperparameters for the optimization scheme. 
@@ -54,5 +56,10 @@ def setup_parameters():
 
     # Create mesh of body:
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
+
+    # Setup initial boolean tensor representing the spherical grid approximation of the body's gravity field
+    args.problem.fixed_velocity = np.array([args.problem.sample_vx, args.problem.sample_vy, args.problem.sample_vz])
+    args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor = create_spherical_tensor_grid(args.problem.measurement_period, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.max_velocity_scaling_factor, args.problem.fixed_velocity)
+    
 
     return args
