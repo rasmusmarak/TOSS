@@ -121,15 +121,15 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         theta_points = theta_points[index_feasible_positions]
         phi_points = phi_points[index_feasible_positions]
 
-    # Compute ratio of visited points. 
+    # Compute coverage
+    # NOTE: 
+    #   - The coverage score is based on the current candidate trajectory.
+    #   - However, revisiting points on the tensor will not results in any gain. 
+    #     Thus we acknowledge previous spacecraft's trajectory for updating the tensor w.r.t the new candidate trajectory.
     if len(r_points)==0 or len(theta_points)==0 or len(phi_points)==0:
         # NOTE: (Special case) No valid positions along candidate trajectory. 
-        # Return fitness of previous visits instead (no new gain).
-        indices_previous_trajectory  =  np.where(bool_tensor == True)
-        n_previous_visits = indices_previous_trajectory[0].shape[0]
-        ratio_previous_visits = n_previous_visits / bool_tensor.size
-        sum_of_weights = np.sum(1/r[indices_previous_trajectory[0]])
-        fitness = ratio_previous_visits + sum_of_weights
+        # Return no coverage:
+        fitness = 0
         return fitness
     
     else: 
@@ -138,27 +138,24 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
         k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
 
-        # Create a new boolean tensor corresponding to the previous visits.
+        # Create a new boolean tensor corresponding to candidate trajectory.
         new_tensor = np.full((len(r), len(theta), len(phi)), False)
-        indices_previous_trajectory  =  np.where(bool_tensor == True)
-        new_tensor[indices_previous_trajectory[0], indices_previous_trajectory[1], indices_previous_trajectory[2]] = True 
-        
-        # Update the new tensor with the proposed candidate trajectory.
         new_tensor[i, j, k] = True
 
-        # Identify number of unique visits in the region of interest
-        indices_unique_visits = np.where(new_tensor == True)
-        n_unique_visits = indices_unique_visits[0].shape[0]
+        # Update the new tensor according to previously spacecraft trajectories to remove overlap in the new candidate trajectory.
+        indices_previous_visits  =  np.where(bool_tensor == True)
+        new_tensor[indices_previous_visits[0], indices_previous_visits[1], indices_previous_visits[2]] = False 
 
-        # Compute ratio of uniquely visited regions to the number of regions defined by the tensor.
-        ratio_unique_visits = n_unique_visits / bool_tensor.size
+        # Identify number of new visits in the region of interest
+        indices_new_visits = np.where(new_tensor == True)
 
         # Get weights corresponding to the uniquely visited regions. 
-        r_idx = indices_unique_visits[0] #np.concatenate((previous_visits[0], new_visits[0])) # unique_visits[0]
-        sum_of_weights = np.sum(1/r[r_idx])
+        weight_vector = 1/np.array(r)
+        normalization_factor = np.sum(weight_vector*len(theta)*len(phi))
+        normalized_weight_vector = weight_vector/normalization_factor
 
         # Return fitness
-        fitness = ratio_unique_visits + sum_of_weights
+        fitness = np.sum(normalized_weight_vector[indices_new_visits[0]])/(len(r)*len(theta)*len(phi))
         return fitness
 
 
@@ -246,7 +243,7 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
         r (np.ndarray): Array of r coordinates for each point defined on the spherical tensor.
         theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
         phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
-        bool_tensor (np.ndarray): Boolean array corresponding to each point defined on the spherical tensor.
+        bool_tensor (np.ndarray): Boolean tensor corresponding to each point defined on the spherical tensor (1=unvisited, 0=visited).
     """
     assert (time_step > 0)
     assert (radius_min > 0)
@@ -274,6 +271,7 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
     phi = np.linspace(-np.pi, np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined on [-pi, pi])
 
     # Create a boolean tensor with the same shape as the spherical meshgrid
+    # NOTE: Boolean Instruction:  False=Unvisited cell, True=visited cell
     bool_tensor = np.full((len(r), len(theta), len(phi)), False)
 
     return r, theta, phi, bool_tensor
