@@ -27,7 +27,7 @@ def test_large_random_sample():
     velocities = 2*np.random.random_sample((3,number_of_samples)) - 1
 
     # Compute ratio of visited points on the spherical meshgrid
-    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, radius_min, radius_max, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.tensor_weights)
+    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, radius_min, radius_max, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.weight_tensor)
 
     assert (coverage >= 0)
 
@@ -107,10 +107,10 @@ def test_perfect_ratio():
             rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
 
     # Setup initial boolean tensor representing the spherical grid approximation of the body's gravity field
-    tensor_grid_r, tensor_grid_theta, tensor_grid_phi, bool_tensor, tensor_weights = create_spherical_tensor_grid(time_step, radius_min, radius_max, max_velocity_scaling_factor, args.problem.fixed_velocity)
+    tensor_grid_r, tensor_grid_theta, tensor_grid_phi, bool_tensor, weight_tensor = create_spherical_tensor_grid(time_step, radius_min, radius_max, max_velocity_scaling_factor, args.problem.fixed_velocity)
 
     # Evaluate the coverage of visited points, where the positions are every point on the corresponding grid.
-    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, rotated_positions, fixed_velocity, timesteps, radius_min, radius_max, tensor_grid_r, tensor_grid_theta, tensor_grid_phi, bool_tensor, tensor_weights)
+    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, rotated_positions, fixed_velocity, timesteps, radius_min, radius_max, tensor_grid_r, tensor_grid_theta, tensor_grid_phi, bool_tensor, weight_tensor)
     assert np.isclose(coverage,1,rtol=1e-5, atol=1e-5)
 
 
@@ -133,7 +133,7 @@ def test_half_hemisphere():
     position = np.asarray(sphere2cart(args.problem.tensor_grid_r[0], args.problem.tensor_grid_theta[0], args.problem.tensor_grid_phi[9]))
     velocity = np.array([0, 0, 0])
     time = [0]
-    fitness = compute_space_coverage(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, position, velocity, time, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.tensor_weights)
+    fitness = compute_space_coverage(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, position, velocity, time, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.weight_tensor)
     assert np.isclose(fitness,0,rtol=1e-5, atol=1e-5)
 
     # Check coverage for a new position in the false-hemisphere (should add gain):
@@ -141,7 +141,7 @@ def test_half_hemisphere():
     velocity = np.array([0, 0, 0])
     time = [0]
     previous_fitness_with_gain = 0.0021804415692055984
-    fitness = compute_space_coverage(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, position, velocity, time, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.tensor_weights)
+    fitness = compute_space_coverage(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, position, velocity, time, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.weight_tensor)
     assert np.isclose(fitness,previous_fitness_with_gain,rtol=1e-5, atol=1e-5)
 
 
