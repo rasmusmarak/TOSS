@@ -134,26 +134,36 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         return fitness
     
     else: 
-        # Find the indices of the closest values in the meshgrid for each point using broadcasting.
+        # Find indices of the closest point on tensor to each position along the trajectory.
         i = np.argmin(np.abs(r[:, np.newaxis] - r_points), axis=0) # indices along r axis
         j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
         k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
 
-        # Create a new boolean tensor corresponding to candidate trajectory.
-        new_tensor = np.full((len(r), len(theta), len(phi)), False)
-        new_tensor[i, j, k] = True
+        # Define a tensor corresponding only to the new candidate trajectory
+        #   - True: if a point has been visited by candidate trajectory
+        #   - False: otherwise
+        candidate_tensor = np.full((len(r), len(theta), len(phi)), False)
+        candidate_tensor[i, j, k] = True
 
-        # Update the new tensor according to previously spacecraft trajectories to remove overlap in the new candidate trajectory.
-        indices_previous_visits  =  np.where(bool_tensor == True)
-        new_tensor[indices_previous_visits[0], indices_previous_visits[1], indices_previous_visits[2]] = False 
+        # Remove already visited points on candidate_tensor:
+        #   - True: if a point has only been visited by candidate trajectory
+        #   - False: if a point has been previously visited (and stored in bool_tensor)
+        candidate_tensor = np.logical_xor(candidate_tensor, bool_tensor)
 
-        # Identify number of new visits in the region of interest
-        indices_new_visits = np.where(new_tensor == True)
+        # Find the radial indices corresponding each visited point on the tensor.
+        #   Eg:  radii_indices = [0, 0, 0, 0, 1, 1, 4, 6, 6, 6]
+        # Which could corresponds to the radii: (NOTE: this is only an example)
+        #     0: r= 4000m,    1: r= 4200m
+        #     4: r= 4800m     6: r= 5000m
+        radii_indices = np.where(candidate_tensor == True)[0]
 
-        # Return fitness
-        fitness = np.sum(tensor_weights[indices_new_visits[0]])
+        # Return fitness as:
+        #   fitness = sum(w_i)    for i = set of points on tensor only visited by candidate trajectory.
+        # NOTE: 
+        #   tensor_weights: (N,1) array of weights corresponding to every possible radii on the spherical grid (tensor).
+        #   radii_indices: (M,1) array of indices corresponding to the radial components of each visited point on candidate tensor.
+        fitness = np.sum(tensor_weights[radii_indices])
         return fitness
-
 
 def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray) -> np.ndarray:
     """
