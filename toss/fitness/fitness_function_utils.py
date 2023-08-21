@@ -155,7 +155,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         normalized_weight_vector = weight_vector/normalization_factor
 
         # Return fitness
-        fitness = np.sum(normalized_weight_vector[indices_new_visits[0]])/(len(r)*len(theta)*len(phi))
+        fitness = np.sum(normalized_weight_vector[indices_new_visits[0]])
         return fitness
 
 
