@@ -27,7 +27,7 @@ def test_large_random_sample():
     velocities = 2*np.random.random_sample((3,number_of_samples)) - 1
 
     # Compute ratio of visited points on the spherical meshgrid
-    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, radius_min, radius_max, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
+    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, radius_min, radius_max, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.tensor_weights)
 
     assert (coverage >= 0)
 
