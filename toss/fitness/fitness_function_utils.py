@@ -148,7 +148,8 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         # Remove already visited points on candidate_tensor:
         #   - True: if a point has only been visited by candidate trajectory
         #   - False: if a point has been previously visited (and stored in bool_tensor)
-        candidate_tensor = np.logical_xor(candidate_tensor, bool_tensor)
+        # NOTE: we only have to compared the affected points on candidate tensor.
+        candidate_tensor[i, j, k] = np.logical_xor(candidate_tensor[i, j, k], bool_tensor[i, j, k])
 
         # Find the radial indices corresponding each visited point on the tensor.
         #   Eg:  radii_indices = [0, 0, 0, 0, 1, 1, 4, 6, 6, 6]
