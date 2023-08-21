@@ -51,7 +51,7 @@ def _compute_squared_distance(positions: np.ndarray, constant: float) -> np.ndar
     return np.sum(np.power(positions,2), axis=0) - constant**2
 
 
-def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray, tensor_weights: np.ndarray) -> float:
+def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray, weight_tensor: np.ndarray) -> float:
     """
     Given a set of positions on a candidate trajectory defined inside the 
     outer bounding sphere, we identify the points on the spherical grid that are 
@@ -77,7 +77,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
         phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
         bool_tensor (np.ndarray): Boolean tensor corresponding to each point defined on the spherical grid.
-        tensor_weights (np.ndarray): A vector of normalized weights corresponding to the domain of radial values defined on the spherical grid.
+        weight_tensor (np.ndarray): Array of normalized weights corresponding to each point defined on the spherical tensor.
 
     Returns:
         fitness (float): Aggregate coverage of the spherical tensor grid for a set of active trajectories (where coverage = ratio of visited points + weights). 
@@ -152,22 +152,14 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         # Remove already visited points on candidate_tensor:
         #   - True: if a point has only been visited by candidate trajectory
         #   - False: if a point has been previously visited (and stored in bool_tensor)
-        # NOTE: we only need to compare the affected points [i,j,k] on the candidate tensor.
-        candidate_tensor[i, j, k] = np.logical_xor(candidate_tensor[i, j, k], bool_tensor[i, j, k])
-
-        # Find the radial indices corresponding each visited point on the tensor.
-        #   Eg:  radii_indices = [0, 0, 0, 0, 1, 1, 4, 6, 6, 6]
-        # Which could corresponds to the radii: (NOTE: this is only an example)
-        #     0: r= 4000m,    1: r= 4200m
-        #     4: r= 4800m     6: r= 5000m
-        radii_indices = np.where(candidate_tensor == True)[0]
+        # NOTE: 
+        #   * We only need to compare the visited points [i,j,k] on the candidate tensor.
+        #   * We refer to this partial tensor as the reduced_candidate_tensor.
+        reduced_candidate_tensor = np.logical_xor(candidate_tensor[i, j, k], bool_tensor[i, j, k])
 
         # Return fitness as:
-        #   fitness = sum(w_i)    for i = set of points on tensor only visited by candidate trajectory.
-        # NOTE: 
-        #   tensor_weights: (N,1) array of weights corresponding to every possible radii on the spherical grid (tensor).
-        #   radii_indices: (M,1) array of indices corresponding to the radial components of each visited point on candidate tensor.
-        fitness = np.sum(tensor_weights[radii_indices])
+        #   fitness = sum_{i in I} (B_i * w_i)    for I = set of points on tensor only visited by candidate trajectory.
+        fitness = np.multiply(weight_tensor[i, j, k], reduced_candidate_tensor.astype("float")).sum()
         return fitness
 
 def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray) -> np.ndarray:
@@ -286,16 +278,17 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
     # NOTE: Boolean Instruction:  False=Unvisited cell, True=visited cell
     bool_tensor = np.full((len(r), len(theta), len(phi)), False)
 
-    # Get weights corresponding to each point on the tensor. 
-    # NOTE: 
-    #   Given the geometrical structure of the spherical grid,
-    #   we may simplify the weight tensor to a vector corresponding
-    #   to each possible radial value. 
+    # Define a tensor with individual normalized weights corresponding 
+    # to each point on the tensor. 
+    # NOTE: Each point i on meshgrid has a weight defined by its radial component: w_i = 1/r_i.
     weight_vector = 1/np.array(r)
-    normalization_factor = np.sum(weight_vector*len(theta)*len(phi))
-    tensor_weights = weight_vector/normalization_factor
+    weight_tensor = np.full((len(r), len(theta), len(phi)), 0, dtype=np.float64)
+    for i, weight in enumerate(weight_vector):
+        weight_tensor[i,:,:] += weight
+    normalizing_factor = weight_tensor.sum()
+    weight_tensor_normalized = weight_tensor/normalizing_factor
 
-    return r, theta, phi, bool_tensor, tensor_weights
+    return r, theta, phi, bool_tensor, weight_tensor_normalized
 
 
 def cart2sphere(x, y, z) -> tuple:
