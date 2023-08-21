@@ -53,12 +53,16 @@ def _compute_squared_distance(positions: np.ndarray, constant: float) -> np.ndar
 
 def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray, tensor_weights: np.ndarray) -> float:
     """
-    Given a set of posiions on the trajectory that are defined inside the 
-    outer bounding sphere, we identify the points that are the closest the given positions, 
-    and subsequently compute the ratio of visited points by the number of True values to the 
-    total number of subregions in the boolean array. The ratio is therefore based on both the historic
-    visits and the new set of candidate trajectories considered. Visiting a specific subregion of interest, 
-    as defined by the tensor, will only give gain to the objetive once.
+    Given a set of positions on a candidate trajectory defined inside the 
+    outer bounding sphere, we identify the points on the spherical grid that are 
+    closest to the trajectory positions, and subsequently compute the coverage score:
+        - score = sum_{i in I} (w_i_normalized), 
+        - I = set of points on the spherical grid visited by the candidate trajectory.
+    where w_i_normalized represent a normalized weight w_i for point i on the spherical grid.
+    The weight w_i = 1/r_i, where r_i is the radial component corresponding to point i.
+
+    NOTE: 
+        Revisiting any point on the spherical grid will not result in additional gain. (i.e: w=0)
 
     Args:
         number_of_spacecrafts (int): Number of spacecraft
@@ -148,7 +152,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         # Remove already visited points on candidate_tensor:
         #   - True: if a point has only been visited by candidate trajectory
         #   - False: if a point has been previously visited (and stored in bool_tensor)
-        # NOTE: we only have to compared the affected points on candidate tensor.
+        # NOTE: we only need to compare the affected points [i,j,k] on the candidate tensor.
         candidate_tensor[i, j, k] = np.logical_xor(candidate_tensor[i, j, k], bool_tensor[i, j, k])
 
         # Find the radial indices corresponding each visited point on the tensor.
