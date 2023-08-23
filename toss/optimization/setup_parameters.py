@@ -1,6 +1,7 @@
 # Core packages
 from math import pi
 import numpy as np
+import polyhedral_gravity as model
 
 # Load required modules
 from toss.utilities.load_default_cfg import load_default_cfg
@@ -44,22 +45,22 @@ def setup_parameters():
     # Load default constants value
     args = load_default_cfg()
 
-    # Setup additional body properties
-    args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = setup_spin_axis(args)
-
     # Setup additional problem properties
     args.problem.squared_volume_inner_bounding_sphere = (4/3) * pi * (args.problem.radius_inner_bounding_sphere**3)
     args.problem.squared_volume_outer_bounding_sphere = (4/3) * pi * (args.problem.radius_outer_bounding_sphere**3)
     args.problem.total_measurable_volume = args.problem.squared_volume_outer_bounding_sphere - args.problem.squared_volume_inner_bounding_sphere
     args.problem.maximal_measurement_sphere_volume = (4/3) * pi * (args.problem.maximal_measurement_sphere_radius**3)
 
-    # Create mesh of body:
+    # Setup additional body properties
+    args.body.spin_velocity = (2*pi)/args.body.spin_period
+    args.body.spin_axis = setup_spin_axis(args)
+
+    # Create mesh of body and polyhedral object:
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
+    args.mesh.evaluable = model.GravityEvaluable((args.mesh.vertices, args.mesh.faces), args.body.density)
 
     # Setup initial boolean tensor representing the spherical grid approximation of the body's gravity field
     args.problem.fixed_velocity = np.array([args.problem.sample_vx, args.problem.sample_vy, args.problem.sample_vz])
-    args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor = create_spherical_tensor_grid(args.problem.measurement_period, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.max_velocity_scaling_factor, args.problem.fixed_velocity)
+    args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.weight_tensor = create_spherical_tensor_grid(args.problem.measurement_period, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.max_velocity_scaling_factor, args.problem.fixed_velocity)
     
-
     return args
