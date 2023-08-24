@@ -4,6 +4,9 @@ mu = 665.666                            # Gravitational parameter for 67P/C-G.
 declination = 64                        # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
 right_ascension = 69                    # [degrees] https://sci.esa.int/web/rosetta/-/14615-comet-67p
 spin_period = 43416                     # 12.06h * 3600 [seconds] https://sci.esa.int/web/rosetta/-/14615-comet-67p
+spin_axis_x = 0
+spin_axis_y = 0
+spin_axis_z = 1
 
 [integrator]
 algorithm = 3                           # Integration algorithm, see:  "toss/Integrator.py".
