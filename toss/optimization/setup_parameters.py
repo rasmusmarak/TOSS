@@ -45,14 +45,6 @@ def setup_parameters():
     # Load default constants value
     args = load_default_cfg()
 
-    # Setup additional body properties
-    args.body.spin_velocity = (2*pi)/args.body.spin_period
-
-    if (args.body.spin_axis_x == None) and (args.body.spin_axis_y == None) and (args.body.spin_axis_z == None):
-        args.body.spin_axis = setup_spin_axis(args)
-    else:
-        args.body.spin_axis = np.array([args.body.spin_axis_x, args.body.spin_axis_y, args.body.spin_axis_z])
-
     # Setup additional problem properties
     args.problem.squared_volume_inner_bounding_sphere = (4/3) * pi * (args.problem.radius_inner_bounding_sphere**3)
     args.problem.squared_volume_outer_bounding_sphere = (4/3) * pi * (args.problem.radius_outer_bounding_sphere**3)
@@ -61,7 +53,10 @@ def setup_parameters():
 
     # Setup additional body properties
     args.body.spin_velocity = (2*pi)/args.body.spin_period
-    args.body.spin_axis = setup_spin_axis(args)
+    if (args.body.spin_axis_x != None) and (args.body.spin_axis_y != None) and (args.body.spin_axis_z != None):
+        args.body.spin_axis = np.array([args.body.spin_axis_x, args.body.spin_axis_y, args.body.spin_axis_z])
+    else:
+        args.body.spin_axis = setup_spin_axis(args)
 
     # Create mesh of body and polyhedral object:
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
