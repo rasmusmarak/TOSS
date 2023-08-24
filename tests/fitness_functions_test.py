@@ -155,3 +155,4 @@ def test_total_covered_volume():
     # Previous ratio
     previous_ratio = -4.338256930189303e-06
     assert np.isclose(volume_ratio,previous_ratio,rtol=1e-5, atol=1e-5)
+
