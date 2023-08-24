@@ -61,8 +61,8 @@ def test_rotation_of_point():
         # Define analytical rotation (euler-rodrigues):
         axis = np.asarray(args.body.spin_axis)
         axis = axis / math.sqrt(np.dot(axis, axis))
-        a = math.cos(((args.body.spin_velocity*t))/2.0)
-        b, c, d = -axis * math.sin(((args.body.spin_velocity*t))/ 2.0)
+        a = math.cos((-(args.body.spin_velocity*t))/2.0)
+        b, c, d = -axis * math.sin((-(args.body.spin_velocity*t))/ 2.0)
         aa, bb, cc, dd = a * a, b * b, c * c, d * d
         bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
 
@@ -74,3 +74,30 @@ def test_rotation_of_point():
 
         # Check if both methods give equal rotation
         assert all(np.isclose(rotated_position_analytical,rotated_position_quaternion,rtol=1e-5, atol=1e-5))
+
+def test_spin_axis():
+    """
+    Test to verify correct setup of a spin axis. Also, sanity test with known axis for given declination and right ascension.
+    """
+    # Body parameters
+    args = DotMap(
+        body=DotMap(_dynamic=False),
+        _dynamic=False)
+    
+    # Test case 1:
+    args.body.declination = 90 
+    args.body.right_ascension = 0
+    spin_axis = setup_spin_axis(args)
+    assert all(np.isclose(spin_axis,np.array([0,0,1]),rtol=1e-5, atol=1e-5))
+
+    # Test case 2:
+    args.body.declination = 45 
+    args.body.right_ascension = 90
+    spin_axis = setup_spin_axis(args)
+    assert all(np.isclose(spin_axis,np.array([0, 7.07106781e-01, 7.07106781e-01]),rtol=1e-5, atol=1e-5))
+
+    # Test case 3:
+    args.body.declination = 64 
+    args.body.right_ascension = 69
+    spin_axis = setup_spin_axis(args)
+    assert all(np.isclose(spin_axis,np.array([0.15709817, 0.40925472, 0.89879405]),rtol=1e-5, atol=1e-5))

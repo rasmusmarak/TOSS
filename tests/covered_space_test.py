@@ -144,6 +144,3 @@ def test_half_hemisphere():
     fitness = compute_space_coverage(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, position, velocity, time, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.weight_tensor)
     assert np.isclose(fitness,previous_fitness_with_gain,rtol=1e-5, atol=1e-5)
 
-
-
-    

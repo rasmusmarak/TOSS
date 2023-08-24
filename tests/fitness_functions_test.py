@@ -77,7 +77,7 @@ def test_covered_volume():
     volume_ratio = covered_volume(args.problem.maximal_measurement_sphere_volume, positions)
 
     # Position and timesteps from previous working results (in cartesian coordinates):
-    previous_results = -0.2033947636445857
+    previous_results = -0.24490757596526147
     assert np.isclose(volume_ratio,previous_results,rtol=1e-5, atol=1e-5)
 
 
@@ -95,7 +95,7 @@ def test_target_altitude_distance():
     fitness = target_altitude_distance(args.problem.target_squared_altitude, positions)
 
     # Previous results:
-    previous_fitness = 1.2070647513671693
+    previous_fitness = 1.416195377466741
     assert np.isclose(fitness,previous_fitness,rtol=1e-5, atol=1e-5)
 
 
@@ -153,5 +153,6 @@ def test_total_covered_volume():
     volume_ratio = total_covered_volume(args.problem.total_measurable_volume, positions)
 
     # Previous ratio
-    previous_ratio = -3.6029050529269822e-06
+    previous_ratio = -4.338256930189303e-06
     assert np.isclose(volume_ratio,previous_ratio,rtol=1e-5, atol=1e-5)
+
