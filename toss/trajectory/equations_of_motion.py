@@ -95,11 +95,11 @@ def compute_motion(t: float, x: np.ndarray, args) -> np.ndarray:
     return np.concatenate((kx, kv))
 
 
-def rotate_point(t, x: np.ndarray, spin_axis: np.ndarray, spin_velocity: float) -> np.ndarray:
+def rotate_point(t: float or list or np.ndarray, x: np.ndarray, spin_axis: np.ndarray, spin_velocity: float) -> np.ndarray:
     """ Rotates position x according to the analyzed body's real rotation.
-        The rotation is made in the 3D cartesian inertial body frame.
+        The rotation is made in the body-fixed frame.
     Args:
-        t (float): Time value in seconds when position x occurs.
+        t (float or list or np.ndarray): Time value in seconds when position x occurs.
         x (np.ndarray): Position of satellite expressed in the 3D cartesian coordinates.
         spin_axis (np.ndarray): The axis around which the body rotates.
         spin_velocity (float): Angular velocity of the body's rotation.
@@ -112,7 +112,7 @@ def rotate_point(t, x: np.ndarray, spin_axis: np.ndarray, spin_velocity: float) 
         x = x.reshape(3, 1)
         angles = [-spin_velocity*t]
     else:
-        angles = -spin_velocity*np.array(t)
+        angles = -spin_velocity*np.asarray(t)
 
     # Create an array of quaternions for rotations
     rotations = np.array([quaternion.from_rotation_vector(angle * spin_axis) for angle in angles])
