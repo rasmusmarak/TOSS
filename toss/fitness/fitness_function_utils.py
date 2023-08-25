@@ -113,17 +113,12 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         # Convert the positions along the trajectory to spherical coordinates
         r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
 
-        # Remove points outside measurement zone (i.e outside outer-bounding sphere)
-        index_feasible_positions = np.where(r_points <= radius_max) # Addition of noise to cover approximation error
-        r_points = r_points[index_feasible_positions]
-        theta_points = theta_points[index_feasible_positions]
-        phi_points = phi_points[index_feasible_positions]
-
-        # Remove points inside safety-radius (i.e inside inner-bounding sphere)
-        index_feasible_positions = np.where(r_points >= radius_min) # Addition of noise to cover approximation error
-        r_points = r_points[index_feasible_positions]
-        theta_points = theta_points[index_feasible_positions]
-        phi_points = phi_points[index_feasible_positions]
+        # Remove points outside feasible region:
+        # NOTE: feasible region = inside outer-bounding sphere and outside inner-bounding sphere)
+        indices_feasible_positions = np.where(np.logical_and(r_points <= radius_max, r_points >= radius_min))
+        r_points = r_points[indices_feasible_positions]
+        theta_points = theta_points[indices_feasible_positions]
+        phi_points = phi_points[indices_feasible_positions]
         
     # Compute coverage
     # NOTE: 
