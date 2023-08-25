@@ -120,11 +120,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         theta_points = theta_points[indices_feasible_positions]
         phi_points = phi_points[indices_feasible_positions]
         
-    # Compute coverage
-    # NOTE: 
-    #   - The coverage score is based on the current candidate trajectory.
-    #   - However, revisiting points on the tensor will not results in any gain. 
-    #     Thus we acknowledge previous spacecraft's trajectory for updating the tensor w.r.t the new candidate trajectory.
+    
     if len(r_points)==0 or len(theta_points)==0 or len(phi_points)==0:
         # NOTE: (Special case) No valid positions along candidate trajectory. 
         # Return no coverage:
@@ -137,7 +133,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
         k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
 
-        # Define a tensor corresponding only to the new candidate trajectory
+        # Define a tensor corresponding to the new candidate trajectory
         #   - True: if a point has been visited by candidate trajectory
         #   - False: otherwise
         candidate_tensor = np.full((len(r), len(theta), len(phi)), False)
@@ -146,7 +142,9 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
 
         # Return fitness as:
         #   fitness = sum_{i in I} (w_i)    for I = set of points on tensor visited by candidate trajectory.
-        # NOTE: Tensor points that have previously been visited are weights equal to zero. 
+        # NOTE: 
+        #   Tensor points that have previously been visited have weights equal to zero,
+        #   and consequently does not contribute to the fitness score.
         fitness = fitness = weight_tensor[indices_candidate_visits].sum()
         return fitness
 
@@ -192,26 +190,20 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
     # Convert the positions along the trajectory to spherical coordinates
     r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
 
-    # Remove points outside measurement zone (i.e outside outer-bounding sphere)
-    index_feasible_positions = np.where(r_points <= radius_max) # Addition of noise to cover approximation error
-    r_points = r_points[index_feasible_positions]
-    theta_points = theta_points[index_feasible_positions]
-    phi_points = phi_points[index_feasible_positions]
+    # Remove points outside feasible region:
+    # NOTE: feasible region = inside outer-bounding sphere and outside inner-bounding sphere)
+    indices_feasible_positions = np.where(np.logical_and(r_points <= radius_max, r_points >= radius_min))
+    r_points = r_points[indices_feasible_positions]
+    theta_points = theta_points[indices_feasible_positions]
+    phi_points = phi_points[indices_feasible_positions]
 
-    # Remove points inside safety-radius (i.e inside inner-bounding sphere)
-    index_feasible_positions = np.where(r_points >= radius_min) # Addition of noise to cover approximation error
-    r_points = r_points[index_feasible_positions]
-    theta_points = theta_points[index_feasible_positions]
-    phi_points = phi_points[index_feasible_positions]
-
-    # Update and return boolean tensory given information on the new trajectory
     if len(r_points)>0 and len(theta_points)>0 and len(phi_points)>0:
-        # Find the indices of the closest values in the meshgrid for each point using broadcasting
-        i = np.argmin(np.abs(r[:, np.newaxis] - r_points), axis=0) # indices along r axis
-        j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0) # indices along theta axis
-        k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
+        # Find the indices of the closest values in the meshgrid for each position using broadcasting
+        i = np.argmin(np.abs(r[:, np.newaxis] - r_points), axis=0)
+        j = np.argmin(np.abs(theta[:, np.newaxis] - theta_points), axis=0)
+        k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0)
 
-        # Update tensor with information on new trajectory using advanced indexing
+        # Update tensor with information on new trajectory
         weight_tensor[i, j, k] = 0
     return weight_tensor
 
