@@ -148,6 +148,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         #   - False: otherwise
         candidate_tensor = np.full((len(r), len(theta), len(phi)), False)
         candidate_tensor[i, j, k] = True
+        indices_active_grid_points = np.where(candidate_tensor==True)
 
         # Remove already visited points on candidate_tensor:
         #   - True: if a point has only been visited by candidate trajectory
@@ -155,11 +156,11 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         # NOTE: 
         #   * We only need to compare the visited points [i,j,k] on the candidate tensor.
         #   * We refer to this partial tensor as the reduced_candidate_tensor.
-        reduced_candidate_tensor = np.logical_xor(candidate_tensor[i, j, k], bool_tensor[i, j, k])
+        reduced_candidate_tensor = np.logical_xor(candidate_tensor[indices_active_grid_points], bool_tensor[indices_active_grid_points])
 
         # Return fitness as:
         #   fitness = sum_{i in I} (B_i * w_i)    for I = set of points on tensor only visited by candidate trajectory.
-        fitness = np.multiply(weight_tensor[i, j, k], reduced_candidate_tensor.astype("float")).sum()
+        fitness = np.multiply(weight_tensor[indices_active_grid_points], reduced_candidate_tensor.astype("float")).sum()
         return fitness
 
 def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray) -> np.ndarray:
