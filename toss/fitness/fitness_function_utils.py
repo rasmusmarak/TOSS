@@ -51,7 +51,7 @@ def _compute_squared_distance(positions: np.ndarray, constant: float) -> np.ndar
     return np.sum(np.power(positions,2), axis=0) - constant**2
 
 
-def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray, weight_tensor: np.ndarray) -> float:
+def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, weight_tensor: np.ndarray) -> float:
     """
     Given a set of positions on a candidate trajectory defined inside the 
     outer bounding sphere, we identify the points on the spherical grid that are 
@@ -76,7 +76,6 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         r (np.ndarray): Array of r coordinates for each point defined on the spherical tensor.
         theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
         phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
-        bool_tensor (np.ndarray): Boolean tensor corresponding to each point defined on the spherical grid.
         weight_tensor (np.ndarray): Array of normalized weights corresponding to each point defined on the spherical tensor.
 
     Returns:
@@ -125,7 +124,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         r_points = r_points[index_feasible_positions]
         theta_points = theta_points[index_feasible_positions]
         phi_points = phi_points[index_feasible_positions]
-
+        
     # Compute coverage
     # NOTE: 
     #   - The coverage score is based on the current candidate trajectory.
@@ -148,22 +147,15 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         #   - False: otherwise
         candidate_tensor = np.full((len(r), len(theta), len(phi)), False)
         candidate_tensor[i, j, k] = True
-        indices_active_grid_points = np.where(candidate_tensor==True)
-
-        # Remove already visited points on candidate_tensor:
-        #   - True: if a point has only been visited by candidate trajectory
-        #   - False: if a point has been previously visited (and stored in bool_tensor)
-        # NOTE: 
-        #   * We only need to compare the visited points [i,j,k] on the candidate tensor.
-        #   * We refer to this partial tensor as the reduced_candidate_tensor.
-        reduced_candidate_tensor = np.logical_xor(candidate_tensor[indices_active_grid_points], bool_tensor[indices_active_grid_points])
+        indices_candidate_visits = np.where(candidate_tensor)
 
         # Return fitness as:
-        #   fitness = sum_{i in I} (B_i * w_i)    for I = set of points on tensor only visited by candidate trajectory.
-        fitness = np.multiply(weight_tensor[indices_active_grid_points], reduced_candidate_tensor.astype("float")).sum()
+        #   fitness = sum_{i in I} (w_i)    for I = set of points on tensor visited by candidate trajectory.
+        # NOTE: Tensor points that have previously been visited are weights equal to zero. 
+        fitness = fitness = weight_tensor[indices_candidate_visits].sum()
         return fitness
 
-def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, bool_tensor: np.ndarray) -> np.ndarray:
+def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, weight_tensor: np.ndarray) -> np.ndarray:
     """
     The function adjusts the trajectory for the body's sidereal rotation, identifies the 
     positions within the region of interest, matches these positions to the closest points on the
@@ -181,10 +173,10 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
         r (np.ndarray): Array of r coordinates for each point defined on the spherical tensor.
         theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
         phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
-        bool_tensor (np.ndarray): Boolean tensor corresponding to each point defined on the spherical grid.
+        weight_tensor (np.ndarray): Array of normalized weights corresponding to each point defined on the spherical tensor.
 
     Returns:
-        bool_tensor (np.ndarray): Updated boolean tensor corresponding to each point defined on the spherical grid.
+        weight_tensor (np.ndarray): Updated array of normalized weights. Visited points are now equal to zero.
     """
     # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accrdingly
     rotated_positions = None
@@ -225,11 +217,11 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
         k = np.argmin(np.abs(phi[:, np.newaxis] - phi_points), axis=0) # indices along phi axis
 
         # Update tensor with information on new trajectory using advanced indexing
-        bool_tensor[i, j, k] = True
-    return bool_tensor
+        weight_tensor[i, j, k] = 0
+    return weight_tensor
 
 
-def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: float, max_velocity_scaling_factor: float, fixed_velocity: np.ndarray) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: float, max_velocity_scaling_factor: float, fixed_velocity: np.ndarray) -> Union[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Generates a number of points in each spherical axis, which together defines
     a spherical tensor grid that satisfies the Courant–Friedrichs–Lewy condition.
@@ -247,8 +239,7 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
         r (np.ndarray): Array of r coordinates for each point defined on the spherical tensor.
         theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
         phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
-        bool_tensor (np.ndarray): Boolean tensor corresponding to each point defined on the spherical tensor (1=unvisited, 0=visited).
-        tensor_weights (np.ndarray): A vector of normalized weights corresponding to the domain of radial values defined on the spherical grid.
+        weight_tensor_normalized (np.ndarray): Array of normalized weights corresponding to each point defined on the spherical tensor.
     """
     assert (time_step > 0)
     assert (radius_min > 0)
@@ -275,10 +266,6 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
     theta = np.linspace(-np.pi/2, np.pi/2, int(theta_steps)) # Number of evenly spaced points along the polar angle/elevation (defined on [-pi/2, pi/2])
     phi = np.linspace(-np.pi, np.pi, int(phi_steps)) # Number of evenly spaced points along the azimuthal angle (defined on [-pi, pi])
 
-    # Create a boolean tensor with the same shape as the spherical meshgrid
-    # NOTE: Boolean Instruction:  False=Unvisited cell, True=visited cell
-    bool_tensor = np.full((len(r), len(theta), len(phi)), False)
-
     # Define a tensor with individual normalized weights corresponding 
     # to each point on the tensor. 
     # NOTE: Each point i on meshgrid has a weight defined by its radial component: w_i = 1/r_i.
@@ -289,7 +276,7 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
     normalizing_factor = weight_tensor.sum()
     weight_tensor_normalized = weight_tensor/normalizing_factor
 
-    return r, theta, phi, bool_tensor, weight_tensor_normalized
+    return r, theta, phi, weight_tensor_normalized
 
 
 def cart2sphere(x, y, z) -> tuple:

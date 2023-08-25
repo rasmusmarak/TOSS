@@ -5,6 +5,7 @@ import pstats
 import time
 import numpy as np
 
+
 # Load required modules
 from toss.optimization.udp_initial_condition import udp_initial_condition
 from toss.optimization.setup_parameters import setup_parameters
@@ -13,6 +14,9 @@ from toss.fitness.fitness_function_utils import compute_space_coverage, update_s
 from toss.trajectory.compute_trajectory import compute_trajectory
 from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
 from toss.trajectory.equations_of_motion import compute_motion
+
+import logging
+logging.basicConfig(level=logging.CRITICAL)
 
 
 def load_udp(args, initial_state, lower_bounds, upper_bounds):
@@ -137,7 +141,7 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
         positions, velocities, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
         
         # Update boolean tensor (using trajectory resulting from champion chromosome)
-        args.problem.bool_tensor = update_spherical_tensor_grid(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor)
+        args.problem.bool_tensor = update_spherical_tensor_grid(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.weight_tensor)
 
         # Store champion information
         champion_f_list.append(champion_f)
