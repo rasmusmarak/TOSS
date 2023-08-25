@@ -6,7 +6,7 @@ from math import pi, radians
 import polyhedral_gravity as model
 
 # For computing rotations of orbits
-from pyquaternion import Quaternion
+import quaternion
 
 
 def setup_spin_axis(args):
@@ -95,7 +95,7 @@ def compute_motion(t: float, x: np.ndarray, args) -> np.ndarray:
     return np.concatenate((kx, kv))
 
 
-def rotate_point(t: float, x: np.ndarray, spin_axis: np.ndarray, spin_velocity: float) -> np.ndarray:
+def rotate_point(t, x: np.ndarray, spin_axis: np.ndarray, spin_velocity: float) -> np.ndarray:
     """ Rotates position x according to the analyzed body's real rotation.
         The rotation is made in the 3D cartesian inertial body frame.
     Args:
@@ -108,11 +108,27 @@ def rotate_point(t: float, x: np.ndarray, spin_axis: np.ndarray, spin_velocity: 
         x_rotated (np.ndarray): Rotated position of satellite expressed in the 3D cartesian coordinates.
     """
 
-    # Get Quaternion object for rotation around spin axis
-    q_rot = Quaternion(axis=spin_axis, angle=-(spin_velocity*t))
-    
-    # Rotate satellite position using q_rot
-    x_rotated = q_rot.rotate(x)
+    if x.ndim == 1:  # Handle single position case
+        x = x.reshape(3, 1)
+        angles = [-spin_velocity*t]
+    else:
+        angles = -spin_velocity*np.array(t)
 
-    return np.array(x_rotated)
+    # Create an array of quaternions for rotations
+    rotations = np.array([quaternion.from_rotation_vector(angle * spin_axis) for angle in angles])
+    
+    # Convert positions array to quaternion objects
+    positions_quat = np.array([quaternion.quaternion(*pos) for pos in x.T])
+    
+    # Perform quaternion rotations element-wise
+    rotated_positions_quat = rotations * positions_quat * rotations.conj()
+
+    # Convert rotated quaternion positions back to arrays
+    rotated_positions = np.array([quat.vec for quat in rotated_positions_quat]).T
+
+    if rotated_positions.ndim == 1:  # Handle single position case
+        return x.reshape(3)
+    else:
+        return rotated_positions
+
 
