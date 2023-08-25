@@ -81,44 +81,35 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
     Returns:
         fitness (float): Aggregate coverage of the spherical tensor grid for a set of active trajectories (where coverage = ratio of visited points + weights). 
     """
+    if positions.ndim == 0:
+        # NOTE: (Special case) No give positions. 
+        # Return no coverage:
+        fitness = 0
+        return fitness
+    
+    elif positions.ndim == 1:
+         # Reshape for compatibility with rotation and coordinate transformation below.
+         positions.reshape(3,1)
+    
+    if number_of_spacecrafts > 1:
+        # Concatenate timesteps in case of multiple spacecraft
+        timesteps = list(timesteps)*number_of_spacecrafts
+
     # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accordingly.
-    rotated_positions = None
+    rotated_positions = rotate_point(timesteps, positions, spin_axis, spin_velocity)
 
-    # Check if only given a single position (Special case for tests).
-    if positions.ndim == 1:
-        rotated_positions = rotate_point(timesteps[0], positions, spin_axis, spin_velocity)
-        r_points, theta_points, phi_points = cart2sphere(rotated_positions[0], rotated_positions[1], rotated_positions[2])
+    # Convert the positions along the trajectory to spherical coordinates
+    r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
+    r_points = np.asarray(r_points)
+    theta_points = np.asarray(theta_points)
+    phi_points = np.asarray(phi_points)
 
-        if (r_points > radius_max) or (r_points < radius_min):
-            r_points = []
-        else: 
-            r_points = [r_points]
-            theta_points = [theta_points]
-            phi_points = [phi_points]
-
-    else:
-        pos = np.array_split(positions, number_of_spacecrafts, axis=1)
-        for counter, pos_arr in enumerate(pos):
-
-            rot_pos_arr = np.empty((pos_arr.shape))
-
-            for col in range(0,len(pos_arr[0,:])):
-                rot_pos_arr[:,col] = rotate_point(timesteps[col], pos_arr[:,col], spin_axis, spin_velocity)
-
-            if counter == 0:
-                rotated_positions = rot_pos_arr
-            else:
-                rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
-
-        # Convert the positions along the trajectory to spherical coordinates
-        r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
-
-        # Remove points outside feasible region:
-        # NOTE: feasible region = inside outer-bounding sphere and outside inner-bounding sphere)
-        indices_feasible_positions = np.where(np.logical_and(r_points <= radius_max, r_points >= radius_min))
-        r_points = r_points[indices_feasible_positions]
-        theta_points = theta_points[indices_feasible_positions]
-        phi_points = phi_points[indices_feasible_positions]
+    # Remove points outside feasible region:
+    # NOTE: feasible region = inside outer-bounding sphere and outside inner-bounding sphere)
+    indices_feasible_positions = np.where(np.logical_and(r_points <= radius_max, r_points >= radius_min))
+    r_points = r_points[indices_feasible_positions]
+    theta_points = theta_points[indices_feasible_positions]
+    phi_points = phi_points[indices_feasible_positions]
         
     
     if len(r_points)==0 or len(theta_points)==0 or len(phi_points)==0:
@@ -171,21 +162,10 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
     Returns:
         weight_tensor (np.ndarray): Updated array of normalized weights. Visited points are now equal to zero.
     """
-    # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accrdingly
-    rotated_positions = None
-    
-    pos = np.array_split(positions, number_of_spacecrafts, axis=1)
-    for counter, pos_arr in enumerate(pos):
-
-        rot_pos_arr = np.empty((pos_arr.shape))
-
-        for col in range(0,len(pos_arr[0,:])):
-            rot_pos_arr[:,col] = rotate_point(timesteps[col], pos_arr[:,col], spin_axis, spin_velocity)
-
-        if counter == 0:
-            rotated_positions = rot_pos_arr
-        else:
-            rotated_positions = np.hstack((rotated_positions, rot_pos_arr))
+    # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accordingly.
+    if number_of_spacecrafts > 1:
+        timesteps = list(timesteps)*number_of_spacecrafts
+    rotated_positions = rotate_point(timesteps, positions, spin_axis, spin_velocity)
 
     # Convert the positions along the trajectory to spherical coordinates
     r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
