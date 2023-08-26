@@ -18,7 +18,7 @@ def test_large_random_sample():
     radius_max = 10
 
     # Define a list of times corresponding to each position
-    timesteps = np.arange(0, number_of_samples+1, 1)
+    timesteps = np.arange(0, number_of_samples, 1)
 
     # Generate random sample of points defined on [radius_min, radius_max]
     positions = (radius_max)*np.random.random_sample((3,number_of_samples)) + (radius_min/2)
@@ -44,7 +44,7 @@ def test_perfect_ratio():
     
     # Define a list of times corresponding to each position
     number_of_samples = 1000000 # choose large number of samples to guarantee that we cover all positions. 
-    timesteps = np.arange(0, number_of_samples+1, 1)
+    timesteps = np.arange(0, number_of_samples, 1)
 
     # Set radius boundaries:
     radius_min = 2
@@ -91,14 +91,15 @@ def test_perfect_ratio():
     x_pos, y_pos, z_pos = sphere2cart(array_of_spherical_coordinates[0,:], array_of_spherical_coordinates[1,:], array_of_spherical_coordinates[2,:])
     positions = np.vstack((x_pos,y_pos,z_pos))
 
+    re_sized_timestep = timesteps[0:positions.shape[1]]
     # Rotate each position backwards to counteract the rotation made to simulate a rotating gravity field when computing coverage. 
-    rotated_positions = rotate_point(-timesteps, positions, args.body.spin_axis, args.body.spin_velocity, None)
+    rotated_positions = rotate_point(-re_sized_timestep, positions, args.body.spin_axis, args.body.spin_velocity, None)
 
     # Setup initial boolean tensor representing the spherical grid approximation of the body's gravity field
-    tensor_grid_r, tensor_grid_theta, tensor_grid_phi, bool_tensor, weight_tensor = create_spherical_tensor_grid(time_step, radius_min, radius_max, max_velocity_scaling_factor, args.problem.fixed_velocity)
+    tensor_grid_r, tensor_grid_theta, tensor_grid_phi, weight_tensor = create_spherical_tensor_grid(time_step, radius_min, radius_max, max_velocity_scaling_factor, args.problem.fixed_velocity)
 
     # Evaluate the coverage of visited points, where the positions are every point on the corresponding grid.
-    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, rotated_positions, fixed_velocity, timesteps, radius_min, radius_max, tensor_grid_r, tensor_grid_theta, tensor_grid_phi, weight_tensor, None)
+    coverage = compute_space_coverage(number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, rotated_positions, fixed_velocity, re_sized_timestep, radius_min, radius_max, tensor_grid_r, tensor_grid_theta, tensor_grid_phi, weight_tensor, None)
     assert np.isclose(coverage,1,rtol=1e-5, atol=1e-5)
 
 
@@ -115,20 +116,19 @@ def test_half_hemisphere():
 
     # Redefine the boolean tensor with new boolean-hemisphere structure as detailed above.
     indices_phi = np.arange(int((args.problem.tensor_grid_phi.shape[0]-1)/2), (args.problem.tensor_grid_phi.shape[0]), 1)
-    args.problem.bool_tensor[:, :, indices_phi] = True
+    args.problem.weight_tensor[:, :, indices_phi] = 0
 
     # Check coverage for a new position in the true-hemisphere (should not add gain):
     position = np.asarray(sphere2cart(args.problem.tensor_grid_r[0], args.problem.tensor_grid_theta[0], args.problem.tensor_grid_phi[9]))
     velocity = np.array([0, 0, 0])
-    time = [0]
-    fitness = compute_space_coverage(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, position, velocity, time, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.weight_tensor, None)
+    time = 0
+    fitness = compute_space_coverage(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, position, velocity, time, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.weight_tensor, None)
     assert np.isclose(fitness,0,rtol=1e-5, atol=1e-5)
 
     # Check coverage for a new position in the false-hemisphere (should add gain):
     position = np.asarray(sphere2cart(args.problem.tensor_grid_r[0], args.problem.tensor_grid_theta[0], args.problem.tensor_grid_phi[6]))
     velocity = np.array([0, 0, 0])
-    time = [0]
+    time = 0
     previous_fitness_with_gain = 0.0021804415692055984
-    fitness = compute_space_coverage(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, position, velocity, time, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor, args.problem.weight_tensor, None)
+    fitness = compute_space_coverage(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, position, velocity, time, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.weight_tensor, None)
     assert np.isclose(fitness,previous_fitness_with_gain,rtol=1e-5, atol=1e-5)
-
