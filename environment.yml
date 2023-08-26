@@ -10,7 +10,7 @@ dependencies:
   - matplotlib
   - panel
   - pykep
-  - pyquaternion
+  - quaternion
   - dotmap
   - pytest
   - python==3.8.15
