@@ -141,7 +141,7 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
         positions, velocities, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
         
         # Update boolean tensor (using trajectory resulting from champion chromosome)
-        args.problem.bool_tensor = update_spherical_tensor_grid(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.weight_tensor)
+        args.problem.bool_tensor = update_spherical_tensor_grid(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.weight_tensor, args.body.quaternion_rotation_objects)
 
         # Store champion information
         champion_f_list.append(champion_f)

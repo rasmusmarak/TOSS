@@ -84,7 +84,7 @@ def compute_motion(t: float, x: np.ndarray, args) -> np.ndarray:
     position = x[0:3]
 
     if args.problem.activate_rotation:
-        rotated_position = rotate_point(t, x[0:3], args.body.spin_axis, args.body.spin_velocity)
+        rotated_position = rotate_point(t, x[0:3], args.body.spin_axis, args.body.spin_velocity, None)
         position = rotated_position
 
     a = compute_acceleration(position, args)
@@ -95,7 +95,7 @@ def compute_motion(t: float, x: np.ndarray, args) -> np.ndarray:
     return np.concatenate((kx, kv))
 
 
-def rotate_point(t: float or list or np.ndarray, x: np.ndarray, spin_axis: np.ndarray, spin_velocity: float) -> np.ndarray:
+def rotate_point(t: float or list or np.ndarray, x: np.ndarray, spin_axis: np.ndarray, spin_velocity: float, quaternion_objects: np.ndarray or None) -> np.ndarray:
     """ Rotates position x according to the analyzed body's real rotation.
         The rotation is made in the body-fixed frame.
     Args:
@@ -103,20 +103,23 @@ def rotate_point(t: float or list or np.ndarray, x: np.ndarray, spin_axis: np.nd
         x (np.ndarray): Position of satellite expressed in the 3D cartesian coordinates.
         spin_axis (np.ndarray): The axis around which the body rotates.
         spin_velocity (float): Angular velocity of the body's rotation.
+        quaternion_objects (np.ndarray or None): Prepared quaternion objects for rotating complete trajetcory using predetermined angles.
         
     Returns:
         x_rotated (np.ndarray): Rotated position of satellite expressed in the 3D cartesian coordinates.
     """
+    if quaternion_objects == None:
+        if x.ndim == 1:  # Handle single position case
+            x = x.reshape(3, 1)
+            angles = [-spin_velocity*t]
+        else:
+            angles = -spin_velocity*np.asarray(t)
 
-    if x.ndim == 1:  # Handle single position case
-        x = x.reshape(3, 1)
-        angles = [-spin_velocity*t]
+        # Create an array of quaternion objects for rotations
+        rotations = np.array([quaternion.from_rotation_vector(angle * spin_axis) for angle in angles])
     else:
-        angles = -spin_velocity*np.asarray(t)
-
-    # Create an array of quaternions for rotations
-    rotations = np.array([quaternion.from_rotation_vector(angle * spin_axis) for angle in angles])
-    
+        rotations = quaternion_objects
+ 
     # Convert positions array to quaternion objects
     positions_quat = np.array([quaternion.quaternion(*pos) for pos in x.T])
     
@@ -125,6 +128,7 @@ def rotate_point(t: float or list or np.ndarray, x: np.ndarray, spin_axis: np.nd
 
     # Convert rotated quaternion positions back to arrays
     rotated_positions = np.array([quat.vec for quat in rotated_positions_quat]).T
+
 
     if rotated_positions.ndim == 1:  # Handle single position case
         return x.reshape(3)

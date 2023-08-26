@@ -51,7 +51,7 @@ def _compute_squared_distance(positions: np.ndarray, constant: float) -> np.ndar
     return np.sum(np.power(positions,2), axis=0) - constant**2
 
 
-def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, weight_tensor: np.ndarray) -> float:
+def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, weight_tensor: np.ndarray, quaternion_objects: np.ndarray or None) -> float:
     """
     Given a set of positions on a candidate trajectory defined inside the 
     outer bounding sphere, we identify the points on the spherical grid that are 
@@ -77,6 +77,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
         phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
         weight_tensor (np.ndarray): Array of normalized weights corresponding to each point defined on the spherical tensor.
+        quaternion_objects (np.ndarray or None): Prepared quaternion objects for rotating complete trajetcory using predetermined angles.
 
     Returns:
         fitness (float): Aggregate coverage of the spherical tensor grid for a set of active trajectories (where coverage = ratio of visited points + weights). 
@@ -96,7 +97,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         timesteps = list(timesteps)*number_of_spacecrafts
 
     # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accordingly.
-    rotated_positions = rotate_point(timesteps, positions, spin_axis, spin_velocity)
+    rotated_positions = rotate_point(timesteps, positions, spin_axis, spin_velocity, quaternion_objects)
 
     # Convert the positions along the trajectory to spherical coordinates
     r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
@@ -139,7 +140,7 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         fitness = fitness = weight_tensor[indices_candidate_visits].sum()
         return fitness
 
-def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, weight_tensor: np.ndarray) -> np.ndarray:
+def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarray, spin_velocity: float, positions: np.ndarray, velocities: np.ndarray, timesteps: np.ndarray, radius_min: float, radius_max: float, r: np.ndarray, theta: np.ndarray, phi: np.ndarray, weight_tensor: np.ndarray, quaternion_objects: np.ndarray or None) -> np.ndarray:
     """
     The function adjusts the trajectory for the body's sidereal rotation, identifies the 
     positions within the region of interest, matches these positions to the closest points on the
@@ -158,6 +159,7 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
         theta (np.ndarray): Array of theta coordinates for each point defined on the spherical tensor.
         phi (np.ndarray): Array of phi coordinates for each point defined on the spherical tensor.
         weight_tensor (np.ndarray): Array of normalized weights corresponding to each point defined on the spherical tensor.
+        quaternion_objects (np.ndarray or None): Prepared quaternion objects for rotating complete trajetcory using predetermined angles.
 
     Returns:
         weight_tensor (np.ndarray): Updated array of normalized weights. Visited points are now equal to zero.
@@ -165,7 +167,7 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
     # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accordingly.
     if number_of_spacecrafts > 1:
         timesteps = list(timesteps)*number_of_spacecrafts
-    rotated_positions = rotate_point(timesteps, positions, spin_axis, spin_velocity)
+    rotated_positions = rotate_point(timesteps, positions, spin_axis, spin_velocity, quaternion_objects)
 
     # Convert the positions along the trajectory to spherical coordinates
     r_points, theta_points, phi_points = cart2sphere(rotated_positions[0,:], rotated_positions[1,:], rotated_positions[2,:])
