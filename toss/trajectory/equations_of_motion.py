@@ -55,6 +55,22 @@ def compute_acceleration(x: np.ndarray, args) -> np.ndarray:
     Returns:
         (np.ndarray): The acceleration at the given point x with respect to the mesh (celestial body).
     """
+
+    #x = np.asarray([x[0][0], x[1][0], x[2][0]], dtype=np.float64)
+    #x_flat = np.ravel(x)
+    #x_new = np.array([x_flat[0], x_flat[1], x_flat[2]], dtype=np.float64)
+    #r_sq = np.dot(np.transpose(x_new),x_new)
+
+    #if r_sq > 1e12:
+        # Estimate gravitational attraction as point source to avoid numeric instability for polyhedral model at great distances (>1000 km),
+    #    m = 1e13
+    #    g = 6.67 * 10**(-11)
+    #    theta = np.arctan(x_new[1]/x_new[0], dtype=np.float64)
+    #    phi = np.arccos(x_new[2]/ r_sq**(1/2), dtype=np.float64)
+    #    c = g*m/r_sq
+    #    a = [c*np.cos(theta), c*np.sin(theta), c*np.cos(phi)]
+
+    #else:
     _, a, _ = args.mesh.evaluable(x, args.integrator.parallel_acceleration_computation)
     return -np.array(a)
 
@@ -81,14 +97,21 @@ def compute_motion(t: float, x: np.ndarray, args) -> np.ndarray:
     Returns:
         (np.ndarray): K vector used for computing state at the following time step.
     """
-    position = x[0:3]
 
+    # Aound variables in state vector to match the integrators tolerance level to avoid overflow causing numeric instability.
+    x = np.around(x, decimals=int(-np.log10(args.integrator.atol)))
+
+    # Adjust positions for chosen reference frame
     if args.problem.activate_rotation:
         rotated_position = rotate_point(t, x[0:3], args.body.spin_axis, args.body.spin_velocity, None)
         position = rotated_position
+    else:
+        position = x[0:3]
 
+    # Compute accelertaion in chosen reference frame
     a = compute_acceleration(position, args)
 
+    # Return Runge-Kutta parameters
     kx = x[3:6]
     kv = a
 

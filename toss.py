@@ -4,6 +4,7 @@ import cProfile
 import pstats
 import time
 import numpy as np
+import polyhedral_gravity
 
 
 # Load required modules
@@ -16,8 +17,12 @@ from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
 from toss.trajectory.equations_of_motion import compute_motion
 
 import logging
-logging.basicConfig(level=logging.CRITICAL)
+#logging.basicConfig(level=logging.CRITICAL)
+#logging.getLogger().setLevel(logging.CRITICAL)
+#logging.getLogger("polyhedral_gravity").setLevel(logging.CRITICAL)
 
+#logger = logging.getLogger('polyhedral_gravity')
+logging.basicConfig(level=logging.CRITICAL, filename='logfile.log')
 
 def load_udp(args, initial_state, lower_bounds, upper_bounds):
     """Loads the provided user-defined problem (UDP).
@@ -108,7 +113,10 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
     for spacecraft_i in range(0, args.problem.number_of_spacecrafts):
 
         # Setup udp
-        prob = load_udp(args, initial_state[spacecraft_i], lower_bounds, upper_bounds)
+        if len(initial_state) == 0:
+            prob = load_udp(args, [], lower_bounds, upper_bounds)
+        else:
+            prob = load_udp(args, initial_state[spacecraft_i], lower_bounds, upper_bounds)
 
         # Setup population
         pop = pg.population(prob=prob, size=args.optimization.population_size, b=bfe)
@@ -137,6 +145,7 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
             state_vector = np.hstack((initial_state[spacecraft_i], champion_x))
         else:
             state_vector = champion_x
+        
         _, list_of_ode_objects, _ = compute_trajectory(state_vector, args, compute_motion)
         positions, velocities, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
         
@@ -158,13 +167,12 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
     return run_time, champion_f_list, champion_x_list, fitness_array
 
 
-def main():
+def main(args, run_id):
     """ 
     Main function. Defines parameters, domain and initial condition and then calls the main optimization script.
     The results are stored in corresponding csv-files. 
     """
-    # Setup problem parameters (as DotMaP)
-    args = setup_parameters()
+    #args = setup_parameters()
     
     # Setup initial state
     # NOTE Initial state can be varied dependent on what is optimized, eg:
@@ -173,7 +181,7 @@ def main():
     #       [position, velocity]
     initial_state = np.array_split([args.problem.initial_x, args.problem.initial_y, args.problem.initial_z]*args.problem.number_of_spacecrafts, args.problem.number_of_spacecrafts)
 
-    # Setup boundary constraints for the chromosome
+    # Setup boundary constraints for the chromosome   NOTE: initial_state[0]
     lower_bounds, upper_bounds = setup_initial_state_domain(initial_state[0], 
                                                             args.problem.start_time, 
                                                             args.problem.final_time, 
@@ -189,15 +197,25 @@ def main():
     champion_f = np.asarray(champion_f)
     champion_x = np.asarray(champion_x)
     fitness_list = np.asarray(fitness_list)
-    np.savetxt("test_run_time.csv", run_time, delimiter=",")
-    np.savetxt("test_champion_f.csv", champion_f, delimiter=",")
-    np.savetxt("test_champion_x.csv", champion_x, delimiter=",")
-    np.savetxt("test_fitness_list.csv", fitness_list, delimiter=",")
-
+    
+    np.savetxt(run_id + "run_time.csv", run_time, delimiter=",")
+    np.savetxt(run_id + "champion_f.csv", champion_f, delimiter=",")
+    np.savetxt(run_id + "champion_x.csv", champion_x, delimiter=",")
+    np.savetxt(run_id + "fitness_list.csv", fitness_list, delimiter=",")
 
 
 if __name__ == "__main__":
-    main()
+    test_cases = [2,4,6,8,10]
+    for test in test_cases:
+        run_id = "Local_new_gaco_param_1S_" + str(test) + "M_"
+        args = setup_parameters()
+        args.problem.number_of_spacecrafts = 1
+        args.problem.number_of_maneuvers = test
+        print("Current simulation: ", run_id)
+        main(args, run_id)
+
+
+    #main()
     #print(pg.__version__)
     #cProfile.run("main()", "output.dat")
 

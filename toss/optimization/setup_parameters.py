@@ -72,4 +72,16 @@ def setup_parameters():
     args.problem.fixed_velocity = np.array([args.problem.sample_vx, args.problem.sample_vy, args.problem.sample_vz])
     args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.weight_tensor = create_spherical_tensor_grid(args.problem.measurement_period, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.max_velocity_scaling_factor, args.problem.fixed_velocity)
     
+    # Chromosome
+    args.chromosome.x_min = args.problem.radius_inner_bounding_sphere
+    args.chromosome.x_max = args.problem.radius_outer_bounding_sphere
+
+    args.chromosome.y_min = -pi/2
+    args.chromosome.y_max = pi/2
+
+    args.chromosome.z_min = 0
+    args.chromosome.z_max = 2*pi
+
+
+
     return args

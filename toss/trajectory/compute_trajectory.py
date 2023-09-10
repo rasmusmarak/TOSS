@@ -276,6 +276,9 @@ def point_is_inside_risk_zone(t: float, state: np.ndarray, args) -> int:
     """
     risk_zone_radius = args.problem.radius_inner_bounding_sphere
     position = state[0:3]
+    #x_flat = np.ravel(position)
+    #x_new = np.array([x_flat[0], x_flat[1], x_flat[2]], dtype=np.float64)
+    #r_sq = np.dot(np.transpose(x_new),x_new)
     distance = risk_zone_radius**2 - (position[0]**2 + position[1]**2 + position[2]**2)
     if distance >= 0:
         return 0

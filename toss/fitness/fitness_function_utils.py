@@ -96,6 +96,10 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         # Concatenate timesteps in case of multiple spacecraft
         timesteps = list(timesteps)*number_of_spacecrafts
 
+    if number_of_spacecrafts > 1 and quaternion_objects != None:
+        if len(quaternion_objects) > positions.shape[1]:
+            quaternion_objects = np.array_split(quaternion_objects, number_of_spacecrafts)[0]
+
     # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accordingly.
     rotated_positions = rotate_point(timesteps, positions, spin_axis, spin_velocity, quaternion_objects)
 
@@ -167,6 +171,11 @@ def update_spherical_tensor_grid(number_of_spacecrafts: int, spin_axis: np.ndarr
     # Rotate positions according to body's rotation to simulate that the grid (i.e gravitational field approximation) is also rotating accordingly.
     if number_of_spacecrafts > 1:
         timesteps = list(timesteps)*number_of_spacecrafts
+
+    if number_of_spacecrafts > 1 and quaternion_objects != None:
+        if len(quaternion_objects) > positions.shape[1]:
+            quaternion_objects = np.array_split(quaternion_objects, number_of_spacecrafts)[0]
+            
     rotated_positions = rotate_point(timesteps, positions, spin_axis, spin_velocity, quaternion_objects)
 
     # Convert the positions along the trajectory to spherical coordinates
@@ -223,7 +232,7 @@ def create_spherical_tensor_grid(time_step: int, radius_min: float, radius_max: 
     #        spacing will be too small. Please use the scaling factor to adapt for this.
 
     # Define frequency of points for the spherical meshgrid: (see: Courant–Friedrichs–Lewy condition)
-    max_velocity = np.max(np.linalg.norm(fixed_velocity)) * max_velocity_scaling_factor
+    max_velocity = 2*(np.max(np.linalg.norm(fixed_velocity)) + max_velocity_scaling_factor)
     max_distance_traveled = max_velocity * time_step
 
     # Calculate and adjust grid spacing based on maximal velocity and time step
@@ -285,11 +294,12 @@ def cart2sphere(x, y, z) -> tuple:
 def sphere2cart(r, theta, phi) -> tuple:
     """
     Converts array of spherical coordinates to corresponding cartesian coordinates.
+    (See mathworks sph2cart: https://www.mathworks.com/help/matlab/ref/sph2cart.html)
 
     Args:
         r (scalar or array_like): R-component of data.
-        theta (scalar or array_like): Theta-component of data.
-        phi (scalar or array_like): Phi-component of data.
+        theta (scalar or array_like): Theta-component (elevation) of data, from xy-plane and up.
+        phi (scalar or array_like): Phi-component (azimuth) of data, on xy-plane.
 
     Returns:
         tuple (x, y, z) of data in cartesian coordinates.
