@@ -2,6 +2,7 @@
 from math import pi
 import numpy as np
 import polyhedral_gravity as model
+import quaternion
 
 # Load required modules
 from toss.utilities.load_default_cfg import load_default_cfg
@@ -51,12 +52,17 @@ def setup_parameters():
     args.problem.total_measurable_volume = args.problem.squared_volume_outer_bounding_sphere - args.problem.squared_volume_inner_bounding_sphere
     args.problem.maximal_measurement_sphere_volume = (4/3) * pi * (args.problem.maximal_measurement_sphere_radius**3)
 
-    # Setup additional body properties
+    # Setup additional body properties related to spin
     args.body.spin_velocity = (2*pi)/args.body.spin_period
     if (args.body.spin_axis_x != None) and (args.body.spin_axis_y != None) and (args.body.spin_axis_z != None):
         args.body.spin_axis = np.array([args.body.spin_axis_x, args.body.spin_axis_y, args.body.spin_axis_z])
     else:
         args.body.spin_axis = setup_spin_axis(args)
+
+    # Prepare rotations assuming fixed measurment period and spin velocity:
+    measurement_times = list(np.arange(args.problem.start_time, args.problem.final_time, args.problem.measurement_period))*args.problem.number_of_spacecrafts
+    measurement_angles = -args.body.spin_velocity*np.asarray(measurement_times)
+    args.body.quaternion_rotation_objects = np.array([quaternion.from_rotation_vector(angle * args.body.spin_axis) for angle in measurement_angles])
 
     # Create mesh of body and polyhedral object:
     args.mesh.body, args.mesh.vertices, args.mesh.faces, args.mesh.largest_body_protuberant = create_mesh(args.mesh.mesh_path)
@@ -64,7 +70,18 @@ def setup_parameters():
 
     # Setup initial boolean tensor representing the spherical grid approximation of the body's gravity field
     args.problem.fixed_velocity = np.array([args.problem.sample_vx, args.problem.sample_vy, args.problem.sample_vz])
-    args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.bool_tensor = create_spherical_tensor_grid(args.problem.measurement_period, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.max_velocity_scaling_factor, args.problem.fixed_velocity)
+    args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.weight_tensor = create_spherical_tensor_grid(args.problem.measurement_period, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.max_velocity_scaling_factor, args.problem.fixed_velocity)
     
+    # Chromosome
+    args.chromosome.x_min = args.problem.radius_inner_bounding_sphere
+    args.chromosome.x_max = args.problem.radius_outer_bounding_sphere
+
+    args.chromosome.y_min = -pi/2
+    args.chromosome.y_max = pi/2
+
+    args.chromosome.z_min = 0
+    args.chromosome.z_max = 2*pi
+
+
 
     return args

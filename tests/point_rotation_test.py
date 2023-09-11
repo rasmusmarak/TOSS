@@ -55,7 +55,8 @@ def test_rotation_of_point():
 
         ######### Rotation using Quaternion #########
         # Rotation of point: 
-        rotated_position_quaternion = rotate_point(t, x, args.body.spin_axis, args.body.spin_velocity)
+        rotated_position_quaternion = rotate_point(t, x, args.body.spin_axis, args.body.spin_velocity, None)
+        rotated_position_quaternion = np.asarray([rotated_position_quaternion[0][0], rotated_position_quaternion[1][0], rotated_position_quaternion[2][0]])
 
         #########    Analtical rotation    #########
         # Define analytical rotation (euler-rodrigues):

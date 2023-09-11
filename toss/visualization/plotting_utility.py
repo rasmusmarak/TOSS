@@ -105,7 +105,7 @@ def fitness_over_generations(fitness_list, number_of_generations):
     convergence_idx = np.where(convergence_list < 1e-6)[0][0]
     convergence_value = fitness_list[convergence_idx]
     print(convergence_idx)
-    ax.scatter(convergence_idx, convergence_value, marker='x', color='g', label='Convergence (delta < 1e-6) \n[Gen: '+str(convergence_idx)+"]")
+    ax.scatter(convergence_idx, convergence_value, marker='x', color='g', label='Convergence (tol < 1e-6) \n[Gen: '+str(convergence_idx)+"]")
 
     # Adjust plot settings
     ax.set_xlim((0, number_of_generations))
@@ -225,7 +225,7 @@ def plot_UDP_3D(args, positions, maneuver_positions, maneuver_unit_vectors, plot
             ax.scatter(x[-1], y[-1], z[-1], marker='o', c='black', label="Final position")
 
             # Plot trajectory
-            colors = ["blue", "darkorange"] #["blue", "darkorange"] #["brown", "purple"]
+            colors = ["blue", "darkorange","brown", "purple"] #["blue", "darkorange"] #["brown", "purple"]
             ax.plot(x, y, z, c=colors[id-1]) #label='Spacecraft '+str(id)
             id += 1
 
@@ -238,7 +238,7 @@ def plot_UDP_3D(args, positions, maneuver_positions, maneuver_unit_vectors, plot
             ux = maneuver_unit_vectors[0,maneuver_idx]
             uy = maneuver_unit_vectors[1,maneuver_idx]
             uz = maneuver_unit_vectors[2,maneuver_idx]
-            ax.quiver(x, y, z, -ux, -uy, -uz, color='r', length=10000) #arrow_length_ratio
+            ax.quiver(x, y, z, -ux, -uy, -uz, color='r', length=3000) #arrow_length_ratio
         ax.plot([], [], [], color="r", label="Thrust direction")
         
     # Plot mesh:
@@ -292,19 +292,19 @@ def plot_UDP_3D(args, positions, maneuver_positions, maneuver_unit_vectors, plot
     ax.set_xlim3d(XYZlim)
     ax.set_ylim3d(XYZlim)
     ax.set_zlim3d(XYZlim)
-    #ax.set_ylim((-140000, 110000))
-    ax.set_xlim((-120000, 120000))
-    ax.set_zlim((-120000, 120000))
+    ax.set_xlim((-19000, 19000))
+    ax.set_ylim((-19000, 19000))
+    ax.set_zlim((-19000, 19000))
     ax.set_aspect("equal")
 
 
     # Change fontsize of ticks and labels
-    ax.set_xlabel("x [km]", fontsize=16, labelpad=14)
-    #ax.set_ylabel("y [km]", fontsize=16, labelpad=20)
-    ax.set_zlabel("z [km]", fontsize=16, labelpad=30)
-    ax.tick_params(axis='x', labelsize=16, pad=0)
+    #ax.set_xlabel("x [km]", fontsize=16, labelpad=25)
+    ax.set_ylabel("y [km]", fontsize=16, labelpad=12)
+    ax.set_zlabel("z [km]", fontsize=16, labelpad=16)
+    ax.tick_params(axis='x', labelsize=16, pad=10)
     ax.tick_params(axis='y', labelsize=16, pad=0)
-    ax.tick_params(axis='z', labelsize=16, pad=15)
+    ax.tick_params(axis='z', labelsize=16, pad=8)
 
     ax.locator_params(axis='y', nbins=4)
     ax.locator_params(axis='x', nbins=4)
@@ -335,8 +335,8 @@ def plot_UDP_3D(args, positions, maneuver_positions, maneuver_unit_vectors, plot
     ax.margins(x=0)
 
     #ax.w_yaxis.line.set_lw(0.)
-    #ax.set_xticks([])  
-    ax.set_yticks([])  
+    ax.set_xticks([])  
+    #ax.set_yticks([])  
     #ax.set_zticks([])   
     #plt.show()
     plt.savefig('trajectory_plot.pdf', bbox_inches='tight', pad_inches = 0) #bbox_inches='tight', pad_inches = 0, dpi=600 # fixed_body_frame_trajectory_plot # trajectory_plot
@@ -456,7 +456,9 @@ def plot_performance_scaling(core_counts, run_times):
 
     # Setting up figure
     figure, (ax1, ax2) = plt.subplots(1,2)
-    figure.tight_layout()
+    figure.tight_layout(pad=3)
+    figure.figsize = (5,5) 
+    figure.dpi=150
 
     # Define ideal scaling:
     lowest_core_count = core_counts[0]
@@ -470,9 +472,10 @@ def plot_performance_scaling(core_counts, run_times):
 
     # Plotting: run time vs core count (alongside corresponding ideal scaling)
     ax1.plot(core_counts, run_times, 'o-r') #, label="10 Pop/Island"
-    ax1.plot(core_counts, ideal_time_n_cores, "--b", label="Ideal scaling")
-    ax1.legend()
-    ax1.set_xlabel("Number of workers in pool")
+    #ax1.plot(core_counts, ideal_time_n_cores, "--b", label="Ideal scaling")  # Strong scaling
+    ax1.plot(core_counts, [run_times[0]]*core_counts.shape[0], "--b", label="Ideal scaling")   # Weak scaling
+    ax1.legend(loc='upper left', fontsize=10)
+    ax1.set_xlabel("Number of threads")
     ax1.set_ylabel("Run time (Seconds)") 
     ax1.set_xscale("log")
     ax1.set_yscale("log")
@@ -486,8 +489,13 @@ def plot_performance_scaling(core_counts, run_times):
     ax2.plot(core_counts, speed_up, "--g", label="Speed-up")
 
 
-    ax2.legend()
-    ax2.set_xlabel("Number of workers in pool")
-    ax2.set_ylabel("Efficiency")
+    ax2.legend(loc='lower left', fontsize=10)
+    ax2.set_xlabel("Number of threads")
+    ax2.set_ylabel("Efficiency (E)")
     ax2.set_xscale("log")
     ax2.set_yscale("log")
+
+    
+    #ax1.set(adjustable='box', aspect='equal')
+    #ax2.set(adjustable='box', aspect='equal')
+    plt.savefig('latest_weak_scaling_plot.pdf', bbox_inches='tight', pad_inches = 0.1)

@@ -15,6 +15,8 @@ from toss.fitness.fitness_function_utils import compute_space_coverage, update_s
 from toss.trajectory.compute_trajectory import compute_trajectory
 from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
 from toss.trajectory.equations_of_motion import compute_motion
+from toss.fitness.fitness_function_enums import FitnessFunctions
+from toss.fitness.fitness_functions import get_fitness
 
 import logging
 #logging.basicConfig(level=logging.CRITICAL)
@@ -22,7 +24,11 @@ import logging
 #logging.getLogger("polyhedral_gravity").setLevel(logging.CRITICAL)
 
 #logger = logging.getLogger('polyhedral_gravity')
-logging.basicConfig(level=logging.CRITICAL, filename='logfile.log')
+#logging.basicConfig(level=logging.CRITICAL, filename='logfile.log')
+
+logging.Logger.manager.loggerDict
+logging.getLogger('polyhedral_gravity').disabled = True
+
 
 def load_udp(args, initial_state, lower_bounds, upper_bounds):
     """Loads the provided user-defined problem (UDP).
@@ -101,70 +107,65 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
     multi_process_bfe.resize_pool(args.optimization.number_of_threads)
     bfe = pg.bfe(multi_process_bfe)
 
-    # Setup arrays for storing results:
-    champion_f_list = []
-    champion_x_list = []
-    fitness_array = np.empty((args.problem.number_of_spacecrafts, args.optimization.number_of_generations), dtype=np.float64)
-
     # Initiate timer of the optimization process
     timer_start = time.time()
-    
-    # Optimize each spacecraft trajectory
-    for spacecraft_i in range(0, args.problem.number_of_spacecrafts):
 
-        # Setup udp
-        if len(initial_state) == 0:
-            prob = load_udp(args, [], lower_bounds, upper_bounds)
-        else:
-            prob = load_udp(args, initial_state[spacecraft_i], lower_bounds, upper_bounds)
+    # Setup udp
+    if len(initial_state) == 0:
+        prob = load_udp(args, [], lower_bounds, upper_bounds)
+    else:
+        prob = load_udp(args, initial_state[0], lower_bounds, upper_bounds)
 
-        # Setup population
-        pop = pg.population(prob=prob, size=args.optimization.population_size, b=bfe)
+    # Setup population
+    pop = pg.population(prob=prob, size=args.optimization.population_size, b=bfe)
 
-        # Setup uda
-        algo = load_uda(args, bfe)
+    # Setup uda
+    algo = load_uda(args, bfe)
 
-        # Evolve population
-        algo.set_verbosity(1)
-        pop = algo.evolve(pop)
+    # Evolve population
+    algo.set_verbosity(1)
+    pop = algo.evolve(pop)
 
-        # Store champion fitness of each generation:
-        optimization_info = algo.extract(pg.gaco).get_log()
-        fitness_list = np.empty(args.optimization.number_of_generations,dtype=np.float64)
-        for generation, info in enumerate(optimization_info):
-            fitness_list[generation] = info[2]
+    # Store champion fitness of each generation:
+    optimization_info = algo.extract(pg.gaco).get_log()
+    fitness_list = np.empty(args.optimization.number_of_generations,dtype=np.float64)
+    for generation, info in enumerate(optimization_info):
+        fitness_list[generation] = info[2]
 
-        # Other logs for output
-        champion_f = pop.champion_f
-        champion_x = pop.champion_x
-
-        # Recompute trajectory from champion chromosome.
-        # NOTE: For a detailed description on constants required in dotmap args,
-        #       see docstring for the function: compute_trajectory()
-        if len(initial_state[spacecraft_i]) > 0:
-            state_vector = np.hstack((initial_state[spacecraft_i], champion_x))
-        else:
-            state_vector = champion_x
-        
-        _, list_of_ode_objects, _ = compute_trajectory(state_vector, args, compute_motion)
-        positions, velocities, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
-        
-        # Update boolean tensor (using trajectory resulting from champion chromosome)
-        args.problem.bool_tensor = update_spherical_tensor_grid(args.problem.number_of_spacecrafts, args.body.spin_axis, args.body.spin_velocity, positions, velocities, timesteps, args.problem.radius_inner_bounding_sphere, args.problem.radius_outer_bounding_sphere, args.problem.tensor_grid_r, args.problem.tensor_grid_theta, args.problem.tensor_grid_phi, args.problem.weight_tensor, args.body.quaternion_rotation_objects)
-
-        # Store champion information
-        champion_f_list.append(champion_f)
-        champion_x_list.append(champion_x)
-        fitness_array[spacecraft_i, :] = fitness_list
+    # Other logs for output
+    champion_f = pop.champion_f
+    champion_x = pop.champion_x
 
     # Compute complete optimization run time.
     timer_end = time.time()
     run_time = timer_end - timer_start
 
+    # Recompute trajectory from champion chromosome.
+    # NOTE: For a detailed description on constants required in dotmap args,
+    #       see docstring for the function: compute_trajectory()
+    chromosomes = np.array_split(champion_x, args.problem.number_of_spacecrafts)
+    for i, chromosome_i in enumerate(chromosomes):
+        spacecraft_info = np.hstack((initial_state[i], chromosome_i))
+        # Compute Trajectory and resample for a given fixed time-step delta t        
+        collision_detected, list_of_ode_objects, _ = compute_trajectory(spacecraft_info, args, compute_motion)
+
+        # Resample trajectory for a fixed time-step delta t
+        positions, velocities, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
+
+        if i == 0:
+            positions_array = positions
+        else:
+            positions_array = np.hstack((positions_array, positions))
+            
+    # Compute aggregate fitness:
+    chosen_fitness_function = FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty
+    fitness = get_fitness(chosen_fitness_function, args, positions_array, velocities, timesteps)
+    print("Champion fitness: ", fitness)
+
     # Shutdown pool to avoid mp_bfe bug for python==3.8
     multi_process_bfe.shutdown_pool()
 
-    return run_time, champion_f_list, champion_x_list, fitness_array
+    return run_time, champion_f, champion_x, fitness_list
 
 
 def main(args, run_id):
@@ -189,6 +190,9 @@ def main(args, run_id):
                                                             args.problem.number_of_spacecrafts,
                                                             args.chromosome)
 
+    lower_bounds = list(lower_bounds)*args.problem.number_of_spacecrafts
+    upper_bounds = list(upper_bounds)*args.problem.number_of_spacecrafts
+
     # Run optimization
     run_time, champion_f, champion_x, fitness_list = run_optimization(args, initial_state, lower_bounds, upper_bounds)
 
@@ -205,11 +209,11 @@ def main(args, run_id):
 
 
 if __name__ == "__main__":
-    test_cases = [2,4,6,8,10]
+    test_cases = [4]
     for test in test_cases:
-        run_id = "Local_new_gaco_param_1S_" + str(test) + "M_"
+        run_id = "Global_new_gaco_param_4S_" + str(test) + "M_"
         args = setup_parameters()
-        args.problem.number_of_spacecrafts = 1
+        args.problem.number_of_spacecrafts = 4
         args.problem.number_of_maneuvers = test
         print("Current simulation: ", run_id)
         main(args, run_id)

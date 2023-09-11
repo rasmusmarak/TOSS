@@ -8,6 +8,7 @@ from toss.trajectory.equations_of_motion import compute_motion
 from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
 from toss.fitness.fitness_function_enums import FitnessFunctions
 from toss.fitness.fitness_functions import get_fitness
+from toss.fitness.fitness_function_utils import sphere2cart
 
 # Class representing UDP 
 class udp_initial_condition:
@@ -113,28 +114,68 @@ class udp_initial_condition:
             fitness (_float_): Evaluated fitness for user-specified fitness-function.
         """
 
-        # If we have a predefined initial state, concatenate the initial state info with corresponding maneuvers
-        if len(self.initial_condition) > 0:
-            spacecraft_info = np.hstack((self.initial_condition, chromosome))
-        else:
-            spacecraft_info = chromosome
-                
-        # Compute Trajectory and resample for a given fixed time-step delta t        
-        collision_detected, list_of_ode_objects, _ = compute_trajectory(spacecraft_info, self.args, compute_motion)
+        if self.args.optimization.global_optimization == False:
+            # If we have a predefined initial state, concatenate the initial state info with corresponding maneuvers
+            if len(self.initial_condition) > 0:
+                spacecraft_info = np.hstack((self.initial_condition, chromosome))
+            else:
+                x,y,z = sphere2cart(chromosome[0], chromosome[1], chromosome[2])
+                chromosome[0] = x
+                chromosome[1] = y
+                chromosome[2] = z
+                spacecraft_info = chromosome
+                    
+            # Compute Trajectory and resample for a given fixed time-step delta t        
+            collision_detected, list_of_ode_objects, _ = compute_trajectory(spacecraft_info, self.args, compute_motion)
 
-        # If collision detected => unfeasible trajectory
-        if collision_detected:
-            fitness = 1e30
+            # If collision detected => unfeasible trajectory
+            if collision_detected:
+                fitness = 1e30
+                return [fitness]
+            
+            # Resample trajectory for a fixed time-step delta t
+            positions, velocities, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
+
+            # Compute aggregate fitness:
+            chosen_fitness_function = FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty
+            fitness = get_fitness(chosen_fitness_function, self.args, positions, velocities, timesteps)
+
             return [fitness]
         
-        # Resample trajectory for a fixed time-step delta t
-        positions, velocities, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
+        else:
+            chromosomes = np.array_split(chromosome, self.args.problem.number_of_spacecrafts)
+            for i, chromosome_i in enumerate(chromosomes):
+                if len(self.initial_condition) > 0:
+                    spacecraft_info = np.hstack((self.initial_condition, chromosome_i))
+                else:
+                    x,y,z = sphere2cart(chromosome_i[0], chromosome_i[1], chromosome_i[2])
+                    chromosome_i[0] = x
+                    chromosome_i[1] = y
+                    chromosome_i[2] = z
+                    spacecraft_info = chromosome_i
 
-        # Compute aggregate fitness:
-        chosen_fitness_function = FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty
-        fitness = get_fitness(chosen_fitness_function, self.args, positions, velocities, timesteps)
+                # Compute Trajectory and resample for a given fixed time-step delta t        
+                collision_detected, list_of_ode_objects, _ = compute_trajectory(spacecraft_info, self.args, compute_motion)
+                # If collision detected => unfeasible trajectory
+                if collision_detected:
+                    fitness = 1e30
+                    return [fitness]
+                # Resample trajectory for a fixed time-step delta t
+                positions, velocities, timesteps = get_trajectory_fixed_step(self.args, list_of_ode_objects)
 
-        return [fitness]
+                if i == 0:
+                    positions_array = positions
+
+                else:
+                    positions_array = np.hstack((positions_array, positions))
+                    
+            # Compute aggregate fitness:
+            chosen_fitness_function = FitnessFunctions.CoveredSpaceCloseDistancePenaltyFarDistancePenalty
+            fitness = get_fitness(chosen_fitness_function, self.args, positions_array, velocities, timesteps)
+
+            return [fitness]
+
+
 
 
     def get_bounds(self) -> Union[np.ndarray, np.ndarray]:

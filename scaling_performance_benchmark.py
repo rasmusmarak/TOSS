@@ -16,13 +16,24 @@ from toss.trajectory.compute_trajectory import compute_trajectory
 from toss.trajectory.trajectory_tools import get_trajectory_fixed_step
 from toss.trajectory.equations_of_motion import compute_motion
 
+#import logging.config
+#logging.config.dictConfig({
+#'version': 1,
+#'disable_existing_loggers': True})
+
 import logging
 #logging.basicConfig(level=logging.CRITICAL)
-#logging.getLogger().setLevel(logging.CRITICAL)
+#logging.getLogger('polyhedral_gravity').setLevel(logging.CRITICAL)
+#logger.propagate = False
 #logging.getLogger("polyhedral_gravity").setLevel(logging.CRITICAL)
+#logging.Logger.disabled = True
 
 #logger = logging.getLogger('polyhedral_gravity')
-logging.basicConfig(level=logging.CRITICAL, filename='logfile.log')
+#logging.basicConfig(level=logging.CRITICAL, filename='logfile.log')
+
+logging.Logger.manager.loggerDict
+logging.getLogger('polyhedral_gravity').disabled = True
+
 
 def load_udp(args, initial_state, lower_bounds, upper_bounds):
     """Loads the provided user-defined problem (UDP).
@@ -141,11 +152,12 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
         # Recompute trajectory from champion chromosome.
         # NOTE: For a detailed description on constants required in dotmap args,
         #       see docstring for the function: compute_trajectory()
-        if len(initial_state[spacecraft_i]) > 0:
-            state_vector = np.hstack((initial_state[spacecraft_i], champion_x))
-        else:
-            state_vector = champion_x
-        
+        #if len(initial_state[spacecraft_i]) > 0:
+        #    state_vector = np.hstack((initial_state[spacecraft_i], champion_x))
+        #else:
+        #    state_vector = champion_x
+        state_vector = champion_x
+
         _, list_of_ode_objects, _ = compute_trajectory(state_vector, args, compute_motion)
         positions, velocities, timesteps = get_trajectory_fixed_step(args, list_of_ode_objects)
         
@@ -167,63 +179,91 @@ def run_optimization(args, initial_state, lower_bounds, upper_bounds):
     return run_time, champion_f_list, champion_x_list, fitness_array
 
 
-def main(args, run_id):
-    """ 
-    Main function. Defines parameters, domain and initial condition and then calls the main optimization script.
-    The results are stored in corresponding csv-files. 
+
+
+def scaling(generations, threads, populations):
     """
-    #args = setup_parameters()
-    
-    # Setup initial state
-    # NOTE Initial state can be varied dependent on what is optimized, eg:
-    #       []
-    #       [position]
-    #       [position, velocity]
-    initial_state = np.array_split([args.problem.initial_x, args.problem.initial_y, args.problem.initial_z]*args.problem.number_of_spacecrafts, args.problem.number_of_spacecrafts)
+    Generates results for a strong scaling test.
+    """
+    args = setup_parameters()
 
-    # Setup boundary constraints for the chromosome   NOTE: initial_state[0]
-    lower_bounds, upper_bounds = setup_initial_state_domain(initial_state[0], 
-                                                            args.problem.start_time, 
-                                                            args.problem.final_time, 
-                                                            args.problem.number_of_maneuvers, 
-                                                            args.problem.number_of_spacecrafts,
-                                                            args.chromosome)
+    # Scaling results: 
+    #   n_rows = 2 + n_spacecraft*(n_initial_arg + 5*n_maneuvers)
+    scaling_results = np.empty((14,len(threads)), dtype=np.float64)
+    for i in range(0, len(threads)):
 
-    # Run optimization
-    run_time, champion_f, champion_x, fitness_list = run_optimization(args, initial_state, lower_bounds, upper_bounds)
+        # Setup optimization parameters:
+        args.optimization.number_of_threads = threads[i]
+        args.optimization.population_size = populations[i]
+        args.optimization.number_of_generations = generations[i]
 
-    # Save results
-    run_time = np.asarray([float(run_time)])
-    champion_f = np.asarray(champion_f)
-    champion_x = np.asarray(champion_x)
-    fitness_list = np.asarray(fitness_list)
-    
-    np.savetxt(run_id + "run_time.csv", run_time, delimiter=",")
-    np.savetxt(run_id + "champion_f.csv", champion_f, delimiter=",")
-    np.savetxt(run_id + "champion_x.csv", champion_x, delimiter=",")
-    np.savetxt(run_id + "fitness_list.csv", fitness_list, delimiter=",")
+
+        # Setup initial state
+        initial_state = [] #np.array_split([args.problem.initial_x, args.problem.initial_y, args.problem.initial_z]*args.problem.number_of_spacecrafts, args.problem.number_of_spacecrafts)
+
+        # Setup boundary constraints for the chromosome   NOTE: initial_state[0]
+        args.chromosome.x_min = 4000
+        args.chromosome.x_max = 12500
+        args.chromosome.y_min = -np.pi/2
+        args.chromosome.y_max = np.pi/2
+        args.chromosome.z_min = 0
+        args.chromosome.z_max = 2*np.pi
+
+        lower_bounds, upper_bounds = setup_initial_state_domain(initial_state, 
+                                                                args.problem.start_time, 
+                                                                args.problem.final_time, 
+                                                                args.problem.number_of_maneuvers, 
+                                                                args.problem.number_of_spacecrafts,
+                                                                args.chromosome)
+
+        # Run optimization
+        run_time, champion_f, champion_x, _ = run_optimization(args, initial_state, lower_bounds, upper_bounds)
+
+        # Store results
+        scaling_results[0,i] = champion_f[0]
+        scaling_results[1:13,i] = np.asarray(champion_x)
+        scaling_results[13,i] = run_time
+
+        # For logs:
+        print("Threads: ", args.optimization.number_of_threads, "   Pop: ", args.optimization.population_size,  "   Gen: ", args.optimization.number_of_generations)
+        print("f: ", champion_f, "   elapsed time: ", run_time)
+
+    return scaling_results
+
+
+
+def run_scaling_benchmark():
+
+    #polyhedral_gravity.LOGGING_LEVEL = 5
+
+    # Initial test:
+    generations = [100]
+    threads = [200]
+    populations = [256]
+    initial_test_results = scaling(generations, threads, populations)
+    np.savetxt("new_initial_test_results.csv", initial_test_results, delimiter=",")
+
+    # Strong scaling, small run:
+    generations = [10, 10, 10, 10, 10, 10, 10, 10, 10]
+    threads = [1, 2, 4, 8, 16, 32, 64, 128, 256]
+    populations = [256, 256, 256, 256, 256, 256, 256, 256, 256]
+    strong_scaling_results = scaling(generations, threads, populations)
+    np.savetxt("new_strong_scaling_small_run__1S_1M_12H.csv", strong_scaling_results, delimiter=",")
+
+    # Strong scaling, large run:
+    generations = [10, 10, 10, 10, 10, 10, 10, 10, 10]
+    threads = [1, 2, 4, 8, 16, 32, 64, 128, 256]
+    populations = [512, 512, 512, 512, 512, 512, 512, 512, 512]
+    strong_scaling_results = scaling(generations, threads, populations)
+    np.savetxt("new_strong_scaling_large_run__1S_1M_12H.csv", strong_scaling_results, delimiter=",")
+
+    # Weak scaling
+    generations = [10, 10, 10, 10, 10, 10, 10, 10, 10]
+    threads =  [1, 2, 4, 8, 16, 32, 64, 128, 256]
+    populations = [20, 40, 80, 160, 320, 640, 1280, 2560, 5120]
+    weak_scaling_results = scaling(generations, threads, populations)
+    np.savetxt("new_weak_scaling__1S_1M_12H.csv", weak_scaling_results, delimiter=",")
 
 
 if __name__ == "__main__":
-    test_cases = [2,4,6,8,10]
-    for test in test_cases:
-        run_id = "Local_new_gaco_param_1S_" + str(test) + "M_"
-        args = setup_parameters()
-        args.problem.number_of_spacecrafts = 1
-        args.problem.number_of_maneuvers = test
-        print("Current simulation: ", run_id)
-        main(args, run_id)
-
-
-    #main()
-    #print(pg.__version__)
-    #cProfile.run("main()", "output.dat")
-
-    #with open("output_time.txt", "w") as f:
-    #    p = pstats.Stats("output.dat", stream=f)
-    #    p.sort_stats("time").print_stats()
-    
-    #with open("output_calls.txt", "w") as f:
-    #    p = pstats.Stats("output.dat", stream=f)
-    #    p.sort_stats("calls").print_stats()
-        
+    run_scaling_benchmark()    
