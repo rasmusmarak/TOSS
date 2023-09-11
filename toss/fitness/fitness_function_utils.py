@@ -135,8 +135,8 @@ def compute_space_coverage(number_of_spacecrafts: int, spin_axis: np.ndarray, sp
         candidate_tensor = np.full((len(r), len(theta), len(phi)), False)
         candidate_tensor[i, j, k] = True
         indices_candidate_visits = np.where(candidate_tensor)
-
-        # Return fitness as:
+        
+                # Return fitness as:
         #   fitness = sum_{i in I} (w_i)    for I = set of points on tensor visited by candidate trajectory.
         # NOTE: 
         #   Tensor points that have previously been visited have weights equal to zero,

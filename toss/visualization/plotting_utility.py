@@ -225,7 +225,7 @@ def plot_UDP_3D(args, positions, maneuver_positions, maneuver_unit_vectors, plot
             ax.scatter(x[-1], y[-1], z[-1], marker='o', c='black', label="Final position")
 
             # Plot trajectory
-            colors = ["blue", "darkorange", "brown", "purple"] #["blue", "darkorange"] #["brown", "purple"]
+            colors = ["blue", "darkorange","brown", "purple"] #["blue", "darkorange"] #["brown", "purple"]
             ax.plot(x, y, z, c=colors[id-1]) #label='Spacecraft '+str(id)
             id += 1
 
@@ -292,16 +292,16 @@ def plot_UDP_3D(args, positions, maneuver_positions, maneuver_unit_vectors, plot
     ax.set_xlim3d(XYZlim)
     ax.set_ylim3d(XYZlim)
     ax.set_zlim3d(XYZlim)
-    ax.set_xlim((-35000, 35000))
-    ax.set_ylim((-35000, 35000))
-    ax.set_zlim((-35000, 35000))
+    ax.set_xlim((-19000, 19000))
+    ax.set_ylim((-19000, 19000))
+    ax.set_zlim((-19000, 19000))
     ax.set_aspect("equal")
 
 
     # Change fontsize of ticks and labels
-    ax.set_xlabel("x [km]", fontsize=16, labelpad=25)
-    ax.set_ylabel("y [km]", fontsize=16, labelpad=20)
-    #ax.set_zlabel("z [km]", fontsize=16, labelpad=16)
+    #ax.set_xlabel("x [km]", fontsize=16, labelpad=25)
+    ax.set_ylabel("y [km]", fontsize=16, labelpad=12)
+    ax.set_zlabel("z [km]", fontsize=16, labelpad=16)
     ax.tick_params(axis='x', labelsize=16, pad=10)
     ax.tick_params(axis='y', labelsize=16, pad=0)
     ax.tick_params(axis='z', labelsize=16, pad=8)
@@ -335,9 +335,9 @@ def plot_UDP_3D(args, positions, maneuver_positions, maneuver_unit_vectors, plot
     ax.margins(x=0)
 
     #ax.w_yaxis.line.set_lw(0.)
-    #ax.set_xticks([])  
+    ax.set_xticks([])  
     #ax.set_yticks([])  
-    ax.set_zticks([])   
+    #ax.set_zticks([])   
     #plt.show()
     plt.savefig('trajectory_plot.pdf', bbox_inches='tight', pad_inches = 0) #bbox_inches='tight', pad_inches = 0, dpi=600 # fixed_body_frame_trajectory_plot # trajectory_plot
 
